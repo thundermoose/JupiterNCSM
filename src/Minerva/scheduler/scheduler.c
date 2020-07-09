@@ -40,7 +40,7 @@ scheduler_t new_scheduler(execution_order_t execution_order,
 			  const char *matrix_file_base_directory)
 {
 	scheduler_t scheduler =
-	       	(scheduler_t)malloc(sizeof(struct _scheduler_));
+		(scheduler_t)malloc(sizeof(struct _scheduler_));
 	scheduler->execution_order = execution_order;
 	scheduler->combination_table = combination_table;
 	scheduler->index_lists_base_directory =
@@ -132,23 +132,25 @@ void neutron_case(memory_manager_t memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
-				 instruction.matrix_element_file);
+				  instruction.matrix_element_file);
 	index_list_t positive_list = 
 		load_index_list(memory_manager,
 				instruction.neutron_index,
 				1);
-	multiplication_neutrons_pos(output_vector_block,
-				    input_vector_block,
-				    matrix_block,
-				    positive_list);
+	multiplication_neutrons(output_vector_block,
+				input_vector_block,
+				matrix_block,
+				positive_list,
+				1);
 	index_list_t negative_list =
 		load_index_list(memory_manager,
 				instruction.neutron_index,
 				-1);
-	multiplication_neutrons_neg(output_vector_block,
-				    input_vector_block,
-				    matrix_block,
-				    negative_list);
+	multiplication_neutrons(output_vector_block,
+				input_vector_block,
+				matrix_block,
+				negative_list,
+				-1);
 
 }
 
@@ -165,23 +167,25 @@ void proton_case(memory_manager_t memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
-				 instruction.matrix_element_file);
+				  instruction.matrix_element_file);
 	index_list_t positive_list = 
 		load_index_list(memory_manager,
-				       instruction.proton_index,
-				       1);
-	multiplication_protons_pos(output_vector_block,
-				    input_vector_block,
-				    matrix_block,
-				    positive_list);
+				instruction.proton_index,
+				1);
+	multiplication_protons(output_vector_block,
+			       input_vector_block,
+			       matrix_block,
+			       positive_list,
+			       1);
 	index_list_t negative_list =
 		load_index_list(memory_manager,
-				       instruction.proton_index,
-				       -1);
-	multiplication_protons_neg(output_vector_block,
-				    input_vector_block,
-				    matrix_block,
-				    negative_list);
+				instruction.proton_index,
+				-1);
+	multiplication_protons(output_vector_block,
+			       input_vector_block,
+			       matrix_block,
+			       negative_list,
+			       -1);
 
 }
 
@@ -198,7 +202,7 @@ void neutron_proton_case(memory_manager_t memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
-				 instruction.matrix_element_file);
+				  instruction.matrix_element_file);
 	index_list_t  positive_neutron_list =
 		load_index_list(memory_manager,
 				instruction.neutron_index,
@@ -215,29 +219,33 @@ void neutron_proton_case(memory_manager_t memory_manager,
 		load_index_list(memory_manager,
 				instruction.proton_index,
 				-1);
-	multiplication_neutrons_protons_pos(output_vector_block,
-					    input_vector_block,
-					    matrix_block,
-					    positive_neutron_list,
-					    positive_proton_list);
-	multiplication_neutrons_protons_pos(output_vector_block,
-					    input_vector_block,
-					    matrix_block,
-					    negative_neutron_list,
-					    negative_proton_list);
-	multiplication_neutrons_protons_neg(output_vector_block,
-					    input_vector_block,
-					    matrix_block,
-					    negative_neutron_list,
-					    positive_proton_list);
-	multiplication_neutrons_protons_neg(output_vector_block,
-					    input_vector_block,
-					    matrix_block,
-					    positive_neutron_list,
-					    negative_proton_list);
+	multiplication_neutrons_protons(output_vector_block,
+					input_vector_block,
+					matrix_block,
+					positive_neutron_list,
+					positive_proton_list,
+					1);
+	multiplication_neutrons_protons(output_vector_block,
+					input_vector_block,
+					matrix_block,
+					negative_neutron_list,
+					negative_proton_list,
+					1);
+	multiplication_neutrons_protons(output_vector_block,
+					input_vector_block,
+					matrix_block,
+					negative_neutron_list,
+					positive_proton_list,
+					-1);
+	multiplication_neutrons_protons(output_vector_block,
+					input_vector_block,
+					matrix_block,
+					positive_neutron_list,
+					negative_proton_list,
+					-1);
 }
 
-static
+	static
 void unload_arrays(memory_manager_t memory_manager,
 		   execution_instruction_t instruction)
 {
