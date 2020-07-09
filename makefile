@@ -47,14 +47,25 @@ program_packages_names := $(filter-out Utilities, $(shell ls ./src))
 program_package_sources=$(filter ./$(source_path)/$(1)/%.c,$(all_sources))
 
 
-all: $(program_packages_names:%=release_%)
+all: $(mode_path)/release.mode
+	make $(program_packages_names:%=release_%)
 
-debug: $(program_packages_names:%=debug_%)
+debug: $(mode_path)/debug.mode
+	make $(program_packages_names:%=debug_%)
 
-test: $(program_packages_names:%=test_%)
+test: $(mode_path)/test.mode
+	make $(program_packages_names:%=test_%)
+
+test_no_logging: $(mode_path)/test_no_logging.mode
+	make $(program_packages_names:%=test_no_logging_%)
 
 clean:
 	rm -rf .tmp release debug
+
+$(mode_path)/%.mode:
+	rm -rf ./.tmp/
+	mkdir -p $(@D)
+	echo "Compilation mode $(@F:%.mode=%)" > $@
 
 define link_package
 -include settings/package_settings_$1.mk
@@ -90,6 +101,15 @@ test_$1: $$(package_programs_$1:%.x=test/%.x)
 test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) $(thundertester_compiler_flags)
 test/$1/%.x: linker_flags+=$(thundertester_linker_flags)
 test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
+	mkdir -p $$(@D)
+	echo "Linking $$@"
+	$$(linker) -o $$@ $$^ $$(linker_flags)
+	$$@ --run-all-tests
+
+test_no_logging_$1: $$(package_programs_$1:%.x=test_no_logging/%.x)
+test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) $(thundertester_compiler_flags) -DNLOGING
+test_no_logging/$1/%.x: linker_flags+=$(thundertester_linker_flags)
+test_no_logging/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
 	$$(linker) -o $$@ $$^ $$(linker_flags)

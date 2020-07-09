@@ -138,13 +138,13 @@ new_test(explicit_matrix_nmax2,
 	 	get_test_file_path("output");
 	 matrix_builder_settings_t settings =
 	 {
-		.combination_file_path = TEST_DATA "nmax2_test_data_2020_06_10/comb.txt",
+		.combination_file_path = TEST_DATA "nmax2_test_data_2020_07_09/comb.txt",
 		.minerva_instruction_path =
-	       		TEST_DATA "nmax2_test_data_2020_06_10/greedy_2_16.txt",
+	       		TEST_DATA "nmax2_test_data_2020_07_09/greedy_2_16.txt",
 		.index_list_path = 
-		TEST_DATA "nmax2_test_data_2020_06_10/index_lists",
+		TEST_DATA "nmax2_test_data_2020_07_09/index_lists",
 		.interaction_path = 
-		TEST_DATA "nmax2_test_data_2020_06_10/interaction",
+		TEST_DATA "nmax2_test_data_2020_07_09/interaction",
 		.input_vector_path =
 			copy_string(input_vector_path),
 		.output_vector_path =
