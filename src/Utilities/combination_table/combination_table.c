@@ -104,6 +104,16 @@ combination_table_t new_combination_table(const char *filename,
 	return table;
 }
 
+size_t get_full_dimension(combination_table_t combination_table)
+{
+	size_t full_dimension = 0;
+	for (size_t i = 0; i<combination_table->num_basis_blocks; i++)
+		full_dimension+=
+			combination_table->basis_blocks[i].num_proton_states*
+			combination_table->basis_blocks[i].num_neutron_states;	
+	return full_dimension;
+}
+
 particle_type_t get_index_list_type(combination_table_t combination_table,
 				    size_t index_list_id)
 {

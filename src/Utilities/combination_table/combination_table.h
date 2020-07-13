@@ -13,6 +13,7 @@ typedef struct _combination_table_ *combination_table_t;
 combination_table_t new_combination_table(const char *filename,
 					  size_t num_protons,
 					  size_t num_neutrons);
+size_t get_full_dimension(combination_table_t combination_table);
 
 particle_type_t get_index_list_type(combination_table_t combination_table,
 				    size_t index_list_id);

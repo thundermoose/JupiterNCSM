@@ -173,6 +173,11 @@ double get_element(vector_t vector,
 	return vector->element_buffer[index-vector_block.start_index];
 }
 
+const char *get_vector_path(vector_t vector)
+{
+	return vector->directory_name;
+}
+
 void save_vector(vector_t vector)
 {
 	log_entry("Saving vector %s",

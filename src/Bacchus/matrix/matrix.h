@@ -3,6 +3,8 @@
 
 #include <vector/vector.h>
 #include <equality_status/equality_status.h>
+#include <execution_order/execution_order.h>
+#include <combination_table/combination_table.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -15,6 +17,11 @@ matrix_t new_zero_matrix(size_t num_rows,
 matrix_t new_random_symmetric_matrix(size_t side_length);
 
 matrix_t new_matrix_from_numpy(FILE* matrix_file);
+
+matrix_t new_generative_matrix(execution_order_t execution_order,
+			       combination_table_t combination_table,
+			       const char *index_lists_base_directory,
+			       const char *matrix_file_base_directory);
 
 void matrix_vector_multiplication(vector_t result_vector,
 				  const matrix_t matrix,

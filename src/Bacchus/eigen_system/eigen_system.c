@@ -1,4 +1,5 @@
 #include <eigen_system/eigen_system.h>
+#include <stdio.h>
 #include <basis/basis.h>
 #include <string.h>
 #include <assert.h>
@@ -55,6 +56,22 @@ void set_eigen_values(eigen_system_t eigen_system,
 	memcpy(eigen_system->eigen_values,
 		eigen_values,
 		eigen_system->num_eigen_values*sizeof(double));
+}
+
+void print_eigen_system(const eigen_system_t eigen_system)
+{
+	printf("eigen_system:\n"
+	       "{\n");
+	printf("\tnum_eigen_values = %lu;\n",
+	       eigen_system->num_eigen_values);
+	printf("\teigen_values = ( ");
+	for (size_t i = 0; i<eigen_system->num_eigen_values; i++)
+		printf("%lg%s ",
+		       eigen_system->eigen_values[i],
+		       i == eigen_system->num_eigen_values-1 ? "" : ","); 
+	printf(");\n"
+	       "}\n");
+
 }
 
 void free_eigen_system(eigen_system_t eigen_system)

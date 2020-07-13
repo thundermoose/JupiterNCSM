@@ -91,12 +91,12 @@ void explicit_matrix_vector_multiplication(vector_t result_vector,
 	save_vector(result_vector);
 }
 
-size_t get_num_rows(explicit_matrix_t explicit_matrix)
+size_t get_explicit_matrix_num_rows(explicit_matrix_t explicit_matrix)
 {
 	return explicit_matrix->num_rows;
 }
 
-size_t get_num_columns(explicit_matrix_t explicit_matrix)
+size_t get_explicit_matrix_num_columns(explicit_matrix_t explicit_matrix)
 {
 	return explicit_matrix->num_columns;
 }
@@ -148,8 +148,9 @@ void save_numpy_explicit_matrix(FILE *file,
 		error("Could not write elements to numpy file\n");
 }
 
-equality_status_t compare_matrices(const explicit_matrix_t first_explicit_matrix,
-				   const explicit_matrix_t second_explicit_matrix)
+equality_status_t 
+compare_explicit_matrices(const explicit_matrix_t first_explicit_matrix,
+			  const explicit_matrix_t second_explicit_matrix)
 {
 	if (first_explicit_matrix->num_rows != second_explicit_matrix->num_rows ||
 	    first_explicit_matrix->num_columns != second_explicit_matrix->num_columns)

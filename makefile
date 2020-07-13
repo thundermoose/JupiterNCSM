@@ -37,8 +37,8 @@ mode_path := .tmp
 object_path := .tmp/objects
 dependencies_path := .tmp/dependencies
 
-compiler_flags := -I./$(source_path)/ -I./$(source_path)/Utilities/  -I$(wigxjpf_path)/inc $(hdf5_comp_flags) -fopenmp
-linker_flags := -lm -llapack -lblas -L$(wigxjpf_path)/lib -lwigxjpf $(hdf5_link_flags) -fopenmp -pthread
+compiler_flags := -I./$(source_path)/ -I./$(source_path)/Utilities/  -I$(wigxjpf_path)/inc $(hdf5_comp_flags) -fopenmp 
+linker_flags := -lm -llapack -lblas -L$(wigxjpf_path)/lib -lwigxjpf $(hdf5_link_flags) -fopenmp -pthread -lconfig
 
 all_sources := $(shell find ./$(source_path)/ -regex [^\#]*\\.c$)
 all_objects := $(all_sources:./$(source_path)/%.c=./$(object_path)/%.o)

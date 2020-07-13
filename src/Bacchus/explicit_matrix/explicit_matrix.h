@@ -1,6 +1,11 @@
 #ifndef __EXPLICIT_MATRIX__
 #define __EXPLICIT_MATRIX__
 
+#include <vector/vector.h>
+#include <equality_status/equality_status.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 struct _explicit_matrix_;
 typedef struct _explicit_matrix_ *explicit_matrix_t;
 
@@ -33,8 +38,8 @@ void save_numpy_explicit_matrix(FILE *file,
 		       const explicit_matrix_t explicit_matrix);
 
 equality_status_t 
-compare_matrices(const explicit_matrix_t first_explicit_matrix,
-		 const explicit_matrix_t second_explicit_matrix);
+compare_explicit_matrices(const explicit_matrix_t first_explicit_matrix,
+			  const explicit_matrix_t second_explicit_matrix);
 
 void free_explicit_matrix(explicit_matrix_t explicit_matrix);
 #endif

@@ -26,6 +26,8 @@ void set_element(vector_t vector,
 double get_element(vector_t vector,
 		   size_t index);
 
+const char *get_vector_path(vector_t vector);
+
 void save_vector(vector_t vector);
 
 void print_vector(vector_t vector);

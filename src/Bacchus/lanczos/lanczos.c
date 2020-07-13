@@ -148,6 +148,8 @@ void orthogonalize_krylow_basis(lanczos_environment_t environment,
 void diagonalize(lanczos_environment_t environment)
 {
 	initialize_first_krylow_vector(environment);
+	log_entry("environment->settings.max_num_iterations = %lu",
+		  environment->settings.max_num_iterations);
 	size_t iteration;
 	for (iteration = 0;
 	     iteration < environment->settings.max_num_iterations;
