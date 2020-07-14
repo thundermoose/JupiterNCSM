@@ -3,14 +3,17 @@
 #include <stdlib.h>
 #include <assert.h>
 
-int sgn(int value)
+int retrive_phase_info(int value)
 {
-	if (value > 0)
-		return 1;
-	else if (value < 0)
+	if (value & 0x80000000)
 		return -1;
 	else
-		return 0;
+		return 1;
+}
+
+int remove_phase_info(int value)
+{
+	return value & 0x7FFFFFFF;
 }
 
 void multiplication_neutrons(vector_block_t out_block,
@@ -42,9 +45,9 @@ void multiplication_neutrons(vector_block_t out_block,
 		const size_t neutron_out_index = neutron_indices[i].out_index;
 		const size_t neutron_in_index = neutron_indices[i].in_index;
 		const int matrix_index = neutron_indices[i].matrix_index;
-		const int sign = sgn(matrix_index);
+		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
-			matrix_elements[abs(matrix_index)];
+			matrix_elements[remove_phase_info(matrix_index)];
 		for (size_t proton_state = 0;
 		     proton_state < num_proton_states;
 		     proton_state++)
@@ -95,9 +98,9 @@ void multiplication_protons(vector_block_t out_block,
 		const size_t proton_out_index = proton_indices[i].out_index;
 		const size_t proton_in_index = proton_indices[i].in_index;
 		const int matrix_index = proton_indices[i].matrix_index;
-		const int sign = sgn(matrix_index);
+		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
-			matrix_elements[abs(matrix_index)];
+			matrix_elements[remove_phase_info(matrix_index)];
 		for (size_t neutron_state = 0;
 		     neutron_state < num_neutron_states;
 		     neutron_state++)
@@ -176,11 +179,11 @@ void multiplication_neutrons_protons(vector_block_t out_block,
 				neutron_out_index +
 				num_out_neutron_states * proton_out_index;
 			const size_t matrix_index = 
-				abs(neutron_matrix_index) +
+				remove_phase_info(neutron_matrix_index) +
 				neutron_matrix_dimension * 
-				abs(proton_matrix_index);
-			int sign = sgn(neutron_matrix_index) *
-			       	sgn(proton_matrix_index);
+				remove_phase_info(proton_matrix_index);
+			int sign = retrive_phase_info(neutron_matrix_index) *
+			       	retrive_phase_info(proton_matrix_index);
 			const double matrix_element =
 				matrix_elements[matrix_index];
 			log_entry("%lg(%lu) %c= %lg(%lu,%lu/%lu,%lu) * %lg(%lu)",
@@ -238,9 +241,9 @@ void multiplication_neutrons_off_diag(vector_block_t out_block_left,
 		const size_t neutron_out_index = neutron_indices[i].out_index;
 		const size_t neutron_in_index = neutron_indices[i].in_index;
 		const int matrix_index = neutron_indices[i].matrix_index;
-		const int sign = sgn(matrix_index);
+		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
-			matrix_elements[abs(matrix_index)];
+			matrix_elements[remove_phase_info(matrix_index)];
 		for (size_t proton_state = 0;
 		     proton_state < num_proton_states;
 		     proton_state++)
@@ -310,9 +313,9 @@ void multiplication_protons_off_diag(vector_block_t out_block_left,
 		const size_t proton_out_index = proton_indices[i].out_index;
 		const size_t proton_in_index = proton_indices[i].in_index;
 		const int matrix_index = proton_indices[i].matrix_index;
-		const int sign = sgn(matrix_index);
+		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
-			matrix_elements[abs(matrix_index)];
+			matrix_elements[remove_phase_info(matrix_index)];
 		for (size_t neutron_state = 0;
 		     neutron_state < num_neutron_states;
 		     neutron_state++)
@@ -410,11 +413,11 @@ void multiplication_neutrons_protons_off_diag(vector_block_t out_block_left,
 				neutron_out_index +
 				num_out_neutron_states * proton_out_index;
 			const size_t matrix_index = 
-				abs(neutron_matrix_index) +
+				remove_phase_info(neutron_matrix_index) +
 				neutron_matrix_dimension * 
-				abs(proton_matrix_index);
-			const int sign = sgn(neutron_matrix_index) * 
-				sgn(proton_matrix_index);
+				remove_phase_info(proton_matrix_index);
+			const int sign = retrive_phase_info(neutron_matrix_index) * 
+				retrive_phase_info(proton_matrix_index);
 			const double matrix_element =
 				matrix_elements[matrix_index];
 			log_entry("%lg(%lu) %c= %lg(%lu,%lu/%lu,%lu) * %lg(%lu)",
