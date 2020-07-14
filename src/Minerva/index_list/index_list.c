@@ -66,18 +66,12 @@ index_list_t new_index_list(const char *base_directory,
 }
 
 index_list_t new_index_list_from_id(const char *base_directory,
-				    const size_t id,
-				    const int sign)
+				    const size_t id)
 {
 	char index_list_file_name[2048];
-	if (sign>0)
-		sprintf(index_list_file_name,
-			"%s/index_list_%lu_pos",
-			base_directory,id);
-	else
-		sprintf(index_list_file_name,
-			"%s/index_list_%lu_neg",
-			base_directory,id);
+	sprintf(index_list_file_name,
+		"%s/index_list_%lu",
+		base_directory,id);
 	FILE *index_list_file = fopen(index_list_file_name,"r");
 	if (index_list_file == NULL)
 		error("Could not open file %s. %s\n",

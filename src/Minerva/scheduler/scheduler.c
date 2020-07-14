@@ -184,25 +184,13 @@ void diagonal_neutron_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t positive_list = 
+	index_list_t list = 
 		load_index_list(memory_manager,
-				instruction.neutron_index,
-				1);
+				instruction.neutron_index);
 	multiplication_neutrons(output_vector_block,
 				input_vector_block,
 				matrix_block,
-				positive_list,
-				1);
-	index_list_t negative_list =
-		load_index_list(memory_manager,
-				instruction.neutron_index,
-				-1);
-	multiplication_neutrons(output_vector_block,
-				input_vector_block,
-				matrix_block,
-				negative_list,
-				-1);
-
+				list);
 }
 
 	static
@@ -219,25 +207,13 @@ void diagonal_proton_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t positive_list = 
+	index_list_t list = 
 		load_index_list(memory_manager,
-				instruction.proton_index,
-				1);
+				instruction.proton_index);
 	multiplication_protons(output_vector_block,
 			       input_vector_block,
 			       matrix_block,
-			       positive_list,
-			       1);
-	index_list_t negative_list =
-		load_index_list(memory_manager,
-				instruction.proton_index,
-				-1);
-	multiplication_protons(output_vector_block,
-			       input_vector_block,
-			       matrix_block,
-			       negative_list,
-			       -1);
-
+			       list);
 }
 
 	static
@@ -254,46 +230,17 @@ void diagonal_neutron_proton_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t  positive_neutron_list =
+	index_list_t  neutron_list =
 		load_index_list(memory_manager,
-				instruction.neutron_index,
-				1);
-	index_list_t  positive_proton_list =
+				instruction.neutron_index);
+	index_list_t  proton_list =
 		load_index_list(memory_manager,
-				instruction.proton_index,
-				1);
-	index_list_t  negative_neutron_list =
-		load_index_list(memory_manager,
-				instruction.neutron_index,
-				-1);
-	index_list_t  negative_proton_list =
-		load_index_list(memory_manager,
-				instruction.proton_index,
-				-1);
+				instruction.proton_index);
 	multiplication_neutrons_protons(output_vector_block,
 					input_vector_block,
 					matrix_block,
-					positive_neutron_list,
-					positive_proton_list,
-					1);
-	multiplication_neutrons_protons(output_vector_block,
-					input_vector_block,
-					matrix_block,
-					negative_neutron_list,
-					negative_proton_list,
-					1);
-	multiplication_neutrons_protons(output_vector_block,
-					input_vector_block,
-					matrix_block,
-					negative_neutron_list,
-					positive_proton_list,
-					-1);
-	multiplication_neutrons_protons(output_vector_block,
-					input_vector_block,
-					matrix_block,
-					positive_neutron_list,
-					negative_proton_list,
-					-1);
+					neutron_list,
+					proton_list);
 }
 
 	static
@@ -316,29 +263,15 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t positive_list = 
+	index_list_t list = 
 		load_index_list(memory_manager,
-				instruction.neutron_index,
-				1);
+				instruction.neutron_index);
 	multiplication_neutrons_off_diag(output_vector_block_left,
 					 output_vector_block_right,
 					 input_vector_block_left,
 					 input_vector_block_right,
 					 matrix_block,
-					 positive_list,
-					 1);
-	index_list_t negative_list =
-		load_index_list(memory_manager,
-				instruction.neutron_index,
-				-1);
-	multiplication_neutrons_off_diag(output_vector_block_left,
-					 output_vector_block_right,
-					 input_vector_block_left,
-					 input_vector_block_right,
-					 matrix_block,
-					 negative_list,
-					 -1);
-
+					 list);
 }
 
 	static
@@ -361,28 +294,15 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t positive_list = 
+	index_list_t list = 
 		load_index_list(memory_manager,
-				instruction.proton_index,
-				1);
+				instruction.proton_index);
 	multiplication_protons_off_diag(output_vector_block_left,
 					output_vector_block_right,
 					input_vector_block_left,
 					input_vector_block_right,
 					matrix_block,
-					positive_list,
-					1);
-	index_list_t negative_list =
-		load_index_list(memory_manager,
-				instruction.proton_index,
-				-1);
-	multiplication_protons_off_diag(output_vector_block_left,
-					output_vector_block_right,
-					input_vector_block_left,
-					input_vector_block_right,
-					matrix_block,
-					negative_list,
-					-1);
+					list);
 }
 
 	static
@@ -405,54 +325,19 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 	matrix_block_t matrix_block =
 		load_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
-	index_list_t  positive_neutron_list =
+	index_list_t  neutron_list =
 		load_index_list(memory_manager,
-				instruction.neutron_index,
-				1);
-	index_list_t  positive_proton_list =
+				instruction.neutron_index);
+	index_list_t  proton_list =
 		load_index_list(memory_manager,
-				instruction.proton_index,
-				1);
-	index_list_t  negative_neutron_list =
-		load_index_list(memory_manager,
-				instruction.neutron_index,
-				-1);
-	index_list_t  negative_proton_list =
-		load_index_list(memory_manager,
-				instruction.proton_index,
-				-1);
+				instruction.proton_index);
 	multiplication_neutrons_protons_off_diag(output_vector_block_left,
 						 output_vector_block_right,
 					input_vector_block_left,
 					input_vector_block_right,
 					matrix_block,
-					positive_neutron_list,
-					positive_proton_list,
-					1);
-	multiplication_neutrons_protons_off_diag(output_vector_block_left,
-						 output_vector_block_right,
-					input_vector_block_left,
-					input_vector_block_right,
-					matrix_block,
-					negative_neutron_list,
-					negative_proton_list,
-					1);
-	multiplication_neutrons_protons_off_diag(output_vector_block_left,
-						 output_vector_block_right,
-					input_vector_block_left,
-					input_vector_block_right,
-					matrix_block,
-					negative_neutron_list,
-					positive_proton_list,
-					-1);
-	multiplication_neutrons_protons_off_diag(output_vector_block_left,
-						 output_vector_block_right,
-					input_vector_block_left,
-					input_vector_block_right,
-					matrix_block,
-					positive_neutron_list,
-					negative_proton_list,
-					-1);
+					neutron_list,
+					proton_list);
 }
 
 	static
@@ -473,19 +358,11 @@ void unload_arrays(memory_manager_t memory_manager,
 	if (instruction.neutron_index != no_index)
 	{
 		unload_index_list(memory_manager,
-				  instruction.neutron_index,
-				  1);
-		unload_index_list(memory_manager,
-				  instruction.neutron_index,
-				  -1);
+				  instruction.neutron_index);
 	}
 	if (instruction.proton_index != no_index)
 	{
 		unload_index_list(memory_manager,
-				  instruction.proton_index,
-				  1);
-		unload_index_list(memory_manager,
-				  instruction.proton_index,
-				  -1);
+				  instruction.proton_index);
 	}
 }

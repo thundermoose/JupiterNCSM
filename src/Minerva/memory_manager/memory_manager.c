@@ -113,17 +113,13 @@ vector_block_t load_output_vector_block(memory_manager_t manager,
 }
 
 index_list_t load_index_list(memory_manager_t manager,
-			     const size_t index_list_id,
-			     const int sign)
+			     const size_t index_list_id)
 {
-	log_entry("load_index_list(%lu,%d)",
-		  index_list_id,sign);
+	log_entry("load_index_list(%lu)",
+		  index_list_id);
 	assert(index_list_id <= manager->num_arrays);
 	array_t *current_array = &manager->all_arrays[index_list_id-1];
-	index_list_t index_list = 
-		sign > 0 ?
-	       	current_array->primary_array :
-		current_array->secondary_array;	
+	index_list_t index_list = current_array->primary_array; 
 	log_entry("current_array->primary_array = %p",
 		  current_array->primary_array);
 	log_entry("current_array->secondary_array = %p",
@@ -132,12 +128,8 @@ index_list_t load_index_list(memory_manager_t manager,
 	if (index_list == NULL)
 		index_list = 
 			new_index_list_from_id(base_directory,
-					       index_list_id,
-					       sign);
-	void **array =
-	       	sign > 0 ?
-	       	&current_array->primary_array :
-	       	&current_array->secondary_array;
+					       index_list_id);
+	void **array = &current_array->primary_array; 
 	if (*array == NULL)
 	{
 		*array = (void*)index_list;
@@ -150,8 +142,6 @@ index_list_t load_index_list(memory_manager_t manager,
 	}
 	log_entry("current_array->primary_array = %p",
 		  current_array->primary_array);
-	log_entry("current_array->secondary_array = %p",
-		  current_array->secondary_array);
 	return (index_list_t)index_list;	
 }
 
@@ -215,32 +205,20 @@ void unload_output_vector_block(memory_manager_t manager,
 }
 
 void unload_index_list(memory_manager_t manager,
-		       size_t index_list_id,
-		       int sign)
+		       size_t index_list_id)
 {
-	log_entry("unload_index_list(%lu, %d)",
-		  index_list_id,sign);
+	log_entry("unload_index_list(%lu)",
+		  index_list_id);
 	assert(index_list_id <= manager->num_arrays);
 	array_t *current_array = &manager->all_arrays[index_list_id-1];
 	if (current_array->type != INDEX_LIST)
 		error("Array %lu is not an index list\n",
 		      index_list_id);
-	if (sign > 0)
-	{
-		if (current_array->primary_array == NULL)
-			error("Index list %lu is not loaded\n",
-			      index_list_id);
-		free_index_list((index_list_t)current_array->primary_array);
-		current_array->primary_array = NULL;
-	}
-	else
-	{
-		if (current_array->secondary_array == NULL)
-			error("Index list %lu is not loaded\n",
-			      index_list_id);
-		free_index_list((index_list_t)current_array->secondary_array);
-		current_array->secondary_array = NULL;
-	}
+	if (current_array->primary_array == NULL)
+		error("Index list %lu is not loaded\n",
+		      index_list_id);
+	free_index_list((index_list_t)current_array->primary_array);
+	current_array->primary_array = NULL;
 }
 
 void unload_matrix_block(memory_manager_t manager,
@@ -288,9 +266,7 @@ void unload_array(memory_manager_t manager,
 			break;
 		case INDEX_LIST:
 			if (array.primary_array != NULL)
-				unload_index_list(manager,id,1);
-			if (array.secondary_array != NULL)
-				unload_index_list(manager,id,-1);
+				unload_index_list(manager,id);
 			break;
 		case MATRIX_BLOCK:
 			if (array.primary_array != NULL)

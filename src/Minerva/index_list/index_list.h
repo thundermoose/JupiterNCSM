@@ -13,8 +13,7 @@ index_list_t new_index_list(const char *base_directory,
 			    const int sign);
 
 index_list_t new_index_list_from_id(const char *base_directory,
-				    const size_t id,
-				    const int sign);
+				    const size_t id);
 
 size_t length_index_list(const index_list_t index_list);
 

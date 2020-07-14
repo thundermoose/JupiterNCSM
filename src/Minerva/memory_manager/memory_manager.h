@@ -23,8 +23,7 @@ vector_block_t load_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id);
 
 index_list_t load_index_list(memory_manager_t manager,
-			     size_t index_list_id,
-			     int sign);
+			     size_t index_list_id);
 
 matrix_block_t load_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id);
@@ -36,8 +35,7 @@ void unload_output_vector_block(memory_manager_t manager,
 				size_t vector_block_id);
 
 void unload_index_list(memory_manager_t manager,
-		       size_t index_list_id,
-		       int sign);
+		       size_t index_list_id);
 
 void unload_matrix_block(memory_manager_t manager,
 			 size_t matrix_block_id);
