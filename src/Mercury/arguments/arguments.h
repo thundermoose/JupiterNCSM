@@ -15,7 +15,9 @@ void show_usage(const arguments_t arguments);
 
 int single_block_mode(const arguments_t arguments);
 
-const char *get_interaction_path(const arguments_t arguments);
+const char *get_interaction_path_2nf(const arguments_t arguments);
+
+const char *get_interaction_path_3nf(const arguments_t arguments);
 
 const char *get_combination_file_path(const arguments_t arguments);
 

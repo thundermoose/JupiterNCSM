@@ -1,5 +1,6 @@
 #include <arguments/arguments.h>
 #include <string_tools/string_tools.h>
+#include <array_builder/array_builder.h>
 #include <error/error.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,7 +11,8 @@ struct _arguments_
 	int to_few_arguments;
 	int single_block;
 	char *program_name;
-	char *interaction_path;
+	char *interaction_path_2nf;
+	char *interaction_path_3nf;
 	char *combination_file_path;
 	char *index_list_path;
 	char *output_path;
@@ -33,6 +35,7 @@ struct _arguments_
 	if (strcmp(argument_list[i],name) == 0) \
 { \
 	arguments->field = 1; \
+	continue;\
 }
 
 arguments_t parse_argument_list(int num_arguments,
@@ -41,25 +44,40 @@ arguments_t parse_argument_list(int num_arguments,
 	arguments_t arguments =
 		(arguments_t)calloc(1,sizeof(struct _arguments_));
 	arguments->program_name = *argument_list;
-	if (num_arguments >= 5)
+	if (num_arguments >= 4)
 	{
 		arguments->single_block = 0;
-		arguments->interaction_path = argument_list[1];	
-		arguments->combination_file_path = argument_list[2];	
-		arguments->index_list_path = argument_list[3];
-		arguments->output_path = argument_list[4];
+		arguments->combination_file_path = argument_list[1];	
+		arguments->index_list_path = argument_list[2];
+		arguments->output_path = argument_list[3];
 		arguments->num_protons = 0; 
 		arguments->num_neutrons = 0; 
 		arguments->energy_max = 0;
-		for (size_t i = 5; i<num_arguments; i++)
+		arguments->to_few_arguments = 1;
+		for (size_t i = 4; i<num_arguments; i++)
 		{
 			INTEGER_ARGUMENT("--num-protons",num_protons);
 			INTEGER_ARGUMENT("--num-neutrons",num_neutrons);
 			INTEGER_ARGUMENT("--energy-max",energy_max);
 			INTEGER_ARGUMENT("--block-id",block_id);
 			MODE_ARGUMENT("--single-block",single_block);
+			if (arguments->interaction_path_2nf == NULL)
+			{
+				arguments->interaction_path_2nf = 
+					argument_list[i];
+				arguments->to_few_arguments = 0;
+			}
+			else if (arguments->interaction_path_3nf == NULL)
+			{
+				arguments->interaction_path_3nf =
+					argument_list[i];
+			}
+			else
+			{
+				arguments->to_few_arguments = 1;
+			}
+				
 		}
-		arguments->to_few_arguments = 0;
 	}
 	else
 	{
@@ -75,11 +93,12 @@ int to_few_arguments(const arguments_t arguments)
 
 void show_usage(const arguments_t arguments)
 {
-	printf("Usage: %s <interaction path> <combination file path> "
+	printf("Usage: %s <combination file path> "
 	       "<index list base directory> <output path> "
 	       "[--num-protons <integer>] [--num-neutrons <integer>] "
 	       "[--energy-max <integer>] [--single-block] "
-	       "[--block-id <integer>]\n",
+	       "[--block-id <integer>] <interaction path 2nf> "
+	       "[interaction path 3nf]\n",
 	       arguments->program_name);
 }
 
@@ -88,9 +107,14 @@ int single_block_mode(const arguments_t arguments)
 	return arguments->single_block;	
 }
 
-const char *get_interaction_path(const arguments_t arguments)
+const char *get_interaction_path_2nf(const arguments_t arguments)
 {
-	return arguments->interaction_path;
+	return arguments->interaction_path_2nf;
+}
+
+const char *get_interaction_path_3nf(const arguments_t arguments)
+{
+	return arguments->interaction_path_3nf;
 }
 
 const char *get_combination_file_path(const arguments_t arguments)

@@ -70,6 +70,27 @@ size_t count_protons(block_type_t type)
 	}
 }
 
+size_t count_particles(block_type_t type)
+{
+	switch (type)
+	{
+		case N_block:
+		case P_block:
+			return 1;
+		case NN_block:
+		case NP_block:
+		case PP_block:
+			return 2;
+		case NNN_block:
+		case NNP_block:
+		case NPP_block:
+		case PPP_block:
+			return 3;
+		default:
+			return 0;
+	}
+}
+
 new_test(test_parse_block_type_nnp,
 	 assert_that(parse_block_type("nnp") == NNP_block);
 	);

@@ -70,13 +70,24 @@ int main(int num_arguments,
 	single_particle_basis_t sp_basis =
 	       	new_single_particle_basis(get_energy_max(arguments));
 	log_entry("Generated the single particle basis correctly\n");
-	interaction_t interaction =
-		new_interaction(get_interaction_path(arguments));
+	interaction_t interaction_2nf =
+			new_interaction(get_interaction_path_2nf(arguments));	
+	interaction_t interaction_3nf = NULL;
+	if (get_interaction_path_3nf(arguments) != NULL)
+		interaction_3nf = 
+			new_interaction(get_interaction_path_3nf(arguments));
 	log_entry("Initiated the interaction correctly\n");
 	if (single_block_mode(arguments))
 	{
 		matrix_block_setting_t matrix_block_setting =
 			get_matrix_block_by_id(table,get_block_id(arguments));
+		size_t num_particles =
+			count_particles(matrix_block_setting.type);
+		interaction_t interaction = 
+			num_particles == 3 && 
+			interaction_3nf != NULL?
+			interaction_3nf : 
+			interaction_2nf;
 		process_block(matrix_block_setting,
 			      sp_basis,
 			      interaction,
@@ -89,6 +100,13 @@ int main(int num_arguments,
 		{
 			matrix_block_setting_t matrix_block_setting =
 				next_matrix_block(table);
+			size_t num_particles =
+				count_particles(matrix_block_setting.type);
+			interaction_t interaction = 
+				num_particles == 3 &&
+				interaction_3nf != NULL?
+				interaction_3nf : 
+				interaction_2nf;
 			process_block(matrix_block_setting,
 				      sp_basis,
 				      interaction,
@@ -96,7 +114,9 @@ int main(int num_arguments,
 				      get_output_path(arguments));
 		}
 	}
-	free_interaction(interaction);
+	free_interaction(interaction_2nf);
+	if (interaction_3nf)
+		free_interaction(interaction_3nf);
 	free_combination_table(table);
 	free_arguments(arguments);
 	free_single_particle_basis(sp_basis);

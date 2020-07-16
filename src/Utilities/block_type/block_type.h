@@ -24,4 +24,6 @@ size_t count_neutrons(block_type_t type);
 
 size_t count_protons(block_type_t type);
 
+size_t count_particles(block_type_t type);
+
 #endif

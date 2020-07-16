@@ -1,6 +1,5 @@
 #include <interaction/interaction.h>
 #include <interaction/basis/basis.h>
-#include <interaction/header/header.h>
 #include <interaction/energy_block/energy_block.h>
 #include <log/log.h>
 #include <energy_block_info/energy_block_info.h>
@@ -37,6 +36,11 @@ interaction_t new_interaction(const char *interaction_path)
 	energy_block_info_t empty_block = {0};
 	interaction->current_block_info = empty_block;
 	return interaction;
+}
+
+const header_t get_header(const interaction_t interaction)
+{
+	return interaction->header;
 }
 
 double get_matrix_element(interaction_t interaction,
