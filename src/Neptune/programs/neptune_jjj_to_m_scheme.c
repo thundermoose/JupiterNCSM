@@ -64,6 +64,7 @@ int main(int argc, char** argv)
 	// Setup the single particle bases
 	Shells* shells = new_shells(e_max1);
 	SP_States* sp_states = new_sp_states(shells);
+	list_sp_states(sp_states);
 
 	// Setup the m-scheme basis
 	M_Scheme_3p_Basis *mp_basis = 
