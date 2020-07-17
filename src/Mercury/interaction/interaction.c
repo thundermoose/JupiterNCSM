@@ -39,7 +39,7 @@ interaction_t new_interaction(const char *interaction_path)
 }
 
 static
-void sort_state(int *state);
+int sort_state(int *state);
 
 const header_t get_header(const interaction_t interaction)
 {
@@ -54,6 +54,7 @@ double get_matrix_element(interaction_t interaction,
 {
 	if (num_particles != get_num_particles(interaction->header))
 		return 0.0;
+	int phase = 1;
 	switch (num_particles)
 	{
 		case 1:
@@ -79,8 +80,7 @@ double get_matrix_element(interaction_t interaction,
 				  ket_state[0],
 				  ket_state[1],
 				  ket_state[2]);
-			sort_state(bra_state);
-			sort_state(ket_state);
+			phase = sort_state(bra_state)*sort_state(ket_state);
 			break;
 		default:
 			log_entry("To many particles to print states");
@@ -121,7 +121,7 @@ double get_matrix_element(interaction_t interaction,
 		get_energy_block_element(energy_block,bra_index,ket_index);
 	log_entry("%lg = get_energy_block_element(%lu, %lu, %lu);",
 		  element,block_index+1,bra_index,ket_index);
-	return element;
+	return element*phase;
 }
 
 
@@ -136,14 +136,16 @@ void free_interaction(interaction_t interaction)
 }
 
 static
-void sort_state(int *state)
+int sort_state(int *state)
 {
 	int tmp = 0;
+	int phase = 1;
 #define swap(a,b) \
 	{\
 		tmp = a;\
 		a = b;\
 		b = tmp;\
+		phase=-phase;\
 	}
 	if (state[0] > state[1])
 		swap(state[0],state[1]);
@@ -151,4 +153,5 @@ void sort_state(int *state)
 		swap(state[1],state[2]);
 	if (state[0] > state[1])
 		swap(state[0],state[1]);
+	return phase;
 }
