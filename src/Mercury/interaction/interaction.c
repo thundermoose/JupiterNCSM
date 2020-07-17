@@ -38,6 +38,9 @@ interaction_t new_interaction(const char *interaction_path)
 	return interaction;
 }
 
+static
+void sort_state(int *state);
+
 const header_t get_header(const interaction_t interaction)
 {
 	return interaction->header;
@@ -76,6 +79,8 @@ double get_matrix_element(interaction_t interaction,
 				  ket_state[0],
 				  ket_state[1],
 				  ket_state[2]);
+			sort_state(bra_state);
+			sort_state(ket_state);
 			break;
 		default:
 			log_entry("To many particles to print states");
@@ -128,4 +133,22 @@ void free_interaction(interaction_t interaction)
 	if (interaction->current_block != NULL)
 		free_energy_block(interaction->current_block);
 	free(interaction);
+}
+
+static
+void sort_state(int *state)
+{
+	int tmp = 0;
+#define swap(a,b) \
+	{\
+		tmp = a;\
+		a = b;\
+		b = tmp;\
+	}
+	if (state[0] > state[1])
+		swap(state[0],state[1]);
+	if (state[1] > state[2])
+		swap(state[1],state[2]);
+	if (state[0] > state[1])
+		swap(state[0],state[1]);
 }
