@@ -139,7 +139,6 @@ static
 void sort_state(int *state)
 {
 	int tmp = 0;
-	int phase = 1;
 #define swap(a,b) \
 	{\
 		tmp = a;\
