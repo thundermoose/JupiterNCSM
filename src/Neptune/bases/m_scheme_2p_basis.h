@@ -1,7 +1,7 @@
 #ifndef __M_SCHEME_2P_BASIS__
 #define __M_SCHEME_2P_BASIS__
 
-#include <bases/sp_states.h>
+#include "sp_states.h"
 #include <stdlib.h>
 
 struct _m_scheme_2p_basis_;
@@ -13,11 +13,16 @@ typedef struct
 } m_scheme_2p_state_t;
 
 m_scheme_2p_basis_t new_m_scheme_2p_basis(quantum_number e_max1,
-				    quantum_number e_max2);
+					  quantum_number e_max2);
 
 m_scheme_2p_basis_t new_m_scheme_2p_basis_fixed_isospin(quantum_number e_max1,
-						  quantum_number e_max2,
-						  quantum_number Tz);
+							quantum_number e_max2,
+							quantum_number Tz);
+
+m_scheme_2p_basis_t 
+new_m_scheme_2p_basis_from_files(quantum_number e_max1,
+				 const char *proton_basis_filename,
+				 const char *neutron_basis_filename);
 
 m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 				      quantum_number Tz,

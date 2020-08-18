@@ -1,4 +1,4 @@
-#include <bases/m_scheme_2p_basis.h>
+#include "m_scheme_2p_basis.h"
 #include <array_builder/array_builder.h>
 #include <utils/helpful_macros.h>
 #include <thundertester/test.h>
@@ -49,6 +49,23 @@ quantum_number total_m(m_scheme_2p_state_t current_state,
 static
 quantum_number total_energy(m_scheme_2p_state_t current_state,
 			    SP_States *sp_states);
+
+static
+void read_two_particle_type_files(m_scheme_2p_basis_t basis,
+				  const char *proton_basis_filename,
+				  const char *neutron_basis_filename);
+
+static
+void read_single_particle_type_file(m_scheme_2p_basis_t basis,
+				    const char *basis_filename,
+				    const int iso_spin);
+
+
+static
+void read_states(void **states,
+		 size_t *num_states,
+		 size_t state_size,
+		 const char *filename);
 
 m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 						    quantum_number e_max2,
@@ -123,6 +140,39 @@ m_scheme_2p_basis_t new_m_scheme_2p_basis_fixed_isospin(quantum_number e_max1,
 					       data.shells,
 					       (state_condition_t)
 					       total_tz_is_fixed,&data);
+}
+
+m_scheme_2p_basis_t 
+new_m_scheme_2p_basis_from_files(quantum_number e_max1,
+				 const char *proton_basis_filename,
+				 const char *neutron_basis_filename)
+{
+	m_scheme_2p_basis_t basis =
+	       	(m_scheme_2p_basis_t)
+		malloc(sizeof(struct _m_scheme_2p_basis_));	
+	basis->shells = new_antoine_shells(e_max1);
+	basis->sp_states = new_sp_states(basis->shells);
+	basis->corresponding_indices = NULL;
+	quantum_number iso_spin = 
+		(neutron_basis_filename != NULL) - 
+		(proton_basis_filename != NULL);
+	if (iso_spin == 0)
+	{
+		read_two_particle_type_files(basis,
+					     proton_basis_filename,
+					     neutron_basis_filename);
+	}	
+	else
+	{
+		const char *basis_filename =
+			iso_spin < 0 ? 
+			proton_basis_filenames :
+			neutron_basis_filename;
+		read_single_particle_type_file(basis,
+					       basis_filename,
+					       iso_spin);
+	}
+	return basis;
 }
 
 m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
@@ -322,6 +372,112 @@ quantum_number total_energy(m_scheme_2p_state_t current_state,
 	Shells *shells = sp_states->shells;
 	return shells->shells[sp_states->sp_states[current_state.a].shell].e + 
 		shells->shells[sp_states->sp_states[current_state.b].shell].e; 
+}
+
+static
+void read_single_particle_type_file(m_scheme_2p_basis_t basis,
+				    const char *basis_filename,
+				    const int iso_spin)
+{
+	unsigned int *packed_states = NULL;
+	size_t num_states = 0;
+	read_states((void**)&packed_states,
+		    &num_states,
+		    sizeof(unsigned int),
+		    basis_filename);
+	basis->dimension = num_states;
+	basis->states =
+		(m_scheme_2p_state_t*)
+		malloc(num_states*sizeof(m_scheme_2p_state_t));
+	const unsigned int particle_stride = 
+		iso_spin > 0 ? 0x00010001 : 0;
+	for (size_t i = 0; i < num_states; i++)
+	{
+		unsigned int packed_state =
+			(packed_states[i]<<1) | particle_stride;
+		basis->states[i].a = (packed_state & 0xFFFF0000) >> 16;
+		basis->states[i].b = (packed_state & 0x0000FFFF);
+	}
+	free(packed_states);
+}
+
+static
+void read_two_particle_type_files(m_scheme_2p_basis_t basis,
+				  const char *proton_basis_filename,
+				  const char *neutron_basis_filename)
+{
+	short *proton_packed_states = NULL;
+	size_t num_proton_states = 0;
+	read_states((void**)&proton_packed_states,
+		    &num_proton_states,
+		    sizeof(short),
+		    proton_basis_filename);
+	short *neutron_packed_states = NULL;
+	size_t num_neutron_states = 0;
+	read_states((void**)&neutron_packed_states,
+		    &num_neutron_states,
+		    sizeof(short),
+		    neutron_basis_filename);
+
+	basis->dimension = num_proton_states*num_neutron_states;
+	basis->states =
+	       	(m_scheme_2p_state_t*)
+		malloc(basis->dimension*sizeof(m_scheme_2p_state_t));
+	size_t state_index = 0;
+	for (size_t proton_index = 0;
+	     proton_index < num_proton_states;
+	     proton_index++)
+	{
+		sp_state_index proton_state = 
+			(sp_state_index)
+			(proton_packed_states[proton_index])*2;
+		for (size_t neutron_index = 0;
+		     neutron_index < num_neutron_states;
+		     neutron_index++)
+		{
+			sp_state_index neutron_state = 
+				(sp_state_index)
+				(neutron_packed_states[neutron_index])*2+1;
+
+			m_scheme_2p_state_t state =
+			{
+				.a = min(proton_state,neutron_state),
+				.b = max(proton_state,neutron_state)
+			};
+			basis->states[state_index++] = state;
+		}
+	}
+	free(proton_packed_states);
+	free(neutron_packed_states);
+}
+
+static
+void read_states(void **states,
+		 size_t *num_states,
+		 size_t state_size,
+		 const char *filename)
+{
+	FILE *basis_file = fopen(filename,"r");
+	if (basis_file == NULL)
+		error("Could not open file %s. %s\n",
+		      filename,
+		      strerror(errno));
+	fseek(basis_file,0,SEEK_END);
+	const size_t num_bytes = ftell(basis_file);
+	fseek(basis_file,0,SEEK_SET);
+	if (num_bytes % state_size != 0)
+		error("Basis file %s do not include %lu bytes states.\n",
+		      filename,
+		      state_size);
+	*num_states = num_bytes/state_size;
+	*states = (unsigned int*)malloc(num_bytes);
+	if (fread(*states,
+		  state_size,
+		  num_states,
+		  basis_file) != num_states)
+		error("Could not read %lu bytes from %s.\n",
+		      num_bytes,basis_filename);
+	fclose(basis_file);	
 }
 
 new_test(print_m_scheme_2p_basis_nmax2,
