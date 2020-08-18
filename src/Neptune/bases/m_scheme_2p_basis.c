@@ -1,9 +1,11 @@
 #include "m_scheme_2p_basis.h"
 #include <array_builder/array_builder.h>
 #include <utils/helpful_macros.h>
+#include <error/error.h>
 #include <thundertester/test.h>
 #include <assert.h>
 #include <utils/debug_messages.h>
+#include <errno.h>
 #include <string.h>
 
 struct _m_scheme_2p_basis_
@@ -166,7 +168,7 @@ new_m_scheme_2p_basis_from_files(quantum_number e_max1,
 	{
 		const char *basis_filename =
 			iso_spin < 0 ? 
-			proton_basis_filenames :
+			proton_basis_filename :
 			neutron_basis_filename;
 		read_single_particle_type_file(basis,
 					       basis_filename,
@@ -473,10 +475,10 @@ void read_states(void **states,
 	*states = (unsigned int*)malloc(num_bytes);
 	if (fread(*states,
 		  state_size,
-		  num_states,
-		  basis_file) != num_states)
+		  *num_states,
+		  basis_file) != (*num_states))
 		error("Could not read %lu bytes from %s.\n",
-		      num_bytes,basis_filename);
+		      num_bytes,filename);
 	fclose(basis_file);	
 }
 
