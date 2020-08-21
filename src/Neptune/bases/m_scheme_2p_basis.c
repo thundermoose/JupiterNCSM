@@ -1,6 +1,7 @@
 #include "m_scheme_2p_basis.h"
 #include <array_builder/array_builder.h>
 #include <utils/helpful_macros.h>
+#include <read_packed_states/read_packed_states.h>
 #include <error/error.h>
 #include <thundertester/test.h>
 #include <assert.h>
@@ -61,13 +62,6 @@ static
 void read_single_particle_type_file(m_scheme_2p_basis_t basis,
 				    const char *basis_filename,
 				    const int iso_spin);
-
-
-static
-void read_states(void **states,
-		 size_t *num_states,
-		 size_t state_size,
-		 const char *filename);
 
 m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 						    quantum_number e_max2,
@@ -383,7 +377,7 @@ void read_single_particle_type_file(m_scheme_2p_basis_t basis,
 {
 	unsigned int *packed_states = NULL;
 	size_t num_states = 0;
-	read_states((void**)&packed_states,
+	read_packed_states((void**)&packed_states,
 		    &num_states,
 		    sizeof(unsigned int),
 		    basis_filename);
@@ -410,13 +404,13 @@ void read_two_particle_type_files(m_scheme_2p_basis_t basis,
 {
 	short *proton_packed_states = NULL;
 	size_t num_proton_states = 0;
-	read_states((void**)&proton_packed_states,
+	read_packed_states((void**)&proton_packed_states,
 		    &num_proton_states,
 		    sizeof(short),
 		    proton_basis_filename);
 	short *neutron_packed_states = NULL;
 	size_t num_neutron_states = 0;
-	read_states((void**)&neutron_packed_states,
+	read_packed_states((void**)&neutron_packed_states,
 		    &num_neutron_states,
 		    sizeof(short),
 		    neutron_basis_filename);
@@ -451,35 +445,6 @@ void read_two_particle_type_files(m_scheme_2p_basis_t basis,
 	}
 	free(proton_packed_states);
 	free(neutron_packed_states);
-}
-
-static
-void read_states(void **states,
-		 size_t *num_states,
-		 size_t state_size,
-		 const char *filename)
-{
-	FILE *basis_file = fopen(filename,"r");
-	if (basis_file == NULL)
-		error("Could not open file %s. %s\n",
-		      filename,
-		      strerror(errno));
-	fseek(basis_file,0,SEEK_END);
-	const size_t num_bytes = ftell(basis_file);
-	fseek(basis_file,0,SEEK_SET);
-	if (num_bytes % state_size != 0)
-		error("Basis file %s do not include %lu bytes states.\n",
-		      filename,
-		      state_size);
-	*num_states = num_bytes/state_size;
-	*states = (unsigned int*)malloc(num_bytes);
-	if (fread(*states,
-		  state_size,
-		  *num_states,
-		  basis_file) != (*num_states))
-		error("Could not read %lu bytes from %s.\n",
-		      num_bytes,filename);
-	fclose(basis_file);	
 }
 
 new_test(print_m_scheme_2p_basis_nmax2,
