@@ -6,6 +6,16 @@
 #include <string_tools/string_tools.h>
 #include <utils/permutation_tools.h>
 
+static
+void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
+				    const char *basis_filename);
+
+static
+void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
+				  const char *proton_basis_filename,
+				  const char *neutron_basis_filename,
+				  const size_t num_protons,
+				  const size_t num_neutrons);
 
 M_Scheme_3p_State sort_on_shells(M_Scheme_3p_State s,
 				 SP_States* sp_states)
@@ -330,6 +340,38 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis3(quantum_number e_max,
 }
 
 
+M_Scheme_3p_Basis* 
+new_m_scheme_3p_basis_from_basis_file(const char *proton_basis_filename,
+				      const char *neutron_basis_filename,
+				      size_t num_protons,
+				      size_t num_neutrons,
+				      SP_States *sp_states)
+{
+	quantum_number iso_spin = (int)(num_neutrons) - (int)(num_protons);
+	M_Scheme_3p_Basis *basis =
+	       	(M_Scheme_3p_Basis*)malloc(sizeof(M_Scheme_3p_Basis));
+	basis->sp_states = sp_states;
+	if (abs(iso_spin) == 3)
+	{
+		const char *basis_filename =
+		       	iso_spin < 0 ? 
+			proton_basis_filename :
+		       	neutron_basis_filename;
+		read_single_particle_type_file(basis,
+					       basis_filename);
+	}
+	else
+	{
+		read_two_particle_type_files(basis,
+					     proton_basis_filename,
+					     neutron_basis_filename,
+					     num_protons,
+					     num_neutrons);
+	}
+	return basis;
+}
+
+
 //inline
 int diff_from_block(M_Scheme_3p_State current,
 		    quantum_number tz,
@@ -391,16 +433,14 @@ int find_block_limits(M_Scheme_3p_Basis *mp_basis,
 		}
 	}
 	while (upper_limit-lower_limit>1);
+	M_Scheme_3p_State current_state
+		= mp_basis->states[known_element];
+	int diff = diff_from_block(current_state,
+				   tz,m_tot,E,
+				   mp_basis->sp_states);
+	if (diff !=0)
 	{
-		M_Scheme_3p_State current_state
-			= mp_basis->states[known_element];
-		int diff = diff_from_block(current_state,
-					   tz,m_tot,E,
-					   mp_basis->sp_states);
-		if (diff !=0)
-		{
-			return 1;
-		}
+		return 1;
 	}
 
 	/* Using the known block element and the limits
@@ -528,4 +568,51 @@ M_Scheme_3p_Basis* generate_block(M_Scheme_3p_Basis *mp_basis,
 	       out->dimension);
 	*offset = start;
 	return out;
+}
+
+static
+void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
+				    const char *basis_filename,
+				    quantum_number iso_spin)
+{
+	short *packed_states = NULL;
+	size_t num_states = 0;
+	read_packed_states((void**)&packed_states,
+			   &num_states,
+			   3*sizeof(short),
+			   basis_filename);
+	basis->dimension = num_states;
+	basis->states =
+	       	(M_Scheme_3p_State*)
+		malloc(num_states*sizeof(M_Scheme_3p_State));
+	const sp_state_index particle_stride = iso_spin > 0 ? 1 : 0;
+	for (size_t i = 0; i < num_states; i++)
+	{
+		basis->states[i].a = 2*packed_states[3*i] + particle_stride; 
+		basis->states[i].b = 2*packed_states[3*i+1] + particle_stride; 
+		basis->states[i].c = 2*packed_states[3*i+2] + particle_stride; 
+	}		
+	free(packed_states);
+}
+
+static
+void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
+				  const char *proton_basis_filename,
+				  const char *neutron_basis_filename,
+				  const size_t num_protons,
+				  const size_t num_neutrons)
+{
+	short *packed_proton_states = NULL;
+	size_t num_proton_states = 0;
+	read_packed_states((void**)&packed_proton_states,
+			   &num_proton_states,
+			   num_protons*sizeof(short),
+			   proton_basis_filename);
+	short *packed_neutron_states = NULL;
+	size_t num_neutron_states = 0;
+	read_packed_states((void**)&packed_neutron_states,
+			   &num_neutron_states,
+			   num_neutrons*sizeof(short),
+			   neutron_basis_filename);
+	
 }
