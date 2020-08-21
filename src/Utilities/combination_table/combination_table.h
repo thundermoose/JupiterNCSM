@@ -25,7 +25,8 @@ void reset_index_list_interator(combination_table_t combination_table);
 
 int has_next_index_list_setting(combination_table_t combination_table);
 
-index_list_setting_t next_index_list_setting(combination_table_t combination_table);
+index_list_setting_t 
+next_index_list_setting(combination_table_t combination_table);
 
 size_t get_num_basis_blocks(combination_table_t combination_table);
 
@@ -42,7 +43,8 @@ matrix_block_setting_t get_matrix_block_by_id(combination_table_t table,
 
 void reset_matrix_block_iterator(combination_table_t combination_table);
 
-matrix_block_setting_t next_matrix_block(combination_table_t combination_table);
+matrix_block_setting_t 
+next_matrix_block(combination_table_t combination_table);
 
 int has_next_matrix_block(combination_table_t combination_table);
 

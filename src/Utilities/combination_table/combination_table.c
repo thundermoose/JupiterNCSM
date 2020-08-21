@@ -139,7 +139,8 @@ int has_next_index_list_setting(combination_table_t combination_table)
 	       	combination_table->num_index_list_settings;
 }
 
-index_list_setting_t next_index_list_setting(combination_table_t combination_table)
+index_list_setting_t 
+next_index_list_setting(combination_table_t combination_table)
 {
 	size_t index = combination_table->current_index_list_setting++;
 	return combination_table->index_list_settings[index];
