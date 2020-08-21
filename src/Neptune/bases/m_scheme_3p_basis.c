@@ -1,14 +1,17 @@
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
-#include <bases/m_scheme_3p_basis.h>
+#include "m_scheme_3p_basis.h"
 #include <string_tools/string_tools.h>
 #include <utils/permutation_tools.h>
+#include <read_packed_states/read_packed_states.h>
 
 static
 void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
-				    const char *basis_filename);
+				    const char *basis_filename,
+				    quantum_number iso_spin);
 
 static
 void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
@@ -358,7 +361,8 @@ new_m_scheme_3p_basis_from_basis_file(const char *proton_basis_filename,
 			proton_basis_filename :
 		       	neutron_basis_filename;
 		read_single_particle_type_file(basis,
-					       basis_filename);
+					       basis_filename,
+					       iso_spin);
 	}
 	else
 	{
@@ -613,6 +617,52 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 	read_packed_states((void**)&packed_neutron_states,
 			   &num_neutron_states,
 			   num_neutrons*sizeof(short),
-			   neutron_basis_filename);
-	
+			   neutron_basis_filename);	
+	const size_t num_states = num_proton_states*num_neutron_states;
+	basis->states = 
+		(M_Scheme_3p_State*)
+		malloc(num_states*sizeof(M_Scheme_3p_State));
+	size_t state_index = 0;
+	uint64_t proton_mask = 
+		num_protons > 1 ? 0x00000000FFFFFFFF : 0x000000000000FFFF;
+	uint64_t neutron_mask =
+		num_neutrons > 1 ? 0x0000FFFFFFFF0000 : 0x0000FFFF00000000;
+	uint64_t particle_strids = 
+		num_neutrons > 1 ?
+		 0x0000000100010000 : 0x0000000100000000;
+	for (size_t proton_state_index = 0;
+	     proton_state_index < num_proton_states;
+	     proton_state_index++)
+	{
+		int *current_proton_state = 
+			(int*)(packed_proton_states +
+			       num_protons*proton_state_index);
+		uint64_t current_packed_state = 
+			(uint64_t)(*current_proton_state) & proton_mask;
+		for (size_t neutron_state_index = 0;
+		     neutron_state_index < num_neutron_states;
+		     neutron_state_index++)
+		{
+			int *current_neutron_state =
+				(int*)(packed_neutron_states +
+				       num_neutrons*neutron_state_index);
+			current_packed_state &= proton_mask;	
+			current_packed_state |= 
+				((uint64_t)(*current_neutron_state) << 
+				 (16*num_protons)) & neutron_mask;
+			current_packed_state = 
+				(current_packed_state<<1) | particle_strids;
+			basis->states[state_index].a = 
+				(sp_state_index)(current_packed_state &
+						 0x000000000000FFFF);
+			basis->states[state_index].b = 
+				(sp_state_index)((current_packed_state &
+						 0x00000000FFFF0000) >> 16);
+			basis->states[state_index].c = 
+				(sp_state_index)((current_packed_state &
+						 0x0000FFFF00000000) >> 32);
+		}
+	}
+	free(packed_proton_states);
+	free(packed_neutron_states);
 }
