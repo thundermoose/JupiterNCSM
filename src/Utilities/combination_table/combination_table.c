@@ -21,6 +21,14 @@ struct _combination_table_
 	matrix_block_setting_t *matrix_block_settings;
 	size_t num_matrix_block_settings;
 	size_t current_matrix_block_index;
+	size_t length_1nf_blocks;
+	size_t iterator_index_1nf_blocks;
+	size_t index_to_2nf_blocks;
+	size_t length_2nf_blocks;
+	size_t iterator_index_2nf_blocks;
+	size_t index_to_3nf_blocks;
+	size_t length_3nf_blocks;
+	size_t iterator_index_3nf_blocks;
 	size_t *id_to_index_map;
 	size_t num_ids;
 };
@@ -202,6 +210,62 @@ int has_next_matrix_block(combination_table_t table)
 {
 	return table->current_matrix_block_index <
 		table->num_matrix_block_settings;
+}
+
+void reset_1nf_block_iterator(combination_table_t combination_table)
+{
+	combination_table->iterator_index_1nf_blocks = 0;
+}
+
+matrix_block_setting_t
+next_1nf_block_iterator(combination_table_t combination_table)
+{
+	size_t index = combination_table->iterator_index_1nf_blocks++;
+	return combination_table->matrix_block_settings[index];
+}
+
+int has_next_1nf_block(combination_table_t combination_table)
+{
+	return combination_table->iterator_index_1nf_blocks <
+	       	combination_table->length_1nf_blocks;
+}
+
+void reset_2nf_block_iterator(combination_table_t combination_table)
+{
+	combination_table->iterator_index_2nf_blocks = 0;
+}
+
+matrix_block_setting_t
+next_2nf_block_iterator(combination_table_t combination_table)
+{
+	size_t index = combination_table->index_to_2nf_blocks + 
+		combination_table->iterator_index_2nf_blocks++;
+	return combination_table->matrix_block_settings[index];
+}
+
+int has_next_2nf_block(combination_table_t combination_table)
+{
+	return combination_table->iterator_index_2nf_blocks <
+	       	combination_table->length_2nf_blocks;
+}
+
+void reset_3nf_block_iterator(combination_table_t combination_table)
+{
+	combination_table->iterator_index_3nf_blocks = 0;
+}
+
+matrix_block_setting_t
+next_3nf_block_iterator(combination_table_t combination_table)
+{
+	size_t index = combination_table->index_to_3nf_blocks + 
+		combination_table->iterator_index_3nf_blocks++;
+	return combination_table->matrix_block_settings[index];
+}
+
+int has_next_3nf_block(combination_table_t combination_table)
+{
+	return combination_table->iterator_index_3nf_blocks <
+	       	combination_table->length_3nf_blocks;
 }
 
 size_t get_num_arrays(combination_table_t combination_table)
@@ -467,6 +531,14 @@ sort_matrix_blocks_on_num_particles(combination_table_t table,
 	size_t bucket_positions[3] = {0};
 	for (size_t i = 1; i<3; i++)
 		bucket_positions[i]=bucket_sizes[i-1]+bucket_positions[i-1];
+	table->length_1nf_blocks = bucket_sizes[0];
+	table->length_2nf_blocks = bucket_sizes[1];
+	table->length_3nf_blocks = bucket_sizes[2];
+	table->index_to_2nf_blocks = bucket_positions[1];
+	table->index_to_3nf_blocks = bucket_positions[2];
+	table->iterator_index_1nf_blocks = 0;
+	table->iterator_index_2nf_blocks = 0;
+	table->iterator_index_3nf_blocks = 0;
 	matrix_block_setting_t *sorted_matrix_block_settings =
 	       	(matrix_block_setting_t*)
 		malloc(table->num_matrix_block_settings*

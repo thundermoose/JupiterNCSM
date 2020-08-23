@@ -48,6 +48,27 @@ next_matrix_block(combination_table_t combination_table);
 
 int has_next_matrix_block(combination_table_t combination_table);
 
+void reset_1nf_block_iterator(combination_table_t combination_table);
+
+matrix_block_setting_t
+next_1nf_block_iterator(combination_table_t combination_table);
+
+int has_next_1nf_block(combination_table_t combination_table);
+
+void reset_2nf_block_iterator(combination_table_t combination_table);
+
+matrix_block_setting_t
+next_2nf_block_iterator(combination_table_t combination_table);
+
+int has_next_2nf_block(combination_table_t combination_table);
+
+void reset_3nf_block_iterator(combination_table_t combination_table);
+
+matrix_block_setting_t
+next_3nf_block_iterator(combination_table_t combination_table);
+
+int has_next_3nf_block(combination_table_t combination_table);
+
 size_t get_num_arrays(combination_table_t combination_table);
 
 void free_combination_table(combination_table_t combination_table);
