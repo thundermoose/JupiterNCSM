@@ -41,6 +41,10 @@ static
 void read_matrix_block_settings(FILE *table_file,
 				array_builder_t matrix_block_settings_builder,
 				array_builder_t id_to_index_map_builder);
+
+static void 
+sort_matrix_blocks_on_num_particles(combination_table_t table,
+				    array_builder_t id_to_index_map_builder);
 static
 int is_title_row(const char *row);
 
@@ -100,6 +104,7 @@ combination_table_t new_combination_table(const char *filename,
 				   id_to_index_map_builder);
 	fclose(table_file);
 	free_array_builder(matrix_block_settings_builder);
+	sort_matrix_blocks_on_num_particles(table,id_to_index_map_builder);
 	free_array_builder(id_to_index_map_builder);
 	return table;
 }
@@ -358,11 +363,11 @@ void read_matrix_block_settings(FILE *table_file,
 			.num_neutron_combinations = atoll(words[9]),
 			.matrix_block_id = interpret_id_string(words[13])
 		};
-		size_t index =
-		       	num_array_elements(matrix_block_settings_builder);
-		set_array_element(id_to_index_map_builder,
-				  current_setting.matrix_block_id,
-				  &index);
+		//size_t index =
+		//       	num_array_elements(matrix_block_settings_builder);
+		//set_array_element(id_to_index_map_builder,
+		//		  current_setting.matrix_block_id,
+		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -428,11 +433,11 @@ void read_matrix_block_settings(FILE *table_file,
 			};
 			current_setting = proton_setting;
 		}
-		size_t index =
-		       	num_array_elements(matrix_block_settings_builder);
-		set_array_element(id_to_index_map_builder,
-				  current_setting.matrix_block_id,
-				  &index);
+		//size_t index =
+		//       	num_array_elements(matrix_block_settings_builder);
+		//set_array_element(id_to_index_map_builder,
+		//		  current_setting.matrix_block_id,
+		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -445,6 +450,40 @@ void read_matrix_block_settings(FILE *table_file,
 	}
 	if (current_row != NULL)
 		free(current_row);
+}
+
+static void 
+sort_matrix_blocks_on_num_particles(combination_table_t table,
+				    array_builder_t id_to_index_map_builder)
+{
+	// Using counting sort to sort the matrix elements on the number of
+	// particles involved in each block
+	size_t bucket_sizes[3] = {0};
+	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+	{
+		const block_type_t type = table->matrix_block_settings[i].type;
+		bucket_sizes[count_particles(type)-1]++; 
+	}
+	size_t bucket_positions[3] = {0};
+	for (size_t i = 1; i<3; i++)
+		bucket_positions[i]=bucket_sizes[i-1]+bucket_positions[i-1];
+	matrix_block_setting_t *sorted_matrix_block_settings =
+	       	(matrix_block_setting_t*)
+		malloc(table->num_matrix_block_settings*
+		       sizeof(matrix_block_setting_t));
+	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+	{
+		matrix_block_setting_t current_block = 
+			table->matrix_block_settings[i];
+		size_t num_particles = count_particles(current_block.type);
+		size_t index = bucket_positions[num_particles-1]++;
+		sorted_matrix_block_settings[index] = current_block;
+		set_array_element(id_to_index_map_builder,
+				  current_block.matrix_block_id,
+				  &index);
+	}
+	free(table->matrix_block_settings);
+	table->matrix_block_settings = sorted_matrix_block_settings;
 }
 
 static
