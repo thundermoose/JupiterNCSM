@@ -63,6 +63,10 @@ void move_to_title(FILE *table_file,
 static
 size_t interpret_id_string(const char *id_string);
 
+static
+int compare_matrix_block_settings(matrix_block_setting_t *block_a,
+				  matrix_block_setting_t *block_b);
+
 combination_table_t new_combination_table(const char *filename,
 					  size_t num_protons,
 					  size_t num_neutrons)
@@ -520,8 +524,6 @@ static void
 sort_matrix_blocks_on_num_particles(combination_table_t table,
 				    array_builder_t id_to_index_map_builder)
 {
-	// Using counting sort to sort the matrix elements on the number of
-	// particles involved in each block
 	size_t bucket_sizes[3] = {0};
 	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
 	{
@@ -539,23 +541,19 @@ sort_matrix_blocks_on_num_particles(combination_table_t table,
 	table->iterator_index_1nf_blocks = 0;
 	table->iterator_index_2nf_blocks = 0;
 	table->iterator_index_3nf_blocks = 0;
-	matrix_block_setting_t *sorted_matrix_block_settings =
-	       	(matrix_block_setting_t*)
-		malloc(table->num_matrix_block_settings*
-		       sizeof(matrix_block_setting_t));
-	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+	qsort(table->matrix_block_settings,
+	      table->num_matrix_block_settings,
+	      sizeof(matrix_block_setting_t),
+	      (__compar_fn_t)compare_matrix_block_settings);
+	for (size_t index = 0; index<table->num_matrix_block_settings; index++)
 	{
-		matrix_block_setting_t current_block = 
-			table->matrix_block_settings[i];
-		size_t num_particles = count_particles(current_block.type);
-		size_t index = bucket_positions[num_particles-1]++;
-		sorted_matrix_block_settings[index] = current_block;
+		matrix_block_setting_t current_block =
+			table->matrix_block_settings[index];
 		set_array_element(id_to_index_map_builder,
 				  current_block.matrix_block_id,
 				  &index);
 	}
-	free(table->matrix_block_settings);
-	table->matrix_block_settings = sorted_matrix_block_settings;
+
 }
 
 static
@@ -597,6 +595,40 @@ size_t interpret_id_string(const char *id_string)
 	while (*id_string != '=' && *id_string != 0)
 		id = 10*id+(size_t)(*(id_string++)-'0');
 	return id;
+}
+
+static
+int compare_matrix_block_settings(matrix_block_setting_t *block_a,
+				  matrix_block_setting_t *block_b)
+{
+	int diff = count_particles(block_a->type) -
+	       	count_particles(block_b->type);
+	if (diff)
+		return diff;
+	diff = count_neutrons(block_a->type) - count_neutrons(block_b->type);
+	if (diff)
+		return diff;
+	diff = block_a->depth_protons - block_b->depth_protons;
+	if (diff)
+		return diff;
+	diff = block_a->difference_energy_protons -
+	       	block_b->difference_energy_protons;
+	if (diff)
+		return diff;
+	diff = block_a->depth_neutrons - block_b->depth_neutrons;
+	if (diff)
+		return diff;
+	diff = block_a->difference_energy_neutrons -
+	       	block_b->difference_energy_neutrons;
+	if (diff)
+		return diff;
+	diff = block_a->difference_M_protons -block_b->difference_M_protons;
+	if (diff)
+		return diff;
+	diff = block_a->difference_M_neutrons -block_b->difference_M_neutrons;
+	if (diff)
+		return diff;
+	return 0;
 }
 
 new_test(interpreting_id_string,
