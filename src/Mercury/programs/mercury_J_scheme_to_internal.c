@@ -42,6 +42,60 @@ int main(int num_arguments,
 		       current_matrix_block.num_neutron_combinations,
 		       current_matrix_block.matrix_block_id);
 	}
+	printf("1NF blocks only:\n");
+	while (has_next_1nf_block(combination_table))
+	{
+		matrix_block_setting_t current_matrix_block = 
+			next_1nf_block_iterator(combination_table);
+		printf("%s p: %d %d %d n: %d %d %d,"
+		       "#PC: %lu #NC: %lu id: %lu\n",
+		       block_type_to_string(current_matrix_block.type),
+		       current_matrix_block.difference_energy_protons,
+		       current_matrix_block.difference_M_protons,
+		       current_matrix_block.depth_protons,
+		       current_matrix_block.difference_energy_neutrons,
+		       current_matrix_block.difference_M_neutrons,
+		       current_matrix_block.depth_neutrons,
+		       current_matrix_block.num_proton_combinations,
+		       current_matrix_block.num_neutron_combinations,
+		       current_matrix_block.matrix_block_id);
+	}
+	printf("2NF blocks only:\n");
+	while (has_next_2nf_block(combination_table))
+	{
+		matrix_block_setting_t current_matrix_block = 
+			next_2nf_block_iterator(combination_table);
+		printf("%s p: %d %d %d n: %d %d %d,"
+		       "#PC: %lu #NC: %lu id: %lu\n",
+		       block_type_to_string(current_matrix_block.type),
+		       current_matrix_block.difference_energy_protons,
+		       current_matrix_block.difference_M_protons,
+		       current_matrix_block.depth_protons,
+		       current_matrix_block.difference_energy_neutrons,
+		       current_matrix_block.difference_M_neutrons,
+		       current_matrix_block.depth_neutrons,
+		       current_matrix_block.num_proton_combinations,
+		       current_matrix_block.num_neutron_combinations,
+		       current_matrix_block.matrix_block_id);
+	}
+	printf("3NF blocks only:\n");
+	while (has_next_3nf_block(combination_table))
+	{
+		matrix_block_setting_t current_matrix_block = 
+			next_3nf_block_iterator(combination_table);
+		printf("%s p: %d %d %d n: %d %d %d,"
+		       "#PC: %lu #NC: %lu id: %lu\n",
+		       block_type_to_string(current_matrix_block.type),
+		       current_matrix_block.difference_energy_protons,
+		       current_matrix_block.difference_M_protons,
+		       current_matrix_block.depth_protons,
+		       current_matrix_block.difference_energy_neutrons,
+		       current_matrix_block.difference_M_neutrons,
+		       current_matrix_block.depth_neutrons,
+		       current_matrix_block.num_proton_combinations,
+		       current_matrix_block.num_neutron_combinations,
+		       current_matrix_block.matrix_block_id);
+	}
 	free_combination_table(combination_table);
 	free_arguments(arguments);
 }
