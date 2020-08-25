@@ -160,7 +160,7 @@ void free_matrix(matrix_t matrix)
 	}
 	free(matrix);
 }
-new_test(save_to_numpy_file,
+new_test(save_matrix_to_numpy_file,
 	 const char *filename = get_test_file_path("matrix.npy");
 	 matrix_t matrix = new_random_symmetric_matrix(10);
 	 FILE *outfile = fopen(filename,"w");

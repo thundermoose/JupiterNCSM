@@ -204,16 +204,19 @@ size_t append_numpy_padding(char *buffer,
 	return padding_length;
 }
 
-new_test(save_to_numpy_file,
+new_test(save_explicit_matrix_to_numpy_file,
 	 const char *filename = get_test_file_path("explicit_matrix.npy");
-	 explicit_matrix_t explicit_matrix = new_random_symmetric_explicit_matrix(10);
+	 explicit_matrix_t explicit_matrix = 
+	 new_random_symmetric_explicit_matrix(10);
 	 FILE *outfile = fopen(filename,"w");
 	 save_numpy_explicit_matrix(outfile,explicit_matrix);
 	 fclose(outfile);
 	 FILE *infile = fopen(filename,"r");
-	 explicit_matrix_t loaded_explicit_matrix = new_explicit_matrix_from_numpy(infile);
+	 explicit_matrix_t loaded_explicit_matrix = 
+	 new_explicit_matrix_from_numpy(infile);
 	 fclose(infile);
-	 assert_that(compare_matrices(explicit_matrix,loaded_explicit_matrix) == EQUAL);
+	 assert_that(compare_explicit_matrices(explicit_matrix,
+					       loaded_explicit_matrix) == EQUAL);
 	 free_explicit_matrix(explicit_matrix);
 	 free_explicit_matrix(loaded_explicit_matrix);
 	);
