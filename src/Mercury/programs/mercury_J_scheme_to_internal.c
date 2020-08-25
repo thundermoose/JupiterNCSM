@@ -103,7 +103,9 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				free_dens_matrix(current_transformed_matrix);
 			if (current_ket_basis != NULL)
 				free_m_scheme_2p_basis(current_ket_basis);
-			current_ket_basis = setup_ket_basis(current_block)
+			current_ket_basis = setup_ket_basis(current_block);
+			current_bra_basis = setup_bra_basis(current_block);
+			current_transformed_matrix = transform_matrix
 		}
 	}
 }
