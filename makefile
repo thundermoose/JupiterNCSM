@@ -1,4 +1,4 @@
-.SILENT:
+#.SILENT:
 -include makefile.local
 ifndef compiler
 compiler := gcc -std=gnu99 -Wall -Werror -c
@@ -29,7 +29,7 @@ hdf5_comp_flags=
 endif
 
 ifndef hdf5_link_flags
-hdf5_link_flags -lhdf5
+hdf5_link_flags= -lhdf5
 endif
 
 source_path := src
