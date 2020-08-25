@@ -46,6 +46,8 @@ dependencies_files := $(all_sources:./$(source_path)/%.c=$(dependencies_path)/%.
 program_packages_names := $(filter-out Utilities, $(shell ls ./src))
 program_package_sources=$(filter ./$(source_path)/$(1)/%.c,$(all_sources))
 
+.SECONDARY: %.x
+.PRESIOUS: $(all_objects) $(dependencies_files) %.x
 
 all: $(mode_path)/release.mode
 	make $(program_packages_names:%=release_%)
@@ -104,7 +106,7 @@ test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
 	$$(linker) -o $$@ $$^ $$(linker_flags)
-	$$@ --run-all-tests
+#$$@ --run-all-tests
 
 test_no_logging_$1: $$(package_programs_$1:%.x=test_no_logging/%.x)
 test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) $(thundertester_compiler_flags) -DNLOGING
@@ -118,7 +120,6 @@ endef
 
 $(foreach package, $(program_packages_names), $(eval $(call link_package,$(package))))
 # Compilation
-.PRESIOUS: $(all_objects) $(dependencies_files)
 -include $(dependencies_files)
 
 $(object_path)/%.o: $(source_path)/%.c $(dependencies_path)/%.d
