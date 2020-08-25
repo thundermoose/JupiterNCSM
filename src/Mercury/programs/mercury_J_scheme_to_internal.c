@@ -77,11 +77,8 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
 	printf("2NF blocks only:\n");
-	m_scheme_2p_basis_t current_ket_basis = NULL;
-	m_scheme_2p_basis_t current_bra_basis = NULL;
-	Dens_Matrix *current_transformed_matrix = NULL;
-	transform_block_settings_t transformed_block = {0};
-	size_t block_index = 0;
+	//transform_block_settings_t transformed_block = {0};
+	//size_t block_index = 0;
 	while (has_next_2nf_block(combination_table))
 	{
 		matrix_block_setting_t current_matrix_block = 
@@ -94,19 +91,6 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 		       current_block.proton_energy_ket,
 		       current_block.neutron_energy_ket,
 		       current_block.total_isospin);
-		if (compare_transform_block_settings
-		    (&current_block,
-		     &transformed_block) != 0 ||
-		    block_index == 0)
-		{
-			if (current_transformed_matrix != NULL)
-				free_dens_matrix(current_transformed_matrix);
-			if (current_ket_basis != NULL)
-				free_m_scheme_2p_basis(current_ket_basis);
-			current_ket_basis = setup_ket_basis(current_block);
-			current_bra_basis = setup_bra_basis(current_block);
-			current_transformed_matrix = transform_matrix
-		}
 	}
 }
 
