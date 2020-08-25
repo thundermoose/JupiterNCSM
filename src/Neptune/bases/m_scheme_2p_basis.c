@@ -254,14 +254,18 @@ void print_m_scheme_2p_basis(m_scheme_2p_basis_t basis)
 				sp_states->sp_states[state_b].shell;
 			true_shell_index tshell_b =
 			       	shells->shells[shell_b].tse;
-			printf("(%lu): (%d:%lu:%lu) (%d:%lu:%lu)\n",
+			printf("(%lu): (%d:%lu:%lu) (%d:%lu:%lu) M = %d E = %d\n",
 					i,
 					basis->states[i].a,
 					shell_a,
 					tshell_a,
 					basis->states[i].b,
 					shell_b,
-					tshell_b);
+					tshell_b,
+					total_m(basis->states[i],
+						sp_states),
+					total_energy(basis->states[i],
+						     sp_states));
 		}
 	else
 		for (size_t i = 0; i<basis->dimension; i++)
@@ -469,3 +473,11 @@ new_test(generate_2p_block_trivial,
 	free_m_scheme_2p_basis(block_basis);
 	free_m_scheme_2p_basis(basis);
 );
+
+new_test(read_anicr_basis,
+	 const char *anicr_basis = TEST_DATA"/anicr_bases/basis_energy_1";
+	 m_scheme_2p_basis_t basis = 
+	 new_m_scheme_2p_basis_from_files(2,NULL,anicr_basis); 
+	 print_m_scheme_2p_basis(basis);
+	 free_m_scheme_2p_basis(basis);
+	);
