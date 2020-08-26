@@ -1,6 +1,7 @@
 #include "m_scheme_2p_basis.h"
 #include <array_builder/array_builder.h>
 #include <utils/helpful_macros.h>
+#include <global_constants/global_constants.h>
 #include <read_packed_states/read_packed_states.h>
 #include <error/error.h>
 #include <thundertester/test.h>
@@ -18,6 +19,7 @@ struct _m_scheme_2p_basis_
 	size_t dimension;
 	quantum_number e_max1;
 	quantum_number e_max2;
+	int is_view;
 };
 
 typedef struct
@@ -63,6 +65,15 @@ void read_single_particle_type_file(m_scheme_2p_basis_t basis,
 				    const char *basis_filename,
 				    const int iso_spin);
 
+static
+size_t find_M_block(m_scheme_2p_basis_t basis,
+		    quantum_number M);
+
+static
+size_t determine_M_block_length(m_scheme_2p_basis_t basis,
+				size_t block_start,
+				quantum_number M);
+
 m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 						    quantum_number e_max2,
 						    Shells *shells,
@@ -74,13 +85,13 @@ m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 	m_scheme_2p_basis->e_max1 = e_max1;
 	m_scheme_2p_basis->e_max2 = e_max2;
 	m_scheme_2p_basis->shells = shells;
+	m_scheme_2p_basis->is_view = 0;
 	SP_States *sp_states =
 		m_scheme_2p_basis->sp_states =
 		new_sp_states(m_scheme_2p_basis->shells);
 	m_scheme_2p_basis->corresponding_indices = NULL;
 	array_builder_t states_builder = 
-		new_array_builder(
-				  (void*)&m_scheme_2p_basis->states,
+		new_array_builder((void*)&m_scheme_2p_basis->states,
 				  &m_scheme_2p_basis->dimension,
 				  sizeof(m_scheme_2p_state_t));
 	m_scheme_2p_state_t current_state = {0};
@@ -183,6 +194,7 @@ m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 	basis->sp_states = m_scheme_2p_basis->sp_states;
 	basis->e_max1 = m_scheme_2p_basis->e_max1;
 	basis->e_max2 = energy;
+	basis->is_view = 0;
 	array_builder_t basis_builder =
 		new_array_builder((void**)&basis->states,
 				  &basis->dimension,
@@ -218,6 +230,30 @@ m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 		return NULL;
 	}
 	return basis;
+}
+
+m_scheme_2p_basis_t cut_out_M_block(m_scheme_2p_basis_t m_scheme_2p_basis,
+				    quantum_number M)
+{
+	size_t block_start_index = find_M_block(m_scheme_2p_basis,M);
+	size_t block_length_index =
+	       	determine_M_block_length(m_scheme_2p_basis,
+					 block_start_index, M);
+	m_scheme_2p_basis_t m_block_basis =
+	       	(m_scheme_2p_basis_t)
+		malloc(sizeof(struct _m_scheme_2p_basis_));
+	m_block_basis->is_view = 1;
+	m_block_basis->shells = m_block_basis->shells;
+	m_block_basis->sp_states = m_scheme_2p_basis->sp_states;
+	m_block_basis->states = m_scheme_2p_basis->states+block_start_index;
+	m_block_basis->dimension = block_length_index;
+	m_block_basis->e_max1 = m_scheme_2p_basis->e_max1;
+	m_block_basis->e_max2 = m_scheme_2p_basis->e_max2;
+	m_block_basis->corresponding_indices =
+	       	(size_t*)malloc(block_length_index*sizeof(size_t));
+	for (size_t i = 0; i<block_length_index; i++)
+		m_block_basis->corresponding_indices[i] = i+block_start_index;
+	return m_block_basis;
 }
 
 size_t get_m_scheme_2p_dimension(m_scheme_2p_basis_t m_scheme_2p_basis)
@@ -319,7 +355,8 @@ void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
 	{
 		free(m_scheme_2p_basis->corresponding_indices);
 	}
-	free(m_scheme_2p_basis->states);
+	if (!m_scheme_2p_basis->is_view)
+		free(m_scheme_2p_basis->states);
 	free(m_scheme_2p_basis);
 }
 
@@ -451,6 +488,27 @@ void read_two_particle_type_files(m_scheme_2p_basis_t basis,
 	free(neutron_packed_states);
 }
 
+static
+size_t find_M_block(m_scheme_2p_basis_t basis,
+		    quantum_number M)
+{
+	for (size_t i = 0; i < basis->dimension; i++)
+		if (total_m(basis->states[i], basis->sp_states) == M)
+			return i;
+	return no_index;
+}
+
+static
+size_t determine_M_block_length(m_scheme_2p_basis_t basis,
+				size_t block_start,
+				quantum_number M)
+{
+	for (size_t i = block_start+1; i < basis->dimension; i++)
+		if (total_m(basis->states[i], basis->sp_states) != M)
+			return i-block_start;
+	return basis->dimension - block_start;
+}
+
 new_test(print_m_scheme_2p_basis_nmax2,
 	 m_scheme_2p_basis_t basis = new_m_scheme_2p_basis(2,2);
 	 assert_that(basis != NULL);
@@ -479,5 +537,15 @@ new_test(read_anicr_basis,
 	 m_scheme_2p_basis_t basis = 
 	 new_m_scheme_2p_basis_from_files(2,NULL,anicr_basis); 
 	 print_m_scheme_2p_basis(basis);
+	 free_m_scheme_2p_basis(basis);
+	);
+new_test(cut_out_M_block,
+	 const char *anicr_basis = TEST_DATA"/anicr_bases/basis_energy_1";
+	 m_scheme_2p_basis_t basis =
+	 new_m_scheme_2p_basis_from_files(2,NULL,anicr_basis);
+	 m_scheme_2p_basis_t m_0_basis = cut_out_M_block(basis,0);
+	 print_m_scheme_2p_basis(basis);
+	 print_m_scheme_2p_basis(m_0_basis);
+	 free_m_scheme_2p_basis(m_0_basis);
 	 free_m_scheme_2p_basis(basis);
 	);

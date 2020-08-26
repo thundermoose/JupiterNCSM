@@ -29,6 +29,12 @@ m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 				      quantum_number M,
 				      quantum_number E);
 
+// Warning: The following function assumes that the original basis is 
+// sorted in blocks with constant M. If that is not the case
+// use generate_2p_block instead
+m_scheme_2p_basis_t cut_out_M_block(m_scheme_2p_basis_t m_scheme_2p_basis,
+				    quantum_number M);
+
 size_t get_m_scheme_2p_dimension(m_scheme_2p_basis_t m_scheme_2p_basis);
 
 quantum_number get_m_scheme_2p_e_max1(m_scheme_2p_basis_t m_scheme_2p_basis);
