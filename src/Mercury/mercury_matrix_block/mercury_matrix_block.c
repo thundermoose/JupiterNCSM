@@ -11,7 +11,7 @@
 
 struct _mercury_matrix_block_
 {
-	matrix_block_setting_t setting;
+	matrix_block_setting_t settings;
 	size_t num_elements;
 	double *elements;
 };
@@ -30,13 +30,14 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 	double *elements = (double*)calloc(num_elements,
 					   sizeof(double));
 	size_t element_index = 0;
-	matrix_block_setting_t setting = get_matrix_block_setting(connections);
-	int E1 = setting.depth_protons+setting.depth_neutrons;
+	matrix_block_setting_t settings = 
+		get_matrix_block_setting(connections);
+	int E1 = settings.depth_protons+settings.depth_neutrons;
 	int E2 = E1+
-		setting.difference_energy_protons+
-		setting.difference_energy_neutrons;
+		settings.difference_energy_protons+
+		settings.difference_energy_neutrons;
 	log_entry("Creating matrix block %lu\n",
-		  setting.matrix_block_id);
+		  settings.matrix_block_id);
 	while (has_next_connection(connections))
 	{
 		connection_t current_connection =
@@ -69,10 +70,24 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 	mercury_matrix_block_t matrix_block = 
 		(mercury_matrix_block_t)
 		malloc(sizeof(struct _mercury_matrix_block_));
-	matrix_block->setting = setting;
+	matrix_block->settings = settings;
 	matrix_block->num_elements = num_elements;
 	matrix_block->elements = elements;
 	return matrix_block;
+}
+
+mercury_matrix_block_t 
+new_mercury_matrix_block_from_data(double *elements,
+				   size_t num_elements,
+				   matrix_block_setting_t settings)
+{
+	mercury_matrix_block_t block =
+	       	(mercury_matrix_block_t)
+		malloc(sizeof(struct _mercury_matrix_block_));
+	block->elements = elements;
+	block->num_elements = num_elements;
+	block->settings = settings;
+	return block;
 }
 
 void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
@@ -80,7 +95,7 @@ void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
 {
 	log_entry("save_mercury_matrix_block");
 	log_entry("matrix_block = {\n"
-		  "\t.setting = {\n"
+		  "\t.settings = {\n"
 		  "\t\t.type = %s,\n"
 		  "\t\t.difference_energy_protons = %d,\n"
 		  "\t\t.difference_M_protons = %d,\n"
@@ -94,19 +109,19 @@ void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
 		  "},\n"
 		  ".num_elements = %lu,\n"
 		  ".elements = %p}",
-		  block_type_to_string(matrix_block->setting.type),
-		  matrix_block->setting.difference_energy_protons,
-		  matrix_block->setting.difference_M_protons,
-		  matrix_block->setting.depth_protons,
-		  matrix_block->setting.difference_energy_neutrons,
-		  matrix_block->setting.difference_M_neutrons,
-		  matrix_block->setting.depth_neutrons,
-		  matrix_block->setting.num_proton_combinations,
-		  matrix_block->setting.num_neutron_combinations,
-		  matrix_block->setting.matrix_block_id,
+		  block_type_to_string(matrix_block->settings.type),
+		  matrix_block->settings.difference_energy_protons,
+		  matrix_block->settings.difference_M_protons,
+		  matrix_block->settings.depth_protons,
+		  matrix_block->settings.difference_energy_neutrons,
+		  matrix_block->settings.difference_M_neutrons,
+		  matrix_block->settings.depth_neutrons,
+		  matrix_block->settings.num_proton_combinations,
+		  matrix_block->settings.num_neutron_combinations,
+		  matrix_block->settings.matrix_block_id,
 		  matrix_block->num_elements,
 		  matrix_block->elements);
-	size_t array_index = matrix_block->setting.matrix_block_id;
+	size_t array_index = matrix_block->settings.matrix_block_id;
 	size_t length_file_name =
 		strlen(output_path)+(size_t)(log(array_index)+1)+18;
 	char *file_name = (char*)malloc(length_file_name);
@@ -121,9 +136,9 @@ void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
 		      file_name,
 		      strerror(errno));
 	size_t neutron_dimension =
-		matrix_block->setting.num_neutron_combinations;	
+		matrix_block->settings.num_neutron_combinations;	
 	size_t proton_dimension =
-		matrix_block->setting.num_proton_combinations;
+		matrix_block->settings.num_proton_combinations;
 	if (fwrite(&neutron_dimension,
 		   sizeof(size_t),1,
 		   file) != 1)		

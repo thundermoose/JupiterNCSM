@@ -12,6 +12,11 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 						connection_list_t connections,
 						single_particle_basis_t basis);
 
+mercury_matrix_block_t 
+new_mercury_matrix_block_from_data(double *elements,
+				   size_t num_elements,
+				   matrix_block_setting_t settings);
+
 void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
 			       const char *output_path);
 

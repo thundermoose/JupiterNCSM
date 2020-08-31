@@ -10,7 +10,9 @@ struct _transformed_block_manager_;
 typedef struct _transformed_block_manager_ *transformed_block_manager_t;
 
 transformed_block_manager_t 
-new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data);
+new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
+			      const char *basis_file_path,
+			      int single_particle_energy_max);
 
 void decouple_transform_block(transformed_block_manager_t manager,
 			      transform_block_settings_t block_settings);

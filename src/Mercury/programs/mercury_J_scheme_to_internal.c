@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include <arguments/arguments.h>
 #include <transform_block_settings/transform_block_settings.h>
 #include <combination_table/combination_table.h>
@@ -77,8 +78,19 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
 	printf("2NF blocks only:\n");
-	//transform_block_settings_t transformed_block = {0};
-	//size_t block_index = 0;
+	antoine_2nf_file_t coupled_2nf_data =
+		open_antoine_2nf_file
+		(get_interaction_path_2nf(arguments),
+		 get_num_particle_argument(arguments),
+		 get_single_particle_energy_argument(arguments),
+		 get_two_particle_energy_argument(arguments));
+	transformed_block_manager_t manager =
+		new_transformed_block_manager
+		(coupled_2nf_data,
+		 get_basis_files_argument(arguments),
+		 get_energy_max(arguments));
+	transform_block_settings_t transformed_block = {INT_MAX};	
+	const char *output_path_base = get_output_path(arguments);
 	while (has_next_2nf_block(combination_table))
 	{
 		matrix_block_setting_t current_matrix_block = 
@@ -91,7 +103,22 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 		       current_block.proton_energy_ket,
 		       current_block.neutron_energy_ket,
 		       current_block.total_isospin);
+		if (compare_transform_block_settings(&transformed_block,
+						     &current_block) != 0)
+		{
+			decouple_transform_block(manager,
+						 current_block);
+			transformed_block = current_block;
+		}
+		mercury_matrix_block_t matrix_block = 
+			get_transformed_matrix_block(manager,
+						     current_matrix_block);
+		save_mercury_matrix_block(matrix_block,
+					  output_path_base);
+		free_mercury_matrix_block(matrix_block);
 	}
+	free_transformed_block_manager(manager);
+	free_antoine_2nf_file(coupled_2nf_data);
 }
 
 static

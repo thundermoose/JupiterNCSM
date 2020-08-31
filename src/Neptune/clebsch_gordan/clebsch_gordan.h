@@ -8,7 +8,7 @@ typedef struct _clebsch_gordan_data_{
   size_t max_num_threads;
 } Clebsch_Gordan_Data; // Should be shared between threads
 
-Clebsch_Gordan_Data* initiate_clebsch_gordan(int max_j); // Should be runed once, inside omp
+Clebsch_Gordan_Data* initiate_clebsch_gordan(int max_j); // Should be ran once, inside omp
 
 double clebsch_gordan(int j1,int j2,int j3,
 		      int m1,int m2,int m3,
