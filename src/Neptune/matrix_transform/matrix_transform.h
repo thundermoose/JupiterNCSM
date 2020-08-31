@@ -35,6 +35,10 @@ void print_matrix(Dens_Matrix mat);
 double mean_square_difference(Dens_Matrix *matrix_a,
 			      Dens_Matrix *matrix_b);
 
+double get_dens_matrix_element(Dens_Matrix *matrix,
+			       size_t i,
+			       size_t j);
+
 void free_dens_matrix(Dens_Matrix* matrix);
 
 typedef struct _sparse_matrix_{

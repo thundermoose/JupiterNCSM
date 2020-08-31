@@ -100,6 +100,13 @@ double mean_square_difference(Dens_Matrix *matrix_a,
 	return accumulator/(matrix_a->m*matrix_a->n);
 }
 
+double get_dens_matrix_element(Dens_Matrix *matrix,
+			       size_t i,
+			       size_t j)
+{
+	return matrix->elements[i*matrix->n+j];
+}
+
 void free_dens_matrix(Dens_Matrix* matrix){
 	free(matrix->elements);
 	free(matrix);

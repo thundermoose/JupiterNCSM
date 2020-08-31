@@ -3,6 +3,7 @@
 #include <utils/helpful_macros.h>
 #include <global_constants/global_constants.h>
 #include <read_packed_states/read_packed_states.h>
+#include <radix_sort/radix_sort.h>
 #include <error/error.h>
 #include <thundertester/test.h>
 #include <assert.h>
@@ -16,6 +17,7 @@ struct _m_scheme_2p_basis_
 	SP_States *sp_states;
 	size_t *corresponding_indices;
 	m_scheme_2p_state_t *states;
+	size_t *state_to_index_map;
 	size_t dimension;
 	quantum_number e_max1;
 	quantum_number e_max2;
@@ -74,6 +76,16 @@ size_t determine_M_block_length(m_scheme_2p_basis_t basis,
 				size_t block_start,
 				quantum_number M);
 
+static 
+void setup_state_to_index_map(m_scheme_2p_basis_t basis);
+
+static
+uint64_t state_index_key_function(size_t *index,
+				  m_scheme_2p_basis_t basis);
+
+static inline
+uint64_t state_key_function(m_scheme_2p_state_t state);
+
 m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 						    quantum_number e_max2,
 						    Shells *shells,
@@ -122,6 +134,7 @@ m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 		}
 	}
 	free_array_builder(states_builder);
+	setup_state_to_index_map(m_scheme_2p_basis);
 	return m_scheme_2p_basis;
 }
 
@@ -179,6 +192,7 @@ new_m_scheme_2p_basis_from_files(quantum_number e_max1,
 					       basis_filename,
 					       iso_spin);
 	}
+	setup_state_to_index_map(basis);
 	return basis;
 }
 
@@ -343,6 +357,14 @@ size_t *m_scheme_2p_corresponding_indices(m_scheme_2p_basis_t basis)
 	return basis->corresponding_indices;
 }
 
+size_t get_m_scheme_2p_state_index(m_scheme_2p_basis_t basis,
+				   m_scheme_2p_state_t state)
+{
+	uint64_t key = state_key_function(state);
+	if (key >= basis->dimension) 
+		return no_index;
+	return basis->state_to_index_map[key];
+}
 
 void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
 {
@@ -507,6 +529,33 @@ size_t determine_M_block_length(m_scheme_2p_basis_t basis,
 		if (total_m(basis->states[i], basis->sp_states) != M)
 			return i-block_start;
 	return basis->dimension - block_start;
+}
+
+static 
+void setup_state_to_index_map(m_scheme_2p_basis_t basis)
+{
+	basis->state_to_index_map =
+	       	(size_t*)malloc(basis->dimension*sizeof(size_t));
+	for (size_t i = 0; i < basis->dimension; i++)
+		basis->state_to_index_map[i] = i;
+	rsort_r(basis->state_to_index_map,
+		basis->dimension,
+		sizeof(size_t),
+		(__key_function_r_t)state_index_key_function,
+		basis);
+}
+
+static
+uint64_t state_index_key_function(size_t *index,
+				  m_scheme_2p_basis_t basis)
+{
+	return state_key_function(basis->states[*index]);
+}
+
+static inline
+uint64_t state_key_function(m_scheme_2p_state_t state)
+{
+	return (uint64_t)(state.a)<<32 | (uint64_t)(state.b);
 }
 
 new_test(print_m_scheme_2p_basis_nmax2,

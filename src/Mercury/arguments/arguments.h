@@ -25,11 +25,17 @@ const char *get_index_list_path(const arguments_t arguments);
 
 const char *get_output_path(const arguments_t arguments);
 
+const char *get_basis_files_argument(const arguments_t arguments);
+
+const char *get_
+
 size_t get_block_id(const arguments_t arguments);
 
 size_t get_num_protons_argument(const arguments_t arguments);
 
 size_t get_num_neutrons_argument(const arguments_t arguments);
+
+size_t get_num_particles_argument(const arguments_t arguments);
 
 int get_energy_max(const arguments_t arguments);
 

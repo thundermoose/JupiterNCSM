@@ -12,6 +12,7 @@ typedef struct _transformed_block_manager_ *transformed_block_manager_t;
 transformed_block_manager_t 
 new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 			      const char *basis_file_path,
+			      const char *index_list_path,
 			      int single_particle_energy_max);
 
 void decouple_transform_block(transformed_block_manager_t manager,

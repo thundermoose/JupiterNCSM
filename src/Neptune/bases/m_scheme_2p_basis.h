@@ -56,5 +56,8 @@ size_t *m_scheme_2p_corresponding_indices(m_scheme_2p_basis_t basis);
 
 void print_m_scheme_2p_basis(m_scheme_2p_basis_t basis);
 
+size_t get_m_scheme_2p_state_index(m_scheme_2p_basis_t basis,
+				   m_scheme_2p_state_t state);
+
 void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis);
 #endif

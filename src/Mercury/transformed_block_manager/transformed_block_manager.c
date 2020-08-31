@@ -3,6 +3,9 @@
 #include <clebsch_gordan/clebsch_gordan.h>
 #include <block_transform/block_transform.h>
 #include <string_tools/string_tools.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 typedef struct
 {
@@ -71,6 +74,9 @@ void expand_block_list(transformed_block_manager_t manager,
 static
 void free_blocks(transformed_block_manager_t manager);
 
+static inline
+void swap(int *a,int *b);
+
 transformed_block_manager_t 
 new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 			      const char *basis_files_path,
@@ -82,7 +88,6 @@ new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 		malloc(sizeof(struct _transformed_block_manager_));
 	manager->ket_basis = NULL;
 	manager->bra_basis = NULL;
-	manager->matrices = NULL;
 	manager->coupled_2nf_data = coupled_2nf_data;
 	manager->basis_files_path = copy_string(basis_files_path);
 	manager->index_list_path = copy_string(index_list_path);
@@ -222,7 +227,7 @@ m_scheme_2p_basis_t load_anicr_basis(char *basis_files_path,
 		proton_basis_filename = (char*)malloc(length_filename_buffer);
 		sprintf(proton_basis_filename,
 			"%s/%s_inds_index_lists/basis_energy_%d",
-			proton_basis_files_path,
+			basis_files_path,
 			total_isospin == 0 ? "p" : "pp", 
 			proton_energy);			
 	}
@@ -231,14 +236,14 @@ m_scheme_2p_basis_t load_anicr_basis(char *basis_files_path,
 		neutron_basis_filename = (char*)malloc(length_filename_buffer);
 		sprintf(neutron_basis_filename,
 			"%s/%s_inds_index_lists/basis_energy_%d",
-			neutron_basis_files_path,
+			basis_files_path,
 			total_isospin == 0 ? "n" : "nn",
 			neutron_energy);
 	}
 	m_scheme_2p_basis_t basis =
-	       	new_m_scheme_2p_basis_from_file(single_particle_energy_max,
-						proton_basis_filename,
-						neutron_basis_filename);
+		new_m_scheme_2p_basis_from_files(single_particle_energy_max,
+						 proton_basis_filename,
+						 neutron_basis_filename);
 	free(proton_basis_filename);
 	free(neutron_basis_filename);
 	return basis;
@@ -308,22 +313,36 @@ const size_t get_ket_index(connection_t connection,
 	size_t num_protons = count_protons(connection.type);
 	if (num_protons == 2)
 	{
-		m_scheme_2p_basis_t state =
+		m_scheme_2p_state_t state =
 		{
 			.a = 2*connection.proton_states[0],
-			.b = 2*connection.proton_states[1];
+			.b = 2*connection.proton_states[1]
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
-		return state;
+		return get_m_scheme_2p_state_index(basis,state);
 	}
 	else if (num_protons == 1)
 	{
-
+		m_scheme_2p_state_t state =
+		{
+			.a = 2*connection.proton_states[0],
+			.b = 2*connection.neutron_states[0]+1
+		};
+		if (state.a > state.b)
+			swap(&state.a,&state.b);
+		return get_m_scheme_2p_state_index(basis,state);
 	}	
 	else
 	{
-
+		m_scheme_2p_state_t state =
+		{
+			.a = 2*connection.neutron_states[0]+1,
+			.b = 2*connection.neutron_states[1]+1
+		};
+		if (state.a > state.b)
+			swap(&state.a,&state.b);
+		return get_m_scheme_2p_state_index(basis,state);
 	}
 }
 
@@ -331,6 +350,40 @@ static inline
 const size_t get_bra_index(connection_t connection,
 			   m_scheme_2p_basis_t basis)
 {
+	size_t num_protons = count_protons(connection.type);
+	if (num_protons == 2)
+	{
+		m_scheme_2p_state_t state =
+		{
+			.a = 2*connection.proton_states[2],
+			.b = 2*connection.proton_states[3]
+		};
+		if (state.a > state.b)
+			swap(&state.a,&state.b);
+		return get_m_scheme_2p_state_index(basis,state);
+	}
+	else if (num_protons == 1)
+	{
+		m_scheme_2p_state_t state =
+		{
+			.a = 2*connection.proton_states[1],
+			.b = 2*connection.neutron_states[1]+1
+		};
+		if (state.a > state.b)
+			swap(&state.a,&state.b);
+		return get_m_scheme_2p_state_index(basis,state);
+	}	
+	else
+	{
+		m_scheme_2p_state_t state =
+		{
+			.a = 2*connection.neutron_states[2]+1,
+			.b = 2*connection.neutron_states[3]+1
+		};
+		if (state.a > state.b)
+			swap(&state.a,&state.b);
+		return get_m_scheme_2p_state_index(basis,state);
+	}
 }
 
 static inline
