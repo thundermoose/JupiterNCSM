@@ -19,7 +19,8 @@ struct _arguments_
 	size_t block_id;
 	size_t num_protons;
 	size_t num_neutrons;
-	int energy_max;
+	int single_particle_energy;
+	int two_particle_energy;
 };
 
 #define INTEGER_ARGUMENT(name,field) \
@@ -52,13 +53,17 @@ arguments_t parse_argument_list(int num_arguments,
 		arguments->output_path = argument_list[3];
 		arguments->num_protons = 0; 
 		arguments->num_neutrons = 0; 
-		arguments->energy_max = 0;
+		arguments->single_particle_energy = 0;
+		arguments->two_particle_energy = 0;
 		arguments->to_few_arguments = 1;
 		for (size_t i = 4; i<num_arguments; i++)
 		{
 			INTEGER_ARGUMENT("--num-protons",num_protons);
 			INTEGER_ARGUMENT("--num-neutrons",num_neutrons);
-			INTEGER_ARGUMENT("--energy-max",energy_max);
+			INTEGER_ARGUMENT("--single-particle-energy",
+					 single_particle_energy);
+			INTEGER_ARGUMENT("--two-particle-energy",
+					 two_particle_energy);
 			INTEGER_ARGUMENT("--block-id",block_id);
 			MODE_ARGUMENT("--single-block",single_block);
 			if (arguments->interaction_path_2nf == NULL)
@@ -96,7 +101,8 @@ void show_usage(const arguments_t arguments)
 	printf("Usage: %s <combination file path> "
 	       "<index list base directory> <output path> "
 	       "[--num-protons <integer>] [--num-neutrons <integer>] "
-	       "[--energy-max <integer>] [--single-block] "
+	       "[--single-particle-energy <integer>] "
+	       "[--two-particle-energy <integer>] [--single-block] "
 	       "[--block-id <integer>] <interaction path 2nf> "
 	       "[interaction path 3nf]\n",
 	       arguments->program_name);
@@ -107,27 +113,27 @@ int single_block_mode(const arguments_t arguments)
 	return arguments->single_block;	
 }
 
-const char *get_interaction_path_2nf(const arguments_t arguments)
+const char *get_interaction_path_2nf_argument(const arguments_t arguments)
 {
 	return arguments->interaction_path_2nf;
 }
 
-const char *get_interaction_path_3nf(const arguments_t arguments)
+const char *get_interaction_path_3nf_argument(const arguments_t arguments)
 {
 	return arguments->interaction_path_3nf;
 }
 
-const char *get_combination_file_path(const arguments_t arguments)
+const char *get_combination_file_path_argument(const arguments_t arguments)
 {
 	return arguments->combination_file_path;
 }
 
-const char *get_index_list_path(const arguments_t arguments)
+const char *get_index_list_path_argument(const arguments_t arguments)
 {
 	return arguments->index_list_path;
 }
 
-const char *get_output_path(const arguments_t arguments)
+const char *get_output_path_argument(const arguments_t arguments)
 {
 	return arguments->output_path;
 }
@@ -147,9 +153,19 @@ size_t get_num_neutrons_argument(const arguments_t arguments)
 	return arguments->num_neutrons;
 }
 
-int get_energy_max(const arguments_t arguments)
+size_t get_num_particles_argument(const arguments_t arguments)
 {
-	return arguments->energy_max;
+	return arguments->num_neutrons + arguments->num_protons;
+}
+
+int get_single_particle_energy_argument(const arguments_t arguments)
+{
+	return arguments->single_particle_energy;
+}
+
+int get_two_particle_energy_argument(const arguments_t arguments)
+{
+	return arguments->two_particle_energy;
 }
 
 void free_arguments(arguments_t arguments)

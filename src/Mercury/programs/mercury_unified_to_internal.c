@@ -63,19 +63,23 @@ int main(int num_arguments,
 		return EXIT_FAILURE;
 	}
 	combination_table_t table =
-		new_combination_table(get_combination_file_path(arguments),
-				      get_num_protons_argument(arguments),
-				      get_num_neutrons_argument(arguments));
+		new_combination_table
+		(get_combination_file_path_argument(arguments),
+		 get_num_protons_argument(arguments),
+		 get_num_neutrons_argument(arguments));
 	log_entry("Parsed the combination table correctly\n"); 
 	single_particle_basis_t sp_basis =
-	       	new_single_particle_basis(get_energy_max(arguments));
+	       	new_single_particle_basis
+		(get_single_particle_energy_argument(arguments));
 	log_entry("Generated the single particle basis correctly\n");
 	interaction_t interaction_2nf =
-			new_interaction(get_interaction_path_2nf(arguments));	
+			new_interaction
+			(get_interaction_path_2nf_argument(arguments));	
 	interaction_t interaction_3nf = NULL;
-	if (get_interaction_path_3nf(arguments) != NULL)
+	if (get_interaction_path_3nf_argument(arguments) != NULL)
 		interaction_3nf = 
-			new_interaction(get_interaction_path_3nf(arguments));
+			new_interaction
+			(get_interaction_path_3nf_argument(arguments));
 	log_entry("Initiated the interaction correctly\n");
 	if (single_block_mode(arguments))
 	{
@@ -91,8 +95,8 @@ int main(int num_arguments,
 		process_block(matrix_block_setting,
 			      sp_basis,
 			      interaction,
-			      get_index_list_path(arguments),
-			      get_output_path(arguments));
+			      get_index_list_path_argument(arguments),
+			      get_output_path_argument(arguments));
 	}
 	else
 	{
@@ -110,8 +114,8 @@ int main(int num_arguments,
 			process_block(matrix_block_setting,
 				      sp_basis,
 				      interaction,
-				      get_index_list_path(arguments),
-				      get_output_path(arguments));
+				      get_index_list_path_argument(arguments),
+				      get_output_path_argument(arguments));
 		}
 	}
 	free_interaction(interaction_2nf);

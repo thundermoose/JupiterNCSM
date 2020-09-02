@@ -4,6 +4,7 @@
 #include <arguments/arguments.h>
 #include <input/read_2nf_antoine_format.h>
 #include <transform_block_settings/transform_block_settings.h>
+#include <transformed_block_manager/transformed_block_manager.h>
 #include <combination_table/combination_table.h>
 #include <log/log.h>
 
@@ -34,12 +35,14 @@ int main(int num_arguments,
 	if (to_few_arguments(arguments))
 	{
 		show_usage(arguments);
+		free_arguments(arguments);
 		return EXIT_SUCCESS;
 	}
 	combination_table_t combination_table =
-		new_combination_table(get_combination_file_path(arguments),
-				      get_num_protons_argument(arguments),
-				      get_num_neutrons_argument(arguments));
+		new_combination_table
+		(get_combination_file_path_argument(arguments),
+		 get_num_protons_argument(arguments),
+		 get_num_neutrons_argument(arguments));
 	generate_1nf_matrix_blocks(combination_table,
 				   arguments);
 	generate_2nf_matrix_blocks(combination_table,
@@ -81,18 +84,18 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 	printf("2NF blocks only:\n");
 	antoine_2nf_file_t coupled_2nf_data =
 		open_antoine_2nf_file
-		(get_interaction_path_2nf(arguments),
+		(get_interaction_path_2nf_argument(arguments),
 		 get_num_particles_argument(arguments),
 		 get_single_particle_energy_argument(arguments),
 		 get_two_particle_energy_argument(arguments));
 	transformed_block_manager_t manager =
 		new_transformed_block_manager
 		(coupled_2nf_data,
-		 get_basis_files_argument(arguments),
-		 get_index_lists_path_argument(arguments),
-		 get_energy_max(arguments));
+		 get_index_list_path_argument(arguments),
+		 get_index_list_path_argument(arguments),
+		 get_single_particle_energy_argument(arguments));
 	transform_block_settings_t transformed_block = {INT_MAX};	
-	const char *output_path_base = get_output_path(arguments);
+	const char *output_path_base = get_output_path_argument(arguments);
 	while (has_next_2nf_block(combination_table))
 	{
 		matrix_block_setting_t current_matrix_block = 
