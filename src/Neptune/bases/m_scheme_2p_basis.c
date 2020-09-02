@@ -3,7 +3,7 @@
 #include <utils/helpful_macros.h>
 #include <global_constants/global_constants.h>
 #include <read_packed_states/read_packed_states.h>
-#include <radix_sort/radix_sort.h>
+#include <hash_map/hash_map.h>
 #include <error/error.h>
 #include <thundertester/test.h>
 #include <assert.h>
@@ -17,7 +17,7 @@ struct _m_scheme_2p_basis_
 	SP_States *sp_states;
 	size_t *corresponding_indices;
 	m_scheme_2p_state_t *states;
-	size_t *state_to_index_map;
+	hash_map_t state_to_index_map;
 	size_t dimension;
 	quantum_number e_max1;
 	quantum_number e_max2;
@@ -80,11 +80,11 @@ static
 void setup_state_to_index_map(m_scheme_2p_basis_t basis);
 
 static
-uint64_t state_index_key_function(size_t *index,
-				  m_scheme_2p_basis_t basis);
+int compare_m_scheme_states(m_scheme_2p_state_t *state_a,
+			    m_scheme_2p_state_t *state_b);
 
-static inline
-uint64_t state_key_function(m_scheme_2p_state_t state);
+static
+uint64_t hash_m_scheme_state(m_scheme_2p_state_t *state);
 
 m_scheme_2p_basis_t new_m_scheme_2p_basis_condition(quantum_number e_max1,
 						    quantum_number e_max2,
@@ -360,10 +360,13 @@ size_t *m_scheme_2p_corresponding_indices(m_scheme_2p_basis_t basis)
 size_t get_m_scheme_2p_state_index(m_scheme_2p_basis_t basis,
 				   m_scheme_2p_state_t state)
 {
-	uint64_t key = state_key_function(state);
-	if (key >= basis->dimension) 
-		return no_index;
-	return basis->state_to_index_map[key];
+	size_t index = no_index;
+	if (hash_map_get(basis->state_to_index_map,
+		 	 &state,
+			 &index))
+       		return index;
+	else
+		return no_index;	
 }
 
 void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
@@ -379,6 +382,7 @@ void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
 	}
 	if (!m_scheme_2p_basis->is_view)
 		free(m_scheme_2p_basis->states);
+	free_hash_map(m_scheme_2p_basis->state_to_index_map);
 	free(m_scheme_2p_basis);
 }
 
@@ -535,27 +539,38 @@ static
 void setup_state_to_index_map(m_scheme_2p_basis_t basis)
 {
 	basis->state_to_index_map =
-	       	(size_t*)malloc(basis->dimension*sizeof(size_t));
-	for (size_t i = 0; i < basis->dimension; i++)
-		basis->state_to_index_map[i] = i;
-	rsort_r(basis->state_to_index_map,
-		basis->dimension,
-		sizeof(size_t),
-		(__key_function_r_t)state_index_key_function,
-		basis);
+		new_hash_map(basis->dimension,
+			     2,
+			     sizeof(size_t),
+			     sizeof(m_scheme_2p_state_t),
+			     (__compar_fn_t)compare_m_scheme_states,
+			     (__hash_fn_t)hash_m_scheme_state);  			     
+	for (size_t index = 0; index < basis->dimension; index++)
+		hash_map_insert(basis->state_to_index_map,
+				&basis->states[index],
+				&index);
 }
 
 static
-uint64_t state_index_key_function(size_t *index,
-				  m_scheme_2p_basis_t basis)
+int compare_m_scheme_states(m_scheme_2p_state_t *state_a,
+			    m_scheme_2p_state_t *state_b)
 {
-	return state_key_function(basis->states[*index]);
+	int diff = state_a->a - state_b->a;
+	if (diff)
+		return diff;
+	diff = state_a->b - state_b->b;
+	return diff;
 }
 
-static inline
-uint64_t state_key_function(m_scheme_2p_state_t state)
+static
+uint64_t hash_m_scheme_state(m_scheme_2p_state_t *state)
 {
-	return (uint64_t)(state.a)<<32 | (uint64_t)(state.b);
+	union {
+		uint64_t hash;
+		m_scheme_2p_state_t state;
+	} hash_state;
+	hash_state.state = *state;
+	return hash_state.hash;
 }
 
 new_test(print_m_scheme_2p_basis_nmax2,
