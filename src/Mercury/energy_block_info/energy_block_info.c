@@ -1,4 +1,5 @@
 #include <energy_block_info/energy_block_info.h>
+#include <debug_mode/debug_mode.h>
 
 int compare_energy_block_info(const energy_block_info_t *block_info_one,
 			      const energy_block_info_t *block_info_two)

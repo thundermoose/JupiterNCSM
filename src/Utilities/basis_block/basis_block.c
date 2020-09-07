@@ -1,4 +1,5 @@
 #include <basis_block/basis_block.h>
+#include <debug_mode/debug_mode.h>
 
 basis_block_t new_basis_block(int proton_energy,
 			      int proton_total_M,

@@ -10,6 +10,8 @@
 #include <utils/debug_messages.h>
 #include <errno.h>
 #include <string.h>
+#include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 struct _m_scheme_2p_basis_
 {
@@ -173,6 +175,7 @@ new_m_scheme_2p_basis_from_files(quantum_number e_max1,
 	basis->shells = new_antoine_shells(e_max1);
 	basis->sp_states = new_sp_states(basis->shells);
 	basis->corresponding_indices = NULL;
+	basis->is_view = 0;
 	quantum_number iso_spin = 
 		(neutron_basis_filename != NULL) - 
 		(proton_basis_filename != NULL);
@@ -243,6 +246,7 @@ m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 		free(basis);
 		return NULL;
 	}
+	setup_state_to_index_map(basis);
 	return basis;
 }
 
@@ -267,6 +271,7 @@ m_scheme_2p_basis_t cut_out_M_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 	       	(size_t*)malloc(block_length_index*sizeof(size_t));
 	for (size_t i = 0; i<block_length_index; i++)
 		m_block_basis->corresponding_indices[i] = i+block_start_index;
+	setup_state_to_index_map(m_block_basis);
 	return m_block_basis;
 }
 
@@ -371,6 +376,7 @@ size_t get_m_scheme_2p_state_index(m_scheme_2p_basis_t basis,
 
 void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
 {
+	log_entry("free_m_scheme_2p_basis(%p)",m_scheme_2p_basis);
 	if (m_scheme_2p_basis->corresponding_indices == NULL)
 	{
 		free_sp_states(m_scheme_2p_basis->sp_states);
@@ -381,7 +387,9 @@ void free_m_scheme_2p_basis(m_scheme_2p_basis_t m_scheme_2p_basis)
 		free(m_scheme_2p_basis->corresponding_indices);
 	}
 	if (!m_scheme_2p_basis->is_view)
+	{
 		free(m_scheme_2p_basis->states);
+	}
 	free_hash_map(m_scheme_2p_basis->state_to_index_map);
 	free(m_scheme_2p_basis);
 }
@@ -458,8 +466,10 @@ void read_single_particle_type_file(m_scheme_2p_basis_t basis,
 	{
 		unsigned int packed_state =
 			(packed_states[i]<<1) | particle_stride;
-		basis->states[i].a = (packed_state & 0xFFFF0000) >> 16;
-		basis->states[i].b = (packed_state & 0x0000FFFF);
+		int first_particle = (packed_state & 0xFFFF0000) >> 16;
+		int second_particle = (packed_state & 0x0000FFFF);
+		basis->states[i].a = min(first_particle,second_particle);
+		basis->states[i].b = max(first_particle,second_particle);
 	}
 	free(packed_states);
 }

@@ -9,6 +9,7 @@
 #include <utils/automatic_test.h>
 #include <utils/permutation_tools.h>
 #include <thundertester/test.h>
+#include <debug_mode/debug_mode.h>
 
 typedef struct
 {

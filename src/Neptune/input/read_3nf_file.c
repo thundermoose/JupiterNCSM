@@ -7,6 +7,7 @@
 #include <input/read_3nf_hdf5_file.h>
 #include <input/read_3nf_ascii_format.h>
 #include <utils/debug_messages.h>
+#include <debug_mode/debug_mode.h>
 
 Data_File* open_data_file(const char* file_name)
 {

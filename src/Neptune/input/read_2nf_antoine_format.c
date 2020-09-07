@@ -1,6 +1,8 @@
 #include <input/read_2nf_antoine_format.h>
 #include <utils/index_hash.h>
 #include <utils/debug_messages.h>
+#include <log/log.h>
+#include <debug_mode/debug_mode.h>
 #include <math.h>
 #include <string.h>
 #include <errno.h>
@@ -168,11 +170,9 @@ double *read_elements(antoine_header_t header,
 	{
 		fprintf(stderr,"Could not read matrix elements.%s\n",
 			strerror(errno));
-		exit(EXIT_FAILURE);
-	}
-	fseek(file,initial_position,SEEK_SET);
-	double *elements = (double*)calloc(header.num_rows*header.num_columns,
-					   sizeof(double));
+		exit(EXIT_FAILURE); } fseek(file,initial_position,SEEK_SET); 
+	double *elements = (double*)calloc(header.num_rows*header.num_columns, 
+					   sizeof(double)); 
 	for (size_t i = 0; i<header.num_rows*header.num_columns; i++)
 	{
 		elements[i] = elements_float[i];
@@ -223,6 +223,8 @@ double *compress_elements(antoine_header_t header,
 			(2.0)*header.basis_frequency*
 			raw_elements[header.num_columns*i]/num_particles;
 		assert(!isnan(kinetic_energy));
+		log_entry("kinetic_energy[%lu] = %lg",i,kinetic_energy);
+		log_entry("num_particles = %lu",num_particles);
 		elements[3*i] = 
 			raw_elements[header.num_columns*i+3]+kinetic_energy;
 		elements[3*i+1] = 

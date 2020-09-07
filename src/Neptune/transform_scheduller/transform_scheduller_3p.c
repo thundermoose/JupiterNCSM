@@ -3,6 +3,7 @@
 #include <transform_scheduller/transform_scheduller_3p.h>
 #include <block_transform/block_transform.h>
 #include <utils/range.h>
+#include <debug_mode/debug_mode.h>
 
 	static
 void task_handler(Data_Block current_block,

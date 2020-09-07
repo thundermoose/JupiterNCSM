@@ -1,5 +1,6 @@
 #include <fortran_block/fortran_block.h>
 #include <stdlib.h>
+#include <debug_mode/debug_mode.h>
 
 struct _fortran_block_
 {

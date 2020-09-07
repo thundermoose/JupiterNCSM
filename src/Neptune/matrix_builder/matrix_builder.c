@@ -1,5 +1,6 @@
 #include <matrix_builder/matrix_builder.h>
 #include <utils/index_hash.h>
+#include <debug_mode/debug_mode.h>
 
 struct _sparse_matrix_builder_
 {

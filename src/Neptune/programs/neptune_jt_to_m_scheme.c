@@ -4,6 +4,7 @@
 #include <input/read_2nf_antoine_format.h>
 #include <output/out_file.h>
 #include <transform_scheduller/transform_scheduller_2p.h>
+#include <debug_mode/debug_mode.h>
 #include <string.h>
 
 typedef struct

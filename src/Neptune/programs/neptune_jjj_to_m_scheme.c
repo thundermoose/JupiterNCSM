@@ -7,6 +7,7 @@
 #include <matrix_transform/matrix_transform.h>
 #include <transform_scheduller/transform_scheduller_3p.h>
 #include <output/out_file.h>
+#include <debug_mode/debug_mode.h>
 #include <thundertester/test.h>
 
 

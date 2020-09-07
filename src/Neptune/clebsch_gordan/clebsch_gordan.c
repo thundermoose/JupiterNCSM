@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <debug_mode/debug_mode.h>
+
 Clebsch_Gordan_Data* initiate_clebsch_gordan(int max_j)
 {
   Clebsch_Gordan_Data* out;

@@ -1,4 +1,5 @@
 #include <connection_list/connection_list.h>
+#include <debug_mode/debug_mode.h>
 #include <error/error.h>
 #include <log/log.h>
 #include <stdio.h>

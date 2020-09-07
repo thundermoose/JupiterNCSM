@@ -2,6 +2,7 @@
 #include <math.h>
 #include <output/write_to_hdf5.h>
 #include <utils/questions.h>
+#include <debug_mode/debug_mode.h>
 
 void save_sp_basis(hid_t file_handle,
 		   SP_States *sp_states)

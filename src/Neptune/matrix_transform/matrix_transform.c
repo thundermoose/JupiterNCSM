@@ -6,6 +6,7 @@
 #include <utils/permutation_tools.h>
 #include <utils/assertion.h>
 #include <utils/debug_messages.h>
+#include <debug_mode/debug_mode.h>
 
 Dens_Matrix* new_zero_matrix(size_t m,
 			     size_t n){

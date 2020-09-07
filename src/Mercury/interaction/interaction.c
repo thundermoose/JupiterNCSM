@@ -3,6 +3,7 @@
 #include <interaction/energy_block/energy_block.h>
 #include <log/log.h>
 #include <energy_block_info/energy_block_info.h>
+#include <debug_mode/debug_mode.h>
 #include <error/error.h>
 #include <string_tools/string_tools.h>
 #include <array_builder/array_builder.h>

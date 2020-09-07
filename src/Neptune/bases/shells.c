@@ -2,6 +2,7 @@
 #include <bases/shells.h>
 #include <search.h>
 #include <string.h>
+#include <debug_mode/debug_mode.h>
 
 /* The following function generate a 
  * Shells object with all single particle

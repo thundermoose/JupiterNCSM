@@ -7,6 +7,7 @@
 #include <utils/automatic_test.h>
 #include <utils/assertion.h>
 #include <utils/debug_messages.h>
+#include <debug_mode/debug_mode.h>
 
 
 #define MAX(a,b) ((a)<(b) ? (b) : (a))

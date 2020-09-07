@@ -2,6 +2,7 @@
 #include <error/error.h>
 #include <string.h>
 #include <thundertester/test.h>
+#include <debug_mode/debug_mode.h>
 
 #define NUM_TYPES 9
 

@@ -6,6 +6,7 @@
 #include "../utils/debug_messages.h"
 #include "../utils/automatic_test.h"
 #include "../utils/permutation_tools.h"
+#include <debug_mode/debug_mode.h>
 
 
 Sparse_Matrix* new_jjj_transformation(M_Scheme_3p_Basis* m_basis,

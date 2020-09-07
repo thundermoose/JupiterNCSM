@@ -1,6 +1,7 @@
 #include <jt_block_iterator/jt_block_iterator.h>
 #include <utils/helpful_macros.h>
 #include <utils/debug_messages.h>
+#include <debug_mode/debug_mode.h>
 
 jt_block_iterator_t initial_block(quantum_number j_a,
 				  quantum_number j_b,

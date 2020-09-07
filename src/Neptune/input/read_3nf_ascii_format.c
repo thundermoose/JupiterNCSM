@@ -6,6 +6,7 @@
 #include <input/read_3nf_ascii_format.h>
 #include <bases/jt_basis_3p.h>
 #include <string_tools/string_tools.h>
+#include <debug_mode/debug_mode.h>
 
 #define HAS_CONFIG_FILE 1
 #define HAS_MATRIX_FILE 2

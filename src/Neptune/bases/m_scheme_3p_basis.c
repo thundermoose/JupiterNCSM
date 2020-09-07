@@ -7,6 +7,7 @@
 #include <string_tools/string_tools.h>
 #include <utils/permutation_tools.h>
 #include <read_packed_states/read_packed_states.h>
+#include <debug_mode/debug_mode.h>
 
 static
 void read_single_particle_type_file(M_Scheme_3p_Basis *basis,

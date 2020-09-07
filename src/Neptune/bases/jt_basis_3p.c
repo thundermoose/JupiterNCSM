@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "jt_basis_3p.h"
+#include <debug_mode/debug_mode.h>
 
 JT_Basis* new_jt_basis(quantum_number e_max,
 		quantum_number e_min,

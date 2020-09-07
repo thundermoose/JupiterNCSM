@@ -1,4 +1,5 @@
 #include <hash_map/hash_map.h>
+#include <debug_mode/debug_mode.h>
 #include <string.h>
 
 struct _hash_map_

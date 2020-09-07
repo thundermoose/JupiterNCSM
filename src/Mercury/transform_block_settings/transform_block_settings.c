@@ -1,4 +1,5 @@
 #include <transform_block_settings/transform_block_settings.h>
+#include <debug_mode/debug_mode.h>
 
 transform_block_settings_t 
 setup_transform_block(matrix_block_setting_t block_setting)

@@ -1,5 +1,6 @@
 #include <radix_sort/radix_sort.h>
 #include <string.h>
+#include <debug_mode/debug_mode.h>
 
 
 typedef struct
@@ -59,6 +60,9 @@ void rsort_r(void *array,
 	memcpy(array,
 	       sorted_array,
 	       array_length*element_size);		
+	free(sorted_array);
+	free(current_order);
+	free(next_order);
 }
 
 static inline

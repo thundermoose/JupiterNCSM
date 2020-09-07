@@ -2,6 +2,7 @@
 #include <omp.h>
 #include "read_3nf_hdf5_file.h"
 #include "../utils/debug_messages.h"
+#include <debug_mode/debug_mode.h>
 
 
 int comp_confs(Configuration conf_a,

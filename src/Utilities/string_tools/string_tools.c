@@ -2,6 +2,7 @@
 #include <thundertester/test.h>
 #include <stdlib.h>
 #include <string.h>
+#include <debug_mode/debug_mode.h>
 
 static
 size_t count_words(const char *string);

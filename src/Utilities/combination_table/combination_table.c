@@ -9,6 +9,7 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <debug_mode/debug_mode.h>
 
 struct _combination_table_
 {

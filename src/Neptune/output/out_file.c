@@ -1,6 +1,7 @@
 #include <output/out_file.h>
 #include <output/write_to_uniform.h>
 #include <output/write_to_hdf5.h>
+#include <debug_mode/debug_mode.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

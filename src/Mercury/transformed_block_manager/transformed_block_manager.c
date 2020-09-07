@@ -3,6 +3,8 @@
 #include <clebsch_gordan/clebsch_gordan.h>
 #include <block_transform/block_transform.h>
 #include <string_tools/string_tools.h>
+#include <log/log.h>
+#include <debug_mode/debug_mode.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -77,6 +79,11 @@ void free_blocks(transformed_block_manager_t manager);
 static inline
 void swap(int *a,int *b);
 
+#ifndef NDEBUG
+static inline
+void log_matrix(Dens_Matrix *matrix);
+#endif
+
 transformed_block_manager_t 
 new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 			      const char *basis_files_path,
@@ -88,6 +95,9 @@ new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 		malloc(sizeof(struct _transformed_block_manager_));
 	manager->ket_basis = NULL;
 	manager->bra_basis = NULL;
+	manager->blocks = NULL;
+	manager->num_blocks = 0;
+	manager->num_allocated_blocks = 0;
 	manager->coupled_2nf_data = coupled_2nf_data;
 	manager->basis_files_path = copy_string(basis_files_path);
 	manager->index_list_path = copy_string(index_list_path);
@@ -102,16 +112,16 @@ new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 void decouple_transform_block(transformed_block_manager_t manager,
 			      transform_block_settings_t block_settings)
 {
-	if (manager->ket_basis != NULL)
-		free_m_scheme_2p_basis(manager->ket_basis);
-	if (manager->bra_basis != NULL)
-		free_m_scheme_2p_basis(manager->bra_basis);
+	log_entry("In decouple_transform_block");
 	setup_ket_basis(manager,block_settings);
 	setup_bra_basis(manager,block_settings);
+	log_entry("Set up the new bases");
 	int min_M = max(get_min_M(manager->ket_basis),
 			get_min_M(manager->bra_basis));
 	int max_M = min(get_max_M(manager->ket_basis),
 			get_max_M(manager->bra_basis));
+	log_entry("min_M = %d", min_M);
+	log_entry("max_M = %d", max_M);
 	int Tz = block_settings.total_isospin;
 	size_t num_blocks = (max_M-min_M)/2+1;
 	manager->min_M = min_M;
@@ -120,6 +130,7 @@ void decouple_transform_block(transformed_block_manager_t manager,
 	for (size_t i = 0; i < num_blocks; i++)
 	{	
 		int M = min_M+i*2;
+		log_entry("Decoupling M = %d",M);
 		m_scheme_2p_basis_t ket_m_basis = 
 			cut_out_M_block(manager->ket_basis,M);
 		m_scheme_2p_basis_t bra_m_basis =
@@ -134,6 +145,9 @@ void decouple_transform_block(transformed_block_manager_t manager,
 					 manager->J_max,
 					 manager->coupled_2nf_data,
 					 manager->clebsch_gordan_data);
+#ifndef NDEBUG
+		log_matrix(manager->blocks[i].matrix);
+#endif
 		if (manager->blocks[i].ket_basis)
 			free_m_scheme_2p_basis(manager->blocks[i].ket_basis);
 		manager->blocks[i].ket_basis = ket_m_basis;
@@ -163,12 +177,16 @@ get_transformed_matrix_block(transformed_block_manager_t manager,
 		size_t i = (M-manager->min_M)/2;
 		m_scheme_2p_basis_t ket_m_basis = manager->blocks[i].ket_basis;
 		m_scheme_2p_basis_t bra_m_basis = manager->blocks[i].bra_basis;
-		Dens_Matrix *current_matrix = manager->blocks[i].matrix; 
 		size_t ket_index = get_ket_index(current_connection,
 						 ket_m_basis);
 		size_t bra_index = get_bra_index(current_connection,
 						 bra_m_basis);
-		elements[element_index++] =
+		log_entry("ket_index = %lu",ket_index);
+		log_entry("bra_index = %lu",bra_index);
+		Dens_Matrix *current_matrix = manager->blocks[i].matrix; 
+		elements[element_index++] = 
+			ket_index == no_index || bra_index == no_index ?
+			0.0 :
 		       	get_dens_matrix_element(current_matrix,
 						ket_index,
 						bra_index);
@@ -182,6 +200,16 @@ get_transformed_matrix_block(transformed_block_manager_t manager,
 void free_transformed_block_manager(transformed_block_manager_t manager)
 {
 	free_blocks(manager);
+	if (manager->ket_basis)
+		free_m_scheme_2p_basis(manager->ket_basis);	
+	if (manager->bra_basis)
+		free_m_scheme_2p_basis(manager->bra_basis);	
+	free_antoine_2nf_file(manager->coupled_2nf_data);
+	free(manager->basis_files_path);
+	free(manager->index_list_path);
+	free_single_particle_basis(manager->single_particle_basis);
+	free_clebsch_gordan(manager->clebsch_gordan_data);
+	free(manager);
 }
 
 static
@@ -219,7 +247,7 @@ m_scheme_2p_basis_t load_anicr_basis(char *basis_files_path,
 				     int neutron_energy,
 				     int single_particle_energy_max)
 {
-	size_t length_filename_buffer = strlen(basis_files_path)+7;
+	size_t length_filename_buffer = strlen(basis_files_path)+128;
 	char *proton_basis_filename = NULL;
 	char *neutron_basis_filename = NULL;
 	if (total_isospin < 2)
@@ -274,7 +302,7 @@ static inline
 const int get_max_M(m_scheme_2p_basis_t basis)
 {
 	m_scheme_2p_state_t top_state = 
-		get_m_scheme_2p_state(basis,get_m_scheme_2p_dimension(basis));
+		get_m_scheme_2p_state(basis,get_m_scheme_2p_dimension(basis)-1);
 	SP_States *sp_states = get_m_scheme_sp_states(basis);
 	return sp_states->sp_states[top_state.a].m + 
 		sp_states->sp_states[top_state.b].m;
@@ -320,6 +348,7 @@ const size_t get_ket_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
 	else if (num_protons == 1)
@@ -331,6 +360,7 @@ const size_t get_ket_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	
 	else
@@ -342,6 +372,7 @@ const size_t get_ket_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
 }
@@ -360,6 +391,7 @@ const size_t get_bra_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
 	else if (num_protons == 1)
@@ -371,6 +403,7 @@ const size_t get_bra_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	
 	else
@@ -382,6 +415,7 @@ const size_t get_bra_index(connection_t connection,
 		};
 		if (state.a > state.b)
 			swap(&state.a,&state.b);
+		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
 }
@@ -393,3 +427,20 @@ void swap(int *a,int *b)
 	*a = *b;
 	*b = tmp;
 }
+
+#ifndef NDEBUG
+static inline
+void log_matrix(Dens_Matrix *matrix)
+{
+	log_entry("matrix (%p):",matrix);
+	for (size_t i = 0; i<matrix->m; i++)
+	{
+		for (size_t j = 0; j<matrix->n; j++)
+		{
+			log_entry("(%lu %lu) = %g",
+				  i,j,
+				  matrix->elements[matrix->n*i+j]);
+		}
+	}
+}
+#endif

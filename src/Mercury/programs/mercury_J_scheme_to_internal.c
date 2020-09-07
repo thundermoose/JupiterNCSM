@@ -82,6 +82,8 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
 	printf("2NF blocks only:\n");
+	log_entry("num_particle_argument = %lu",
+		  get_num_particles_argument(arguments));
 	antoine_2nf_file_t coupled_2nf_data =
 		open_antoine_2nf_file
 		(get_interaction_path_2nf_argument(arguments),
@@ -102,15 +104,16 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 			next_2nf_block_iterator(combination_table);
 		transform_block_settings_t current_block =
 			setup_transform_block(current_matrix_block);
-		printf("<(pE %d nE %d)|(pE %d nE %d)> Tz = %d\n",
-		       current_block.proton_energy_bra,
-		       current_block.neutron_energy_bra,
-		       current_block.proton_energy_ket,
-		       current_block.neutron_energy_ket,
-		       current_block.total_isospin);
+		log_entry("<(pE %d nE %d)|(pE %d nE %d)> Tz = %d",
+			  current_block.proton_energy_bra,
+			  current_block.neutron_energy_bra,
+			  current_block.proton_energy_ket,
+			  current_block.neutron_energy_ket,
+			  current_block.total_isospin);
 		if (compare_transform_block_settings(&transformed_block,
 						     &current_block) != 0)
 		{
+			log_entry("Needs to decouple a new block");
 			decouple_transform_block(manager,
 						 current_block);
 			transformed_block = current_block;
@@ -118,8 +121,10 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 		mercury_matrix_block_t matrix_block = 
 			get_transformed_matrix_block(manager,
 						     current_matrix_block);
+		log_entry("Retrieved the current matrix_block");
 		save_mercury_matrix_block(matrix_block,
 					  output_path_base);
+		log_entry("Saved the current matrix_block to file");
 		free_mercury_matrix_block(matrix_block);
 	}
 	free_transformed_block_manager(manager);

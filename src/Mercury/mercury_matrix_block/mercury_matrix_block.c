@@ -2,6 +2,7 @@
 #include <error/error.h>
 #include <global_constants/global_constants.h>
 #include <log/log.h>
+#include <debug_mode/debug_mode.h>
 #include <thundertester/test.h>
 #include <stdlib.h>
 #include <stdio.h>

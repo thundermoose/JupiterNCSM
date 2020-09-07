@@ -1,6 +1,7 @@
 #include <particle_type/particle_type.h>
 #include <log/log.h>
 #include <error/error.h>
+#include <debug_mode/debug_mode.h>
 
 particle_type_t parse_particle_type(const char *string)
 {

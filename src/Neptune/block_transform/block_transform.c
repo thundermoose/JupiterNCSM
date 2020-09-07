@@ -8,6 +8,8 @@
 #include <utils/helpful_macros.h>
 #include <jjj_transformation/jjj_transformation.h>
 #include <jt_transformation/jt_transformation.h>
+#include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 // The following four functions
 // compute the extremal values
@@ -134,6 +136,7 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 
 
 	DEBUG_MESS("\n\n========================New Block=============================\n\n");
+	DEBUG_MESS("Test\n");
 
 	// This matrix is the one that will
 	// be returned, we will build it up

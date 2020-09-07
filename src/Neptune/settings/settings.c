@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "argument_buffer.h"
 #include "argument_callback.h"
+#include <debug_mode/debug_mode.h>
 
 Settings *empty_settings()
 {

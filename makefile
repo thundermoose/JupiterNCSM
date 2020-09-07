@@ -1,4 +1,4 @@
-#.SILENT:
+.SILENT:
 -include makefile.local
 ifndef compiler
 compiler := gcc -std=gnu99 -Wall -Werror -c
@@ -49,16 +49,16 @@ program_package_sources=$(filter ./$(source_path)/$(1)/%.c,$(all_sources))
 .SECONDARY: %.x
 .PRESIOUS: $(all_objects) $(dependencies_files) %.x
 
-all: $(mode_path)/release.mode
+all: $(mode_path)/release.mode $(all_sources)
 	make $(program_packages_names:%=release_%)
 
-debug: $(mode_path)/debug.mode
+debug: $(mode_path)/debug.mode $(all_sources)
 	make $(program_packages_names:%=debug_%)
 
-test: $(mode_path)/test.mode
+test: $(mode_path)/test.mode $(all_sources)
 	make $(program_packages_names:%=test_%)
 
-test_no_logging: $(mode_path)/test_no_logging.mode
+test_no_logging: $(mode_path)/test_no_logging.mode $(all_sources)
 	make $(program_packages_names:%=test_no_logging_%)
 
 clean:

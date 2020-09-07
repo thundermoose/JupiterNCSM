@@ -1,6 +1,8 @@
 #include <arguments/arguments.h>
 #include <string_tools/string_tools.h>
 #include <array_builder/array_builder.h>
+#include <debug_mode/debug_mode.h>
+#include <log/log.h>
 #include <error/error.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +60,8 @@ arguments_t parse_argument_list(int num_arguments,
 		arguments->to_few_arguments = 1;
 		for (size_t i = 4; i<num_arguments; i++)
 		{
+			log_entry("argument_list[%lu] = %s",i,
+				  argument_list[i]);
 			INTEGER_ARGUMENT("--num-protons",num_protons);
 			INTEGER_ARGUMENT("--num-neutrons",num_neutrons);
 			INTEGER_ARGUMENT("--single-particle-energy",
@@ -83,6 +87,10 @@ arguments_t parse_argument_list(int num_arguments,
 			}
 				
 		}
+		log_entry("arguments->num_protons = %lu",
+			  arguments->num_protons);
+		log_entry("arguments->num_neutrons = %lu",
+			  arguments->num_neutrons);
 	}
 	else
 	{
