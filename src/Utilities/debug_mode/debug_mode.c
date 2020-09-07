@@ -1,6 +1,8 @@
 #define BACKEND_DEBUG_MODE
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
+#include <string.h>
+#include <errno.h>
 #ifndef NDEBUG
 
 void *logging_malloc(size_t bytes_to_allocate,
@@ -76,4 +78,48 @@ void logging_free(void *pointer_to_free,
 		pointer_to_free);
 	free(pointer_to_free);
 }
+
+FILE *logging_fopen(const char *path_name,
+		    const char *mode,
+		    const char *file_name,
+		    const char *function_name,
+		    const int line_number)
+{
+	FILE *file_handle = fopen(path_name,mode);
+	static size_t num_fopen = 0;
+	num_fopen++;
+	log_log(file_name,
+		function_name,
+		line_number,
+		num_fopen,
+		"%p = fopen(%s,%s) files",
+		file_handle,
+		path_name,mode);
+	if (file_handle == NULL)
+		log_log(file_name,
+			function_name,
+			line_number,
+			1,
+			"%s: %s",
+			path_name,
+			strerror(errno));
+	return file_handle;
+}
+
+void logging_fclose(FILE *file_handle,
+		    const char *file_name,
+		    const char *function_name,
+		    const int line_number)
+{
+	static size_t num_fclose = 0;
+	num_fclose++;
+	log_log(file_name,
+		function_name,
+		line_number,
+		num_fclose,
+		"fclose(%p) files",
+		file_handle);
+	fclose(file_handle);
+}
+
 #endif

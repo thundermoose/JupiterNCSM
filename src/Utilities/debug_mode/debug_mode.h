@@ -2,6 +2,7 @@
 #define __DEBUG_MODE_
 
 #include <stdlib.h>
+#include <stdio.h>
 #ifndef NDEBUG
 #ifndef BACKEND_DEBUG_MODE
 #define malloc(bytes_to_allocate) logging_malloc(bytes_to_allocate,\
@@ -18,6 +19,17 @@
 						 __builtin_FUNCTION(),\
 						 __builtin_LINE())
 #define free(pointer_to_free) logging_free(pointer_to_free,\
+					   __builtin_FILE(),\
+					   __builtin_FUNCTION(),\
+					   __builtin_LINE())
+
+
+#define fopen(pathname,mode) logging_fopen(pathname,mode,\
+					   __builtin_FILE(),\
+					   __builtin_FUNCTION(),\
+					   __builtin_LINE())
+
+#define fclose(file_handle) logging_fclose(file_handle,\
 					   __builtin_FILE(),\
 					   __builtin_FUNCTION(),\
 					   __builtin_LINE())
@@ -43,6 +55,18 @@ void logging_free(void *pointer_to_free,
 		  const char *file_name,
 		  const char *function_name,
 		  const int line_number);
+
+
+FILE *logging_fopen(const char *path_name,
+		    const char *mode,
+		    const char *file_name,
+		    const char *function_name,
+		    const int line_number);
+
+void logging_fclose(FILE *file_handle,
+		    const char *file_name,
+		    const char *function_name,
+		    const int line_number);
 
 #endif
 
