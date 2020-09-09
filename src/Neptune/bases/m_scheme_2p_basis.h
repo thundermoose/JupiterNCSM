@@ -56,6 +56,12 @@ size_t *m_scheme_2p_corresponding_indices(m_scheme_2p_basis_t basis);
 
 void print_m_scheme_2p_basis(m_scheme_2p_basis_t basis);
 
+#ifndef NLOGING
+void log_m_scheme_2p_basis(m_scheme_2p_basis_t basis);
+#else
+#define log_m_scheme_2p_basis(basis)
+#endif
+
 size_t get_m_scheme_2p_state_index(m_scheme_2p_basis_t basis,
 				   m_scheme_2p_state_t state);
 

@@ -49,5 +49,6 @@ void free_clebsch_gordan(Clebsch_Gordan_Data* cgd)
   {
     free(cgd->wig_data);
     free(cgd);
+    wigxjpf_fill_factors(0);
   }
 }

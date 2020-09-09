@@ -187,9 +187,11 @@ double get_matrix_element_from_connection(interaction_t interaction,
 				  2*connection.neutron_states[num_neutrons+i]+1);
 		bra_state[i] = bra_neutron.neptune_index;
 		ket_state[i] = ket_neutron.neptune_index;
-		log_entry("bra_neutron.neptune_index = %lu",bra_neutron.neptune_index);
+		log_entry("bra_neutron.neptune_index = %lu",
+			  bra_neutron.neptune_index);
 		log_entry("bra_neutron.tz = %d",bra_neutron.tz);
-		log_entry("ket_neutron.neptune_index= %lu",ket_neutron.neptune_index);
+		log_entry("ket_neutron.neptune_index= %lu",
+			  ket_neutron.neptune_index);
 		log_entry("ket_neutron.tz = %d",ket_neutron.tz);
 	}
 	for (size_t i = 0; i<num_protons; i++)
@@ -202,9 +204,11 @@ double get_matrix_element_from_connection(interaction_t interaction,
 				  2*connection.proton_states[num_protons+i]);
 		bra_state[num_neutrons+i] = bra_proton.neptune_index;
 		ket_state[num_neutrons+i] = ket_proton.neptune_index;
-		log_entry("bra_proton.neptune_index = %lu",bra_proton.neptune_index);
+		log_entry("bra_proton.neptune_index = %lu",
+			  bra_proton.neptune_index);
 		log_entry("bra_proton.tz = %d",bra_proton.tz);
-		log_entry("ket_proton.neptune_index = %lu",ket_proton.neptune_index);
+		log_entry("ket_proton.neptune_index = %lu",
+			  ket_proton.neptune_index);
 		log_entry("ket_proton.tz = %d",ket_proton.tz);
 	}
 	int Tz = (int)(num_neutrons)-(int)(num_protons);

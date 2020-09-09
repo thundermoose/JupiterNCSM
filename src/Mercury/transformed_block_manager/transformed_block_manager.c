@@ -112,7 +112,13 @@ new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 void decouple_transform_block(transformed_block_manager_t manager,
 			      transform_block_settings_t block_settings)
 {
-	log_entry("In decouple_transform_block");
+	log_entry("decouple_transform_block(%p,{pk%d pb%d, nk%d nb%d, Tz%d})",
+		  manager,
+		  block_settings.proton_energy_ket,
+		  block_settings.proton_energy_bra,
+		  block_settings.neutron_energy_ket,
+		  block_settings.neutron_energy_bra,
+		  block_settings.total_isospin);
 	setup_ket_basis(manager,block_settings);
 	setup_bra_basis(manager,block_settings);
 	log_entry("Set up the new bases");
@@ -135,6 +141,8 @@ void decouple_transform_block(transformed_block_manager_t manager,
 			cut_out_M_block(manager->ket_basis,M);
 		m_scheme_2p_basis_t bra_m_basis =
 			cut_out_M_block(manager->bra_basis,M);
+		log_m_scheme_2p_basis(ket_m_basis);
+		log_m_scheme_2p_basis(bra_m_basis);
 		if (manager->blocks[i].matrix)
 			free_dens_matrix(manager->blocks[i].matrix);
 		manager->blocks[i].matrix =
@@ -162,6 +170,29 @@ mercury_matrix_block_t
 get_transformed_matrix_block(transformed_block_manager_t manager,
 			     matrix_block_setting_t settings)
 {
+	log_entry("get_transformed_matrix_block(%p, {\n"
+		  "\t.type = %s\n"
+		  "\t.difference_energy_protons = %d\n"
+		  "\t.difference_M_protons = %d\n"
+		  "\t.depth_protons = %d\n"
+		  "\t.difference_energy_neutrons = %d\n"
+		  "\t.difference_M_neutrons = %d\n"
+		  "\t.depth_neutrons = %d\n"
+		  "\t.num_proton_combinations = %lu\n"
+		  "\t.num_neutron_combinations = %lu\n"
+		  "\t.matrix_block_id = %lu\n"
+		  "}",
+		manager,
+		block_type_to_string(settings.type),
+		settings.difference_energy_protons,
+		settings.difference_M_protons,
+		settings.depth_protons,
+		settings.difference_energy_neutrons,
+		settings.difference_M_neutrons,
+		settings.depth_neutrons,
+		settings.num_proton_combinations,
+		settings.num_neutron_combinations,
+		settings.matrix_block_id);
 	connection_list_t connection_list = 
 		read_connection_files(manager->index_list_path,
 				      settings);
@@ -177,19 +208,23 @@ get_transformed_matrix_block(transformed_block_manager_t manager,
 		size_t i = (M-manager->min_M)/2;
 		m_scheme_2p_basis_t ket_m_basis = manager->blocks[i].ket_basis;
 		m_scheme_2p_basis_t bra_m_basis = manager->blocks[i].bra_basis;
+		log_m_scheme_2p_basis(ket_m_basis);
+		log_m_scheme_2p_basis(bra_m_basis);
 		size_t ket_index = get_ket_index(current_connection,
 						 ket_m_basis);
 		size_t bra_index = get_bra_index(current_connection,
 						 bra_m_basis);
 		log_entry("ket_index = %lu",ket_index);
 		log_entry("bra_index = %lu",bra_index);
+		if (ket_index == no_index || bra_index == no_index)
+			__builtin_trap();
 		Dens_Matrix *current_matrix = manager->blocks[i].matrix; 
 		elements[element_index++] = 
 			ket_index == no_index || bra_index == no_index ?
 			0.0 :
 		       	get_dens_matrix_element(current_matrix,
-						ket_index,
-						bra_index);
+						bra_index,
+						ket_index);
 	}
 	free_connection_list(connection_list);
 	return new_mercury_matrix_block_from_data(elements,
@@ -204,7 +239,6 @@ void free_transformed_block_manager(transformed_block_manager_t manager)
 		free_m_scheme_2p_basis(manager->ket_basis);	
 	if (manager->bra_basis)
 		free_m_scheme_2p_basis(manager->bra_basis);	
-	free_antoine_2nf_file(manager->coupled_2nf_data);
 	free(manager->basis_files_path);
 	free(manager->index_list_path);
 	free_single_particle_basis(manager->single_particle_basis);
@@ -294,6 +328,7 @@ const int get_min_M(m_scheme_2p_basis_t basis)
 {
 	m_scheme_2p_state_t bottom_state = get_m_scheme_2p_state(basis,0);
 	SP_States *sp_states = get_m_scheme_sp_states(basis);
+	log_entry("bottom_state = %d %d", bottom_state.a, bottom_state.b);
 	return sp_states->sp_states[bottom_state.a].m + 
 		sp_states->sp_states[bottom_state.b].m;
 }
@@ -304,6 +339,7 @@ const int get_max_M(m_scheme_2p_basis_t basis)
 	m_scheme_2p_state_t top_state = 
 		get_m_scheme_2p_state(basis,get_m_scheme_2p_dimension(basis)-1);
 	SP_States *sp_states = get_m_scheme_sp_states(basis);
+	log_entry("top_state = %d %d", top_state.a, top_state.b);
 	return sp_states->sp_states[top_state.a].m + 
 		sp_states->sp_states[top_state.b].m;
 }
@@ -322,14 +358,17 @@ static
 void free_blocks(transformed_block_manager_t manager)
 {
 
-	for (size_t i = 0; i <manager->num_blocks; i++)
+	for (size_t i = 0; i <manager->num_allocated_blocks; i++)
 	{
 		if (manager->blocks[i].matrix)
 			free_dens_matrix(manager->blocks[i].matrix);
+		manager->blocks[i].matrix = NULL;
 		if (manager->blocks[i].ket_basis)
-			free_m_scheme_2p_basis(manager->blocks[i].bra_basis);
-		if (manager->blocks[i].bra_basis)
 			free_m_scheme_2p_basis(manager->blocks[i].ket_basis);
+		manager->blocks[i].ket_basis = NULL;
+		if (manager->blocks[i].bra_basis)
+			free_m_scheme_2p_basis(manager->blocks[i].bra_basis);
+		manager->blocks[i].bra_basis = NULL;
 	}
 	free(manager->blocks);
 }
@@ -355,11 +394,9 @@ const size_t get_ket_index(connection_t connection,
 	{
 		m_scheme_2p_state_t state =
 		{
-			.a = 2*connection.proton_states[0],
-			.b = 2*connection.neutron_states[0]+1
+			.a = 2*connection.neutron_states[0]+1,
+			.b = 2*connection.proton_states[0]
 		};
-		if (state.a > state.b)
-			swap(&state.a,&state.b);
 		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	
@@ -398,11 +435,9 @@ const size_t get_bra_index(connection_t connection,
 	{
 		m_scheme_2p_state_t state =
 		{
-			.a = 2*connection.proton_states[1],
-			.b = 2*connection.neutron_states[1]+1
+			.a = 2*connection.neutron_states[1]+1,
+			.b = 2*connection.proton_states[1]
 		};
-		if (state.a > state.b)
-			swap(&state.a,&state.b);
 		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	

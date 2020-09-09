@@ -35,6 +35,10 @@ typedef struct
 typedef int (*state_condition_t)(SP_State state_a,
 				 SP_State state_b,
 				 void *data);
+
+// Evil global variables
+static SP_States *current_sp_states = NULL;
+
 static 
 int any_thing_goes(SP_State state_a,
 		   SP_State state_b,
@@ -84,6 +88,10 @@ void setup_state_to_index_map(m_scheme_2p_basis_t basis);
 static
 int compare_m_scheme_states(m_scheme_2p_state_t *state_a,
 			    m_scheme_2p_state_t *state_b);
+
+static
+int compare_m_scheme_states_m(m_scheme_2p_state_t *state_a,
+			      m_scheme_2p_state_t *state_b);
 
 static
 uint64_t hash_m_scheme_state(m_scheme_2p_state_t *state);
@@ -330,6 +338,48 @@ void print_m_scheme_2p_basis(m_scheme_2p_basis_t basis)
 					basis->states[i].b);
 }
 
+#ifndef NLOGING
+void log_m_scheme_2p_basis(m_scheme_2p_basis_t basis)
+{
+	SP_States *sp_states = basis->sp_states;
+	//list_sp_states(sp_states);
+	log_entry("m-scheme basis:");
+	Shells *shells = sp_states->shells;
+	if (basis->corresponding_indices == NULL)
+		for (size_t i = 0; i<basis->dimension; i++)
+		{
+			sp_state_index state_a = basis->states[i].a;
+			sp_state_index state_b = basis->states[i].b;
+			shell_index shell_a = 
+				sp_states->sp_states[state_a].shell;
+			true_shell_index tshell_a =
+			       	shells->shells[shell_a].tse;
+			shell_index shell_b = 
+				sp_states->sp_states[state_b].shell;
+			true_shell_index tshell_b =
+			       	shells->shells[shell_b].tse;
+			log_entry("(%lu): (%d:%lu:%lu) (%d:%lu:%lu) M = %d E = %d",
+					i,
+					basis->states[i].a,
+					shell_a,
+					tshell_a,
+					basis->states[i].b,
+					shell_b,
+					tshell_b,
+					total_m(basis->states[i],
+						sp_states),
+					total_energy(basis->states[i],
+						     sp_states));
+		}
+	else
+		for (size_t i = 0; i<basis->dimension; i++)
+			log_entry("(%lu:%lu): %d %d",
+					i,basis->corresponding_indices[i],
+					basis->states[i].a,
+					basis->states[i].b);
+}
+#endif
+
 Shells *get_m_scheme_shells(m_scheme_2p_basis_t m_scheme_2p_basis)
 {
 	return m_scheme_2p_basis->sp_states->shells;
@@ -514,14 +564,20 @@ void read_two_particle_type_files(m_scheme_2p_basis_t basis,
 
 			m_scheme_2p_state_t state =
 			{
-				.a = min(proton_state,neutron_state),
-				.b = max(proton_state,neutron_state)
+				.a = neutron_state,
+				.b = proton_state
 			};
 			basis->states[state_index++] = state;
 		}
 	}
 	free(proton_packed_states);
 	free(neutron_packed_states);
+	current_sp_states = basis->sp_states;
+	qsort(basis->states,
+	      basis->dimension,
+	      sizeof(m_scheme_2p_state_t),
+	      (__compar_fn_t)compare_m_scheme_states_m);
+	current_sp_states = NULL;
 }
 
 static
@@ -556,9 +612,15 @@ void setup_state_to_index_map(m_scheme_2p_basis_t basis)
 			     (__compar_fn_t)compare_m_scheme_states,
 			     (__hash_fn_t)hash_m_scheme_state);  			     
 	for (size_t index = 0; index < basis->dimension; index++)
+	{
+		log_entry("basis->state[%lu] = %d %d",
+			  index,
+			  basis->states[index].a,
+			  basis->states[index].b);
 		hash_map_insert(basis->state_to_index_map,
 				&basis->states[index],
 				&index);
+	}
 }
 
 static
@@ -566,6 +628,22 @@ int compare_m_scheme_states(m_scheme_2p_state_t *state_a,
 			    m_scheme_2p_state_t *state_b)
 {
 	int diff = state_a->a - state_b->a;
+	if (diff)
+		return diff;
+	diff = state_a->b - state_b->b;
+	return diff;
+}
+
+static
+int compare_m_scheme_states_m(m_scheme_2p_state_t *state_a,
+			      m_scheme_2p_state_t *state_b)
+{
+	int diff = 
+		total_m(*state_a, current_sp_states) - 
+		total_m(*state_b, current_sp_states);
+	if (diff)
+		return diff;
+	diff = state_a->a - state_b->a;
 	if (diff)
 		return diff;
 	diff = state_a->b - state_b->b;
@@ -613,6 +691,18 @@ new_test(read_anicr_basis,
 	 print_m_scheme_2p_basis(basis);
 	 free_m_scheme_2p_basis(basis);
 	);
+new_test(read_anicr_basis_np,
+	 const char *anicr_basis_protons = 
+	 TEST_DATA"/anicr_bases_protons_nmax2/p/basis_energy_0";
+	 const char *anicr_basis_neutrons = 
+	 TEST_DATA"/anicr_bases_neutrons_nmax2/n/basis_energy_1";
+	 m_scheme_2p_basis_t basis = 
+	 new_m_scheme_2p_basis_from_files(2,
+					  anicr_basis_protons,
+					  anicr_basis_neutrons); 
+	 print_m_scheme_2p_basis(basis);
+	 free_m_scheme_2p_basis(basis);
+	);
 new_test(cut_out_M_block,
 	 const char *anicr_basis = TEST_DATA"/anicr_bases/basis_energy_1";
 	 m_scheme_2p_basis_t basis =
@@ -621,5 +711,23 @@ new_test(cut_out_M_block,
 	 print_m_scheme_2p_basis(basis);
 	 print_m_scheme_2p_basis(m_0_basis);
 	 free_m_scheme_2p_basis(m_0_basis);
+	 free_m_scheme_2p_basis(basis);
+	);
+new_test(search_anicre_basis_np,
+	 const char *anicr_basis_protons = 
+	 TEST_DATA"/anicr_bases_protons_nmax2/p/basis_energy_0";
+	 const char *anicr_basis_neutrons = 
+	 TEST_DATA"/anicr_bases_neutrons_nmax2/n/basis_energy_1";
+	 m_scheme_2p_basis_t basis = 
+	 new_m_scheme_2p_basis_from_files(2,
+					  anicr_basis_protons,
+					  anicr_basis_neutrons); 
+	 for (size_t i = 0; i < basis->dimension; i++)
+	 {
+	 	log_entry("(%lu): %d %d",
+			  i,basis->states[i].a,basis->states[i].b);
+		assert_that(i == get_m_scheme_2p_state_index(basis,
+							     basis->states[i]));
+	 }
 	 free_m_scheme_2p_basis(basis);
 	);

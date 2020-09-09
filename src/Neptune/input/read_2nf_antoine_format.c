@@ -129,6 +129,7 @@ Dens_Matrix *get_antoine_matrix(antoine_2nf_file_t data_file,
 
 void free_antoine_2nf_file(antoine_2nf_file_t data_file)
 {
+	log_entry("free_antoine_2nf_file(%p)",data_file);
 	free_jt_basis(data_file->antoine_basis);
 	free_index_hash(data_file->used_configurations);
 	free(data_file->elements);

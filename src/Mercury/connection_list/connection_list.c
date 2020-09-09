@@ -274,5 +274,6 @@ void read_connection_file(short **connections,
 		  connection_file) != *num_connections)
 		error("Could not read connections from %s\n",
 		      file_name);
+	free(file_name);
 	fclose(connection_file);
 }

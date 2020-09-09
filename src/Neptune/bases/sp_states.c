@@ -1,5 +1,6 @@
 #include "sp_states.h"
 #include <debug_mode/debug_mode.h>
+#include <thundertester/test.h>
 
 Shells* _shells;
 
@@ -103,3 +104,11 @@ void free_sp_states(SP_States* sp_states){
 	free(sp_states->sp_states);
 	free(sp_states);
 }
+
+new_test(print_nmax2_antoine_basis,
+	 Shells *shells = new_antoine_shells(2);
+	 SP_States *states = new_sp_states(shells);
+	 list_sp_states(states);
+	 free_sp_states(states);
+	 free_shells(shells);
+	);

@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <debug_mode/debug_mode.h>
-
 
 FILE *log_file;
 
