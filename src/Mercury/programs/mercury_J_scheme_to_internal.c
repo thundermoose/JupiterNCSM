@@ -4,7 +4,7 @@
 #include <arguments/arguments.h>
 #include <input/read_2nf_antoine_format.h>
 #include <transform_block_settings/transform_block_settings.h>
-#include <transformed_block_manager/transformed_block_manager.h>
+#include <transform_2nf_block_manager/transform_2nf_block_manager.h>
 #include <combination_table/combination_table.h>
 #include <log/log.h>
 
@@ -90,8 +90,8 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 		 get_num_particles_argument(arguments),
 		 get_single_particle_energy_argument(arguments),
 		 get_two_particle_energy_argument(arguments));
-	transformed_block_manager_t manager =
-		new_transformed_block_manager
+	transform_2nf_block_manager_t manager =
+		new_transform_2nf_block_manager
 		(coupled_2nf_data,
 		 get_index_list_path_argument(arguments),
 		 get_index_list_path_argument(arguments),
