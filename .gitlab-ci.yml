@@ -1,0 +1,30 @@
+
+# one should perhaps not dump ' > /dev/null' from testing, but too
+# much output makes the CI logs hard to use too.  In case of error,
+# try locally, or remove the redirect.
+
+.build: &build
+  before_script:
+    - apt-get update -yq > /dev/null
+    - apt-get install -y --no-install-recommends software-properties-common wget make gcc g++ flex bison gsl-bin libgsl-dev libhdf5-dev > /dev/null
+  script:
+    - wget http://fy.chalmers.se/subatom/wigxjpf/wigxjpf-1.10.tar.gz
+    - tar -zxf wigxjpf-1.10.tar.gz
+    - (cd wigxjpf-1.10/ ; make)
+    - make -k wigxjpf_path=wigxjpf-1.10 hdf5_comp_flags=-I/usr/include/hdf5/serial/
+  tags:
+    - docker
+
+###
+
+build gcc-latest:
+  image: gcc:latest
+  <<: *build
+
+build debian-stretch:
+  image: debian:stretch
+  <<: *build
+
+build debian-buster:
+  image: debian:buster
+  <<: *build
