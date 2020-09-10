@@ -63,11 +63,13 @@ const int get_max_M(m_scheme_2p_basis_t basis);
 
 static inline
 const size_t get_ket_index(connection_t connection,
-			   m_scheme_2p_basis_t basis);
+			   m_scheme_2p_basis_t basis,
+			   int *phase);
 
 static inline
 const size_t get_bra_index(connection_t connection,
-			   m_scheme_2p_basis_t basis);
+			   m_scheme_2p_basis_t basis,
+			   int *phase);
 
 static
 void expand_block_list(transformed_block_manager_t manager,
@@ -199,32 +201,65 @@ get_transformed_matrix_block(transformed_block_manager_t manager,
 	size_t num_elements = num_connections(connection_list);
 	double *elements = (double*)calloc(num_elements,sizeof(double));
 	size_t element_index = 0;
+	log_entry("Creating matrix block %lu", settings.matrix_block_id);
 	while (has_next_connection(connection_list))
 	{
 		connection_t current_connection =
 			next_connection(connection_list);
+		log_entry("Current Connection(%lu): %s (%d %d %d %d %d %d),"
+			  " (%d %d %d %d %d %d)",
+			  element_index,
+			  block_type_to_string(current_connection.type),
+			  current_connection.neutron_states[0],
+			  current_connection.neutron_states[1],
+			  current_connection.neutron_states[2],
+			  current_connection.neutron_states[3],
+			  current_connection.neutron_states[4],
+			  current_connection.neutron_states[5],
+			  current_connection.proton_states[0],
+			  current_connection.proton_states[1],
+			  current_connection.proton_states[2],
+			  current_connection.proton_states[3],
+			  current_connection.proton_states[4],
+			  current_connection.proton_states[5]);
 		int M = compute_M(current_connection,
 				  manager->single_particle_basis);
+		log_entry("M = %d",M);
 		size_t i = (M-manager->min_M)/2;
 		m_scheme_2p_basis_t ket_m_basis = manager->blocks[i].ket_basis;
 		m_scheme_2p_basis_t bra_m_basis = manager->blocks[i].bra_basis;
 		log_m_scheme_2p_basis(ket_m_basis);
 		log_m_scheme_2p_basis(bra_m_basis);
+		int phase = 1;
 		size_t ket_index = get_ket_index(current_connection,
-						 ket_m_basis);
+						 ket_m_basis,
+						 &phase);
 		size_t bra_index = get_bra_index(current_connection,
-						 bra_m_basis);
+						 bra_m_basis,
+						 &phase);
 		log_entry("ket_index = %lu",ket_index);
 		log_entry("bra_index = %lu",bra_index);
-		if (ket_index == no_index || bra_index == no_index)
-			__builtin_trap();
 		Dens_Matrix *current_matrix = manager->blocks[i].matrix; 
+#ifndef NLOGING
+		log_entry("current_matrix:");
+		for (size_t k = 0; k<current_matrix->m; k++)
+		{
+			for (size_t l = 0; l<current_matrix->n; l++)
+			{
+				log_entry("(%lu,%lu): %lg",
+					  k,l,
+					  get_dens_matrix_element(current_matrix,
+								  k,l));
+			}
+		}
+#endif
 		elements[element_index++] = 
-			ket_index == no_index || bra_index == no_index ?
-			0.0 :
-		       	get_dens_matrix_element(current_matrix,
-						bra_index,
-						ket_index);
+			phase*get_dens_matrix_element(current_matrix,
+						      bra_index,
+						      ket_index);
+		log_entry("Current element(%lu): %lg",
+			  element_index-1,
+			  elements[element_index-1]);
 	}
 	free_connection_list(connection_list);
 	return new_mercury_matrix_block_from_data(elements,
@@ -375,7 +410,8 @@ void free_blocks(transformed_block_manager_t manager)
 
 static inline
 const size_t get_ket_index(connection_t connection,
-			   m_scheme_2p_basis_t basis)
+			   m_scheme_2p_basis_t basis,
+			   int *phase)
 {
 	size_t num_protons = count_protons(connection.type);
 	if (num_protons == 2)
@@ -386,7 +422,10 @@ const size_t get_ket_index(connection_t connection,
 			.b = 2*connection.proton_states[1]
 		};
 		if (state.a > state.b)
+		{
+			*phase = -*phase;
 			swap(&state.a,&state.b);
+		}
 		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
@@ -397,6 +436,11 @@ const size_t get_ket_index(connection_t connection,
 			.a = 2*connection.neutron_states[0]+1,
 			.b = 2*connection.proton_states[0]
 		};
+		if (state.a > state.b)
+		{
+			*phase = -*phase;
+			swap(&state.a,&state.b);
+		}
 		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	
@@ -408,7 +452,10 @@ const size_t get_ket_index(connection_t connection,
 			.b = 2*connection.neutron_states[1]+1
 		};
 		if (state.a > state.b)
+		{
+			*phase = -*phase;
 			swap(&state.a,&state.b);
+		}
 		log_entry("ket_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
@@ -416,7 +463,8 @@ const size_t get_ket_index(connection_t connection,
 
 static inline
 const size_t get_bra_index(connection_t connection,
-			   m_scheme_2p_basis_t basis)
+			   m_scheme_2p_basis_t basis,
+			   int *phase)
 {
 	size_t num_protons = count_protons(connection.type);
 	if (num_protons == 2)
@@ -427,7 +475,10 @@ const size_t get_bra_index(connection_t connection,
 			.b = 2*connection.proton_states[3]
 		};
 		if (state.a > state.b)
+		{
+			*phase = -*phase;
 			swap(&state.a,&state.b);
+		}
 		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}
@@ -438,6 +489,11 @@ const size_t get_bra_index(connection_t connection,
 			.a = 2*connection.neutron_states[1]+1,
 			.b = 2*connection.proton_states[1]
 		};
+		if (state.a > state.b)
+		{
+			*phase = -*phase;
+			swap(&state.a,&state.b);
+		}
 		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}	
@@ -449,7 +505,10 @@ const size_t get_bra_index(connection_t connection,
 			.b = 2*connection.neutron_states[3]+1
 		};
 		if (state.a > state.b)
+		{
+			*phase = -*phase;
 			swap(&state.a,&state.b);
+		}
 		log_entry("bra_state = %d %d",state.a,state.b);
 		return get_m_scheme_2p_state_index(basis,state);
 	}

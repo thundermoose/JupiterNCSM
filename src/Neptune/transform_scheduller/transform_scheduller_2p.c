@@ -4,6 +4,24 @@
 #include <block_transform/block_transform.h>
 #include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
+
+#ifndef NDEBUG
+static inline
+void log_matrix(Dens_Matrix *matrix)
+{
+	log_entry("matrix (%p):",matrix);
+	for (size_t i = 0; i<matrix->m; i++)
+	{
+		for (size_t j = 0; j<matrix->n; j++)
+		{
+			log_entry("(%lu %lu) = %g",
+				  i,j,
+				  matrix->elements[matrix->n*i+j]);
+		}
+	}
+}
+#endif
 
 	static
 void task_handler(Data_Block current_block,
@@ -35,15 +53,19 @@ void task_handler(Data_Block current_block,
 		free_m_scheme_2p_basis(bra_basis);
 		return;
 	}
-	DEBUG_MESS("block: %d %d %d %d\n",
+	log_entry("block: %d %d %d %d",
 		   current_block.Tz,
 		   current_block.M,
 		   current_block.E1,
 		   current_block.E2);
-	DEBUG_MESS("bra_dimension: %lu\n",
+	log_entry("bra_dimension: %lu",
 		   get_m_scheme_2p_dimension(bra_basis));
-	DEBUG_MESS("ket_dimension: %lu\n",
+	log_entry("ket_dimension: %lu",
 		   get_m_scheme_2p_dimension(ket_basis));
+	log_entry("bra_basis:");
+	log_m_scheme_2p_basis(bra_basis);
+	log_entry("ket_basis:");
+	log_m_scheme_2p_basis(ket_basis);
 	Dens_Matrix* matrix_block =
 		compute_jt_block(bra_basis,
 				 ket_basis,
@@ -52,7 +74,9 @@ void task_handler(Data_Block current_block,
 				 J_max,
 				 data_file,
 				 cgd);
-	DEBUG_PRINT_MATRIX(matrix_block);
+#ifndef NDEBUG
+	log_matrix(matrix_block);
+#endif
 	size_t *bra_indices = m_scheme_2p_corresponding_indices(bra_basis);
 	size_t *ket_indices = m_scheme_2p_corresponding_indices(ket_basis);
 	write_to_block(out_file,
@@ -122,7 +146,7 @@ void transform_2p_data(antoine_2nf_file_t data_file,
 		{
 			do
 			{
-				DEBUG_MESS("current_block: %d %d %d %d\n",
+				log_entry("current_block: %d %d %d %d",
 					   current_block.Tz,
 					   current_block.M,
 					   current_block.E1,

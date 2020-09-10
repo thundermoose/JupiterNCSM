@@ -564,8 +564,8 @@ void read_two_particle_type_files(m_scheme_2p_basis_t basis,
 
 			m_scheme_2p_state_t state =
 			{
-				.a = neutron_state,
-				.b = proton_state
+				.a = min(neutron_state,proton_state),
+				.b = max(neutron_state,proton_state)
 			};
 			basis->states[state_index++] = state;
 		}

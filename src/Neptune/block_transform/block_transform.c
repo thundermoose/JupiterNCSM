@@ -11,6 +11,23 @@
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
 
+#ifndef NDEBUG
+static inline
+void log_matrix(Dens_Matrix *matrix)
+{
+	log_entry("matrix (%p):",matrix);
+	for (size_t i = 0; i<matrix->m; i++)
+	{
+		for (size_t j = 0; j<matrix->n; j++)
+		{
+			log_entry("(%lu %lu) = %g",
+				  i,j,
+				  matrix->elements[matrix->n*i+j]);
+		}
+	}
+}
+#endif
+
 // The following four functions
 // compute the extremal values
 // of Jabc and Tz that exists
@@ -355,8 +372,7 @@ Dens_Matrix* compute_jt_block(m_scheme_2p_basis_t bra_basis,
 			      antoine_2nf_file_t data_file,
 			      Clebsch_Gordan_Data* cgd)
 {
-	DEBUG_MESS("Tz = %d, M = %d, J_max = %d\n",
-		   Tz,M,J_max);
+	log_entry("Tz = %d, M = %d, J_max = %d", Tz,M,J_max);
 	jt_basis_t jt_basis = get_jt_basis(data_file);
 
 	Dens_Matrix* accumulator =
@@ -370,14 +386,16 @@ Dens_Matrix* compute_jt_block(m_scheme_2p_basis_t bra_basis,
 						   J,T);
 			if (jt_block_basis == NULL)
 				continue;
-			DEBUG_MESS("J = %d, T = %d\n",J,T);
+			log_entry("J = %d, T = %d",J,T);
 			Dens_Matrix* jt_potential =
 				get_antoine_matrix(data_file,
 						   jt_block_basis,
 						   jt_block_basis,
 						   Tz);
-			DEBUG_MESS("jt_potential:\n");
-			DEBUG_PRINT_MATRIX(jt_potential);
+			log_entry("jt_potential:");
+#ifndef NDEBUG
+			log_matrix(jt_potential);
+#endif
 			Sparse_Matrix *bra_transform = 
 				new_jt_transformation(bra_basis,
 						      jt_block_basis,
@@ -390,8 +408,10 @@ Dens_Matrix* compute_jt_block(m_scheme_2p_basis_t bra_basis,
 				transform_matrix(bra_transform,
 						 jt_potential,
 						 ket_transform);
-			DEBUG_MESS("transformed_matrix:\n");
-			DEBUG_PRINT_MATRIX(transformed_matrix);
+			log_entry("transformed_matrix:");
+#ifndef NDEBUG
+			log_matrix(transformed_matrix);
+#endif
 			accumulate_matrix(*accumulator,
 					  *transformed_matrix);
 			free_sparse_matrix(bra_transform);

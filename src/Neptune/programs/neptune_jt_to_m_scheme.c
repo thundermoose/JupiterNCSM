@@ -5,6 +5,7 @@
 #include <output/out_file.h>
 #include <transform_scheduller/transform_scheduller_2p.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 #include <string.h>
 
 typedef struct
@@ -16,6 +17,13 @@ typedef struct
 	quantum_number e_max2;
 	size_t num_particles;
 } arguments_t;
+
+__attribute__((constructor(101)))
+void initialization()
+{
+	initiate_logging("NEPTUNE_LOGFILE",
+			 "neptune.log");
+}
 
 static
 arguments_t parse_arguments(size_t num_arguments,

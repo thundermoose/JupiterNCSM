@@ -37,8 +37,7 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 	int E2 = E1+
 		settings.difference_energy_protons+
 		settings.difference_energy_neutrons;
-	log_entry("Creating matrix block %lu\n",
-		  settings.matrix_block_id);
+	log_entry("Creating matrix block %lu", settings.matrix_block_id);
 	while (has_next_connection(connections))
 	{
 		connection_t current_connection =
@@ -122,6 +121,12 @@ void save_mercury_matrix_block(mercury_matrix_block_t matrix_block,
 		  matrix_block->settings.matrix_block_id,
 		  matrix_block->num_elements,
 		  matrix_block->elements);
+	log_entry("Save block %lu",matrix_block->settings.matrix_block_id);
+#ifndef NLOGING
+	for (size_t i = 0; i < matrix_block->num_elements; i++)
+		log_entry("Matrix element (%lu): %lg",
+			  i,matrix_block->elements[i]);
+#endif
 	size_t array_index = matrix_block->settings.matrix_block_id;
 	size_t length_file_name =
 		strlen(output_path)+(size_t)(log(array_index)+1)+18;
