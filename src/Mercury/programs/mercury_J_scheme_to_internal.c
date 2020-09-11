@@ -114,20 +114,20 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 						     &current_block) != 0)
 		{
 			log_entry("Needs to decouple a new block");
-			decouple_transform_block(manager,
-						 current_block);
+			decouple_transform_2nf_block(manager,
+						     current_block);
 			transformed_block = current_block;
 		}
 		mercury_matrix_block_t matrix_block = 
-			get_transformed_matrix_block(manager,
-						     current_matrix_block);
+			get_transform_2nf_matrix_block(manager,
+						       current_matrix_block);
 		log_entry("Retrieved the current matrix_block");
 		save_mercury_matrix_block(matrix_block,
 					  output_path_base);
 		log_entry("Saved the current matrix_block to file");
 		free_mercury_matrix_block(matrix_block);
 	}
-	free_transformed_block_manager(manager);
+	free_transform_2nf_block_manager(manager);
 	free_antoine_2nf_file(coupled_2nf_data);
 }
 

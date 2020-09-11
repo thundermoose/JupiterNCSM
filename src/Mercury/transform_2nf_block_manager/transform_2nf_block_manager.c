@@ -1,4 +1,4 @@
-#include <transformed_block_manager/transformed_block_manager.h>
+#include <transform_2nf_block_manager/transform_2nf_block_manager.h>
 #include <bases/m_scheme_2p_basis.h>
 #include <clebsch_gordan/clebsch_gordan.h>
 #include <block_transform/block_transform.h>
@@ -16,7 +16,7 @@ typedef struct
 	Dens_Matrix *matrix;
 } block_t;
 
-struct _transformed_block_manager_
+struct _transform_2nf_block_manager_
 {
 	m_scheme_2p_basis_t ket_basis;
 	m_scheme_2p_basis_t bra_basis;	
@@ -34,11 +34,11 @@ struct _transformed_block_manager_
 };
 
 static
-void setup_ket_basis(transformed_block_manager_t manager,
+void setup_ket_basis(transform_2nf_block_manager_t manager,
 		     transform_block_settings_t block_settings);
 
 static
-void setup_bra_basis(transformed_block_manager_t manager,
+void setup_bra_basis(transform_2nf_block_manager_t manager,
 		     transform_block_settings_t block_settings);
 
 
@@ -72,11 +72,11 @@ const size_t get_bra_index(connection_t connection,
 			   int *phase);
 
 static
-void expand_block_list(transformed_block_manager_t manager,
+void expand_block_list(transform_2nf_block_manager_t manager,
 		       size_t num_blocks);
 
 static
-void free_blocks(transformed_block_manager_t manager);
+void free_blocks(transform_2nf_block_manager_t manager);
 
 static inline
 void swap(int *a,int *b);
@@ -86,15 +86,15 @@ static inline
 void log_matrix(Dens_Matrix *matrix);
 #endif
 
-transformed_block_manager_t 
-new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
+transform_2nf_block_manager_t 
+new_transform_2nf_block_manager(antoine_2nf_file_t coupled_2nf_data,
 			      const char *basis_files_path,
 			      const char *index_list_path,
 			      int single_particle_energy_max)
 {
-	transformed_block_manager_t manager =
-		(transformed_block_manager_t)
-		malloc(sizeof(struct _transformed_block_manager_));
+	transform_2nf_block_manager_t manager =
+		(transform_2nf_block_manager_t)
+		malloc(sizeof(struct _transform_2nf_block_manager_));
 	manager->ket_basis = NULL;
 	manager->bra_basis = NULL;
 	manager->blocks = NULL;
@@ -111,8 +111,8 @@ new_transformed_block_manager(antoine_2nf_file_t coupled_2nf_data,
 	return manager;
 }
 
-void decouple_transform_block(transformed_block_manager_t manager,
-			      transform_block_settings_t block_settings)
+void decouple_transform_2nf_block(transform_2nf_block_manager_t manager,
+				  transform_block_settings_t block_settings)
 {
 	log_entry("decouple_transform_block(%p,{pk%d pb%d, nk%d nb%d, Tz%d})",
 		  manager,
@@ -169,8 +169,8 @@ void decouple_transform_block(transformed_block_manager_t manager,
 }
 
 mercury_matrix_block_t 
-get_transformed_matrix_block(transformed_block_manager_t manager,
-			     matrix_block_setting_t settings)
+get_transform_2nf_matrix_block(transform_2nf_block_manager_t manager,
+			       matrix_block_setting_t settings)
 {
 	log_entry("get_transformed_matrix_block(%p, {\n"
 		  "\t.type = %s\n"
@@ -267,7 +267,7 @@ get_transformed_matrix_block(transformed_block_manager_t manager,
 						  settings);
 }
 
-void free_transformed_block_manager(transformed_block_manager_t manager)
+void free_transform_2nf_block_manager(transform_2nf_block_manager_t manager)
 {
 	free_blocks(manager);
 	if (manager->ket_basis)
@@ -282,7 +282,7 @@ void free_transformed_block_manager(transformed_block_manager_t manager)
 }
 
 static
-void setup_ket_basis(transformed_block_manager_t manager,
+void setup_ket_basis(transform_2nf_block_manager_t manager,
 		     transform_block_settings_t block_settings)
 {
 	if (manager->ket_basis != NULL)
@@ -296,7 +296,7 @@ void setup_ket_basis(transformed_block_manager_t manager,
 }
 
 static
-void setup_bra_basis(transformed_block_manager_t manager,
+void setup_bra_basis(transform_2nf_block_manager_t manager,
 		     transform_block_settings_t block_settings)
 {
 	if (manager->bra_basis != NULL)
@@ -380,7 +380,7 @@ const int get_max_M(m_scheme_2p_basis_t basis)
 }
 
 static
-void expand_block_list(transformed_block_manager_t manager,
+void expand_block_list(transform_2nf_block_manager_t manager,
 			size_t num_blocks)
 {
 	if (manager->blocks != NULL)
@@ -390,7 +390,7 @@ void expand_block_list(transformed_block_manager_t manager,
 }
 
 static
-void free_blocks(transformed_block_manager_t manager)
+void free_blocks(transform_2nf_block_manager_t manager)
 {
 
 	for (size_t i = 0; i <manager->num_allocated_blocks; i++)
