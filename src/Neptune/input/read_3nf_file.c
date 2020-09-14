@@ -6,8 +6,8 @@
 #include <string_tools/string_tools.h>
 #include <input/read_3nf_hdf5_file.h>
 #include <input/read_3nf_ascii_format.h>
-#include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 Data_File* open_data_file(const char* file_name)
 {
@@ -100,7 +100,7 @@ int is_subset_of_basis(JJJ_Basis* j_scheme,
 					   data_file->data_pointer);
 	    break;
 	case ASCII:
-	    DEBUG_MESS("subset_of_basis_ascii is not yet implemented\n");
+	    log_entry("subset_of_basis_ascii is not yet implemented\n");
 	    return 1;
 	    break;
 	default:

@@ -1,9 +1,9 @@
 #include <bases/jt_basis.h>
 #include <stdint.h>
 #include <array_builder/array_builder.h>
-#include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
 #include <unit_testing/test.h>
+#include <log/log.h>
 
 struct _jt_basis_
 {
@@ -81,7 +81,7 @@ jt_basis_t new_antoine_basis(quantum_number e_max1,
 	     iterator.block_index < num_blocks;
 	     iterator.block_index++)
 	{
-		DEBUG_MESS("block: %d %d %d\n",
+		log_entry("block: %d %d %d\n",
 			   iterator.block.J,
 			   iterator.block.T,
 			   iterator.block.parity);
@@ -147,7 +147,7 @@ index_hash_t compute_used_indices(jt_basis_t basis)
 		     right_index++)
 		{
 			jt_state_t right_state = basis->states[right_index];
-			DEBUG_MESS("config(%lu) %lu %lu %lu %lu %d %d %d\n",
+			log_entry("config(%lu) %lu %lu %lu %lu %d %d %d\n",
 				   combined_index,
 				   left_state.a,left_state.b,
 				   right_state.a,right_state.b,
@@ -155,7 +155,7 @@ index_hash_t compute_used_indices(jt_basis_t basis)
 			if (parity != compute_state_parity(right_state,
 							   basis->shells))
 				break;
-			DEBUG_MESS("config(%lu) %lu %lu %lu %lu %d %d %d\n",
+			log_entry("config(%lu) %lu %lu %lu %lu %d %d %d\n",
 				   combined_index,
 				   left_state.a,left_state.b,
 				   right_state.a,right_state.b,
@@ -268,7 +268,7 @@ void append_block_basis(antoine_block_t block,
 	     current_state.a++)
 	{
 		True_Shell shell_a = shells->true_shells[current_state.a];
-		//DEBUG_MESS("shell_a.e = %d\n",shell_a.e);	
+		//log_entry("shell_a.e = %d\n",shell_a.e);	
 		if (2*shell_a.e > e_max2)
 			break;
 		for (current_state.b = current_state.a;
@@ -283,7 +283,7 @@ void append_block_basis(antoine_block_t block,
 			    ((shell_a.l+shell_b.l)&1) != block.parity ||
 			    !pauli_principle(current_state))
 				continue;
-			DEBUG_MESS("current_state = (%lu %lu) %d %d\n",
+			log_entry("current_state = (%lu %lu) %d %d\n",
 				   current_state.a,
 				   current_state.b,
 				   current_state.J,

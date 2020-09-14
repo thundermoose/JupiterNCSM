@@ -1,8 +1,8 @@
 #include <string.h>
 #include <omp.h>
 #include "read_3nf_hdf5_file.h"
-#include "../utils/debug_messages.h"
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 
 int comp_confs(Configuration conf_a,
@@ -410,7 +410,7 @@ int is_subset_of_basis_hdf5(JJJ_Basis* j_scheme,
 		{ // if atleast one of the states in j_scheme do not exists
 			// in datafile->configurations j_scheme is not a subset
 
-			DEBUG_MESS("Could not find state (%ld) (%ld %ld %ld | %d)\n",
+			log_entry("Could not find state (%ld) (%ld %ld %ld | %d)\n",
 					i,js.a,js.b,js.c,js.j_ab);
 			return 0;
 		}

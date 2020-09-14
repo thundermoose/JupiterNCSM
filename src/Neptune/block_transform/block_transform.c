@@ -152,8 +152,8 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 {
 
 
-	DEBUG_MESS("\n\n========================New Block=============================\n\n");
-	DEBUG_MESS("Test\n");
+	log_entry("\n\n========================New Block=============================\n\n");
+	log_entry("Test\n");
 
 	// This matrix is the one that will
 	// be returned, we will build it up
@@ -179,9 +179,9 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 			"bra_jjj_basis is not a subset of datafile->configurations\n");
 
 	// Debug code
-	DEBUG_MESS("bra_m_scheme_basis:\n");
+	log_entry("bra_m_scheme_basis:\n");
 	DEBUG_CALL(list_m_scheme_3p_basis(bra_basis));
-	DEBUG_MESS("bra_jjj_basis:\n");
+	log_entry("bra_jjj_basis:\n");
 	DEBUG_CALL(list_jjj_states(bra_jjj_basis));
 
 	JJJ_Basis *ket_jjj_basis =
@@ -193,9 +193,9 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 			"ket_jjj_basis is not a subset of datafile->configurations\n");
 
 	// Debug code
-	DEBUG_MESS("ket_m_scheme_basis:\n");
+	log_entry("ket_m_scheme_basis:\n");
 	DEBUG_CALL(list_m_scheme_3p_basis(ket_basis));
-	DEBUG_MESS("ket_jjj_basis:\n");
+	log_entry("ket_jjj_basis:\n");
 	DEBUG_CALL(list_jjj_states(ket_jjj_basis));
 
 	// Determining the limits for the loops
@@ -258,7 +258,7 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 					continue;
 				}
 
-				DEBUG_MESS("cut_bra_basis:\n");
+				log_entry("cut_bra_basis:\n");
 				DEBUG_CALL(list_jjj_states(cut_bra_basis));
 
 				JJJ_Basis* cut_ket_basis =
@@ -272,11 +272,11 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 					continue;
 				}
 
-				DEBUG_MESS("cut_ket_basis:\n");
+				log_entry("cut_ket_basis:\n");
 				DEBUG_CALL(list_jjj_states(cut_ket_basis));
 
 
-				DEBUG_MESS("\n\n\nObtaining elements for: %d %d %d\n",
+				log_entry("\n\n\nObtaining elements for: %d %d %d\n",
 						jabc,tz,parity);
 
 				// Now we know what matrix elements

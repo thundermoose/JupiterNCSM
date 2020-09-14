@@ -4,9 +4,9 @@
 #include <assert.h>
 #include "jjj_transformation.h"
 #include "../utils/assertion.h"
-#include "../utils/debug_messages.h"
 #include <unit_testing/test.h>
 #include "../utils/permutation_tools.h"
+#include <log/log.h>
 #include <debug_mode/debug_mode.h>
 
 
@@ -74,7 +74,7 @@ Sparse_Matrix* new_jjj_transformation(M_Scheme_3p_Basis* m_basis,
 			quantum_number m_c = sp_basis->sp_states[m_state.c].m;
 			quantum_number m_ab = m_a+m_b;
 			quantum_number m_abc = m_ab+m_c;
-			DEBUG_MESS("j_ab: %d m_ab: %d j_abc: %d m_abc: %d\n",
+			log_entry("j_ab: %d m_ab: %d j_abc: %d m_abc: %d\n",
 				   j_ab,m_ab,j_abc,m_abc);
 			// checking the triangular condition
 			if (abs(m_abc)>j_abc)
@@ -97,7 +97,7 @@ Sparse_Matrix* new_jjj_transformation(M_Scheme_3p_Basis* m_basis,
 				    j_state.b == sp_basis->sp_states[m_state.b].shell &&
 				    j_state.c == sp_basis->sp_states[m_state.c].shell)
 				{
-					DEBUG_MESS("m: %ld, n: %ld, p:%ld\n",m_i,n_i,p);
+					log_entry("m: %ld, n: %ld, p:%ld\n",m_i,n_i,p);
 					m_a = sp_basis->sp_states[m_state.a].m;
 					m_b = sp_basis->sp_states[m_state.b].m;
 					m_c = sp_basis->sp_states[m_state.c].m;
@@ -128,7 +128,7 @@ Sparse_Matrix* new_jjj_transformation(M_Scheme_3p_Basis* m_basis,
 			}
 			if (num_contributions > 1)
 				curr_element/=sqrt(num_contributions);
-			DEBUG_MESS("curr_element is %lg\n",curr_element);
+			log_entry("curr_element is %lg\n",curr_element);
 			if (fabs(curr_element)>1e-10)
 			{
 				// Add the current element to our final matrix

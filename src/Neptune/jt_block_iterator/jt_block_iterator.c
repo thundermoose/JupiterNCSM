@@ -1,7 +1,7 @@
 #include <jt_block_iterator/jt_block_iterator.h>
 #include <utils/helpful_macros.h>
-#include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 jt_block_iterator_t initial_block(quantum_number j_a,
 				  quantum_number j_b,
@@ -13,11 +13,11 @@ jt_block_iterator_t initial_block(quantum_number j_a,
 	const quantum_number J_min = max(abs(j_a-j_b),
 					 abs(m_a+m_b))/2;
 	const quantum_number T_min = abs(tz_a+tz_b)/2;
-	DEBUG_MESS("J_min = %d, T_min = %d\n",J_min,T_min);
+	log_entry("J_min = %d, T_min = %d\n",J_min,T_min);
 	jt_block_iterator_t iterator;
 	iterator.block.T = T_min;
 	iterator.block.J = J_min;
-	DEBUG_MESS("block: %u %u\n",
+	log_entry("block: %u %u\n",
 		   iterator.block.J,iterator.block.T);
 	return iterator;
 }

@@ -7,8 +7,8 @@
 #include <utils/permutation_tools.h>
 #include <unit_testing/test.h>
 #include <utils/assertion.h>
-#include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 
 #define MAX(a,b) ((a)<(b) ? (b) : (a))
@@ -327,11 +327,11 @@ JJJ_Basis* new_jjj_basis_m_scheme(M_Scheme_3p_Basis* ms_basis){
 
 	  quantum_number m_ab =
 	    M(cands[k].a) + M(cands[k].b);
-	  DEBUG_MESS("m_ab = %d\n",m_ab);
+	  log_entry("m_ab = %d\n",m_ab);
 	  
 	  quantum_number m_abc =
 	    m_ab + M(cands[k].c);
-	  DEBUG_MESS("m_abc = %d\n",m_abc);
+	  log_entry("m_abc = %d\n",m_abc);
 	  // computing the j_ab loop limits using the triangular conditions
 
 	  quantum_number j_ab_min =
@@ -715,13 +715,13 @@ new_test(nmax_0_test,
   M_Scheme_3p_Basis* m_basis =
     new_m_scheme_3p_basis_no_m_rest(0,sp_states);
 
-  DEBUG_MESS("m-scheme basis:\n");
+  log_entry("m-scheme basis:\n");
   list_m_scheme_3p_basis(m_basis);
 
   JJJ_Basis *j_basis =
     new_jjj_basis_m_scheme(m_basis);
 
-  DEBUG_MESS("j-scheme basis:\n");
+  log_entry("j-scheme basis:\n");
   list_jjj_states(j_basis);
   free_jjj_basis(j_basis);
   free_m_scheme_3p_basis(m_basis);

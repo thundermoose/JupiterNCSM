@@ -104,7 +104,7 @@ Dens_Matrix *get_antoine_matrix(antoine_2nf_file_t data_file,
 				jt_basis_t ket_basis,
 				quantum_number Tz)
 {
-	DEBUG_MESS("Tz = %d\n",Tz);
+	log_entry("Tz = %d\n",Tz);
 	size_t *bra_indices = get_sub_basis_indices(data_file->antoine_basis,
 						    bra_basis);
 	size_t *ket_indices = get_sub_basis_indices(data_file->antoine_basis,

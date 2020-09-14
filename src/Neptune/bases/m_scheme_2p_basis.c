@@ -240,7 +240,7 @@ m_scheme_2p_basis_t generate_2p_block(m_scheme_2p_basis_t m_scheme_2p_basis,
 		    total_energy(current_state,
 				 m_scheme_2p_basis->sp_states) != energy)
 			continue;
-		DEBUG_MESS("add state: %lu, (%d %d)\n",i,
+		log_entry("add state: %lu, (%d %d)\n",i,
 			current_state.a,
 			current_state.b);
 		append_array_element(basis_builder,&current_state);

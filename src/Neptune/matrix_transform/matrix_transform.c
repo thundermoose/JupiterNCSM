@@ -5,8 +5,8 @@
 #include <utils/helpful_macros.h>
 #include <utils/permutation_tools.h>
 #include <utils/assertion.h>
-#include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
+#include <log/log.h>
 
 Dens_Matrix* new_zero_matrix(size_t m,
 			     size_t n){
@@ -228,7 +228,7 @@ Sparse_Matrix *jjj_transform(M_Scheme_3p_Basis* ms3b,
 			       exit(1),
 			       "m_state.a > m_state.b\n");
 
-			DEBUG_MESS("computing: <((%ld %ld)%d %ld)%d|(%ld %d) (%ld %d) (%ld %d)>\n",
+			log_entry("computing: <((%ld %ld)%d %ld)%d|(%ld %d) (%ld %d) (%ld %d)>\n",
 				   m_state.a,m_state.b,m_state.j_ab,m_state.c,m_state.j_abc,
 				   ms3b->sp_states->sp_states[n_state.a].shell,
 				   ms3b->sp_states->sp_states[n_state.a].m,
@@ -244,7 +244,7 @@ Sparse_Matrix *jjj_transform(M_Scheme_3p_Basis* ms3b,
 			jc = jjjbasis->shells->shells[m_state.c].j;
 			quantum_number M_tot = ma+mb+mc;
 			if (m_state.j_abc<abs(M_tot)){
-				DEBUG_MESS("e = %4.3lf\n",0.0);
+				log_entry("e = %4.3lf\n",0.0);
 				continue;
 			}
 
@@ -252,11 +252,11 @@ Sparse_Matrix *jjj_transform(M_Scheme_3p_Basis* ms3b,
 			cg1 = clebsch_gordan(ja,jb,m_state.j_ab,
 					     ma,mb,ma+mb,
 					     cgd);
-			DEBUG_MESS("<%d %d,%d %d|%d %d> = %lf\n",ja,ma,jb,mb,m_state.j_ab,ma+mb,cg1);
+			log_entry("<%d %d,%d %d|%d %d> = %lf\n",ja,ma,jb,mb,m_state.j_ab,ma+mb,cg1);
 			cg2 = clebsch_gordan(m_state.j_ab,jc,m_state.j_abc,
 					     ma+mb,mc,M_tot,
 					     cgd);
-			DEBUG_MESS("<%d %d,%d %d|%d %d> = %lf\n",m_state.j_ab,ma+mb,jc,mc,m_state.j_abc,ma+mb+mc,cg2);
+			log_entry("<%d %d,%d %d|%d %d> = %lf\n",m_state.j_ab,ma+mb,jc,mc,m_state.j_abc,ma+mb+mc,cg2);
 			if (max_num_elements == out_matrix->num_elements){
 				max_num_elements = max_num_elements*2 + 1;
 				out_matrix->m_index = (size_t*)realloc(out_matrix->m_index,
@@ -269,9 +269,9 @@ Sparse_Matrix *jjj_transform(M_Scheme_3p_Basis* ms3b,
 			out_matrix->m_index[out_matrix->num_elements] = i;
 			out_matrix->n_index[out_matrix->num_elements] = j;
 			out_matrix->elements[out_matrix->num_elements++] = cg1*cg2*sign;
-			DEBUG_MESS("cg1 * cg2 = %4.3lf * %4.3lf = %4.3lf \n",cg1,cg2,cg1*cg2);
+			log_entry("cg1 * cg2 = %4.3lf * %4.3lf = %4.3lf \n",cg1,cg2,cg1*cg2);
 		}
-		DEBUG_MESS("\n");
+		log_entry("\n");
 	}
 	out_matrix->m_index = (size_t*)realloc(out_matrix->m_index,
 					       sizeof(size_t)*out_matrix->num_elements);
@@ -313,7 +313,7 @@ int is_unitary(Sparse_Matrix *spm)
 		{
 			if (spm->m_index[i] == spm->m_index[j])
 			{
-				DEBUG_MESS("M^TM_{%ld %ld} += %1.17lg {%ld}\n",
+				log_entry("M^TM_{%ld %ld} += %1.17lg {%ld}\n",
 					   spm->n_index[i],spm->n_index[j],
 					   spm->elements[i]*spm->elements[j],
 					   spm->m_index[i]);
