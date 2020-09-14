@@ -4,7 +4,7 @@
 #include <array_builder/array_builder.h>
 #include <string_tools/string_tools.h>
 #include <error/error.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>

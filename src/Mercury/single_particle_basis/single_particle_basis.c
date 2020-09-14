@@ -1,7 +1,7 @@
 #include <single_particle_basis/single_particle_basis.h>
 #include <array_builder/array_builder.h>
 #include <debug_mode/debug_mode.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <string.h>
 
 struct _single_particle_basis_

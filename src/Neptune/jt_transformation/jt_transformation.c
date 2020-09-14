@@ -1,14 +1,14 @@
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include <math.h>
 #include <jt_transformation/jt_transformation.h>
 #include <matrix_builder/matrix_builder.h>
 #include <jt_block_iterator/jt_block_iterator.h>
 #include <utils/assertion.h>
 #include <utils/debug_messages.h>
-#include <utils/automatic_test.h>
 #include <utils/permutation_tools.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <debug_mode/debug_mode.h>
 
 typedef struct
@@ -39,20 +39,10 @@ Sparse_Matrix* new_jt_transformation_3p(M_Scheme_3p_Basis* m_basis,
 {
 	Sparse_Matrix *final_transform =
 		(Sparse_Matrix*)calloc(1,sizeof(Sparse_Matrix));
-	ASSERT(final_transform != NULL,
-	       return NULL,
-	       "calloc could not allocated enough memory\n"
-	       "%s\n",strerror(errno));
-
-	ASSERT(m_basis != NULL,
-	       return NULL,
-	       "null pointer to m-scheme elements given\n");
-	ASSERT(jt_basis != NULL,
-	       return NULL,
-	       "null pointer to jt-scheme elements given\n");
-	ASSERT(cgd != NULL,
-	       return NULL,
-	       "null pointer to clebsch_gordan_data given\n");
+	assert(final_transform != NULL);
+	assert(m_basis != NULL);
+	assert(jt_basis != NULL);
+	assert(cgd != NULL);
 
 	// setting up the basic properties of the m- to j-scheme
 	// transformation
@@ -363,7 +353,7 @@ new_test(jt_transform_3p_unitarity_test,
 	 Shells *shells = new_shells(nmax);
 	 SP_States *sp_states = new_sp_states(shells);
 	 M_Scheme_3p_Basis *m_scheme_2p_basis = new_m_scheme_3p_basis3(nmax,1,1,sp_states);
-	 /*ASSERT(m_scheme_2p_basis->dimension == 1,
+	 /*assert(m_scheme_2p_basis->dimension == 1,
 	   TEST_FAILED("m_scheme_2p_basis = %ld, but should be 1\n",
 	   m_scheme_2p_basis->dimension),
 	   "");*/

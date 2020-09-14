@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <scheduler/scheduler.h>
 #include <math.h>
 

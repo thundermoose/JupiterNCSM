@@ -3,7 +3,7 @@
 #include <global_constants/global_constants.h>
 #include <log/log.h>
 #include <debug_mode/debug_mode.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

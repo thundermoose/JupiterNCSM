@@ -1,5 +1,5 @@
 #include "write_to_uniform.h"
-#include <utils/directory_tools.h>
+#include <directory_tools/directory_tools.h>
 #include <string_tools/string_tools.h>
 #include <debug_mode/debug_mode.h>
 #include <string.h>

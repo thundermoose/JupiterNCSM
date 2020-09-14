@@ -1,7 +1,7 @@
 #include <utils/index_hash.h>
 #include <utils/bit_operations.h>
 #include <stdint.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 
 
 typedef struct

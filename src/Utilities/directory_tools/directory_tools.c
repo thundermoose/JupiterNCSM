@@ -1,9 +1,4 @@
 #include <directory_tools/directory_tools.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <errno.h>
-#include <string.h>
-#include <error/error.h>
 
 int directory_exists(const char *directory_name)
 {
@@ -23,5 +18,21 @@ int directory_exists(const char *directory_name)
 
 int create_directory(const char *directory_name)
 {
-	return mkdir(directory_name,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if (mkdir(directory_name,
+		  S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != 0)
+		return 1;
+	else
+		return 0;
+}
+
+void clear_directory(const char *directory_name)
+{
+	if (!directory_exists(directory_name))
+		return;
+	char *command = (char*)calloc(strlen(directory_name)+20,
+				      sizeof(char));
+	sprintf(command,
+		"rm -rf %s*\n",directory_name);
+	system(command);
+	free(command);
 }

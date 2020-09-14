@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <log/log.h>
 #include <settings/settings.h>
 #include <matrix/matrix.h>

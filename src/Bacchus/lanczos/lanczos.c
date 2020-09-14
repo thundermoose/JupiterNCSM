@@ -5,7 +5,7 @@
 #include <string.h>
 #include <directory_tools/directory_tools.h>
 #include <error/error.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <log/log.h>
 #include <math.h>
 #include <errno.h>

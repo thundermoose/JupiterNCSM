@@ -7,7 +7,7 @@
 #include <error/error.h>
 #include <assert.h>
 #include <math.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <errno.h>
 #include <string.h>
 

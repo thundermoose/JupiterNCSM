@@ -5,7 +5,7 @@
 #include <read_packed_states/read_packed_states.h>
 #include <hash_map/hash_map.h>
 #include <error/error.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <assert.h>
 #include <utils/debug_messages.h>
 #include <errno.h>

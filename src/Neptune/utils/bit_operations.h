@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 
 static inline
 uint64_t cyclic_rshift(uint64_t number,

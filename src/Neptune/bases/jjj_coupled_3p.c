@@ -1,10 +1,11 @@
 #define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "jjj_coupled_3p.h"
 #include <string_tools/string_tools.h>
 #include <utils/permutation_tools.h>
-#include <utils/automatic_test.h>
+#include <unit_testing/test.h>
 #include <utils/assertion.h>
 #include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
@@ -673,7 +674,7 @@ void free_jjj_basis(JJJ_Basis* jjj_basis)
 // Tests
 
 
-BEGIN_TEST(trivial_test_new_jjj_basis_m_scheme)
+new_test(trivial_test_new_jjj_basis_m_scheme,
 {
   Shells *shells = new_shells(0);
   SP_States *sp_states = new_sp_states(shells);
@@ -686,10 +687,7 @@ BEGIN_TEST(trivial_test_new_jjj_basis_m_scheme)
 
   JJJ_Basis* out_basis = new_jjj_basis_m_scheme(&in_basis);
   list_jjj_states(out_basis);
-  ASSERT(out_basis->dimension == 3,
-	 TEST_FAILED("out_basis->dimension = %ld, but should equal 3\n",
-		     out_basis->dimension),
-	 "");
+  assert_that(out_basis->dimension == 3);
   JJJ_State expected[3] =
     {{0,1,0,0,1,-1,0},
      {0,1,0,2,1,-1,0},
@@ -698,9 +696,7 @@ BEGIN_TEST(trivial_test_new_jjj_basis_m_scheme)
   size_t i;
   for (i = 0; i<3; i++)
     {
-      ASSERT(fast_cmp(expected[i],out_basis->states[i]) == 1,
-	     TEST_FAILED("state[%ld] is wrong\n",i),
-	     "");
+      assert_that(fast_cmp(expected[i],out_basis->states[i]) == 1);
     }
   (void)(expected);
   
@@ -708,9 +704,9 @@ BEGIN_TEST(trivial_test_new_jjj_basis_m_scheme)
   free_sp_states(sp_states);
   free_shells(shells);
 }
-END_TEST
+);
 
-BEGIN_TEST(nmax_0_test)
+new_test(nmax_0_test,
 {
   Shells *shells =
     new_shells(0);
@@ -732,4 +728,4 @@ BEGIN_TEST(nmax_0_test)
   free_sp_states(sp_states);
   free_shells(shells);
 }
-END_TEST
+);

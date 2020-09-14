@@ -3,7 +3,7 @@
 #include <error/error.h>
 #include <stdint.h>
 #include <string.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 
 struct _numpy_array_
 {

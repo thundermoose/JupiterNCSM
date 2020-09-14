@@ -8,13 +8,13 @@ ifndef linker
 linker := gcc -std=gnu99 -Wall -Werror
 endif
 
-ifndef thundertester_linker_flags
-thundertester_linker_flags := -lthundertester 
-endif
-
-ifndef thundertester_compiler_flags
-thundertester_compiler_flags := -DTEST
-endif
+#ifndef thundertester_linker_flags
+#thundertester_linker_flags := -lthundertester 
+#endif
+#
+#ifndef thundertester_compiler_flags
+#thundertester_compiler_flags := -DTEST
+#endif
 
 ifndef test_data_path
 test_data_path := "\"./test_data/\""
@@ -100,8 +100,7 @@ debug/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	$$(linker) -o $$@ $$^ $$(linker_flags)
 
 test_$1: $$(package_programs_$1:%.x=test/%.x)
-test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) $(thundertester_compiler_flags)
-test/$1/%.x: linker_flags+=$(thundertester_linker_flags)
+test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path)
 test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
@@ -109,8 +108,7 @@ test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 #$$@ --run-all-tests
 
 test_no_logging_$1: $$(package_programs_$1:%.x=test_no_logging/%.x)
-test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) $(thundertester_compiler_flags) -DNLOGING
-test_no_logging/$1/%.x: linker_flags+=$(thundertester_linker_flags)
+test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) -DNLOGING
 test_no_logging/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"

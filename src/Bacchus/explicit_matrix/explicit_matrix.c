@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <math.h>
 
 struct _explicit_matrix_

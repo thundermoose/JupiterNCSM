@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 #include <combination_table/combination_table.h>
 #include <execution_order/execution_order.h>
 #include <scheduler/scheduler.h>

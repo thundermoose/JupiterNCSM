@@ -8,7 +8,7 @@
 #include <transform_scheduller/transform_scheduller_3p.h>
 #include <output/out_file.h>
 #include <debug_mode/debug_mode.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 
 
 void usage(char* prg)

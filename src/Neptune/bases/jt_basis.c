@@ -3,7 +3,7 @@
 #include <array_builder/array_builder.h>
 #include <utils/debug_messages.h>
 #include <debug_mode/debug_mode.h>
-#include <thundertester/test.h>
+#include <unit_testing/test.h>
 
 struct _jt_basis_
 {
