@@ -5,6 +5,7 @@
 #include <input/read_2nf_antoine_format.h>
 #include <transform_block_settings/transform_block_settings.h>
 #include <transform_2nf_block_manager/transform_2nf_block_manager.h>
+#include <transform_3nf_block_manager/transform_3nf_block_manager.h>
 #include <combination_table/combination_table.h>
 #include <log/log.h>
 
@@ -136,21 +137,46 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
 	printf("3NF blocks only:\n");
+	Data_File *coupled_3nf_data =
+		open_data_file(get_interaction_path_3nf_argument(arguments));
+	transform_3nf_block_manager_t manager =
+	       	new_transform_3nf_block_manager
+		(coupled_3nf_data,
+		 get_index_list_path_argument(arguments),
+		 get_single_particle_energy_argument(arguments));
+	transform_block_settings_t transformed_block = {INT_MAX};
+	const char *output_path_base = get_output_path_argument(arguments);					
 	while (has_next_3nf_block(combination_table))
 	{
 		matrix_block_setting_t current_matrix_block = 
 			next_3nf_block_iterator(combination_table);
-		printf("%s p: %d %d %d n: %d %d %d,"
-		       "#PC: %lu #NC: %lu id: %lu\n",
-		       block_type_to_string(current_matrix_block.type),
-		       current_matrix_block.difference_energy_protons,
-		       current_matrix_block.difference_M_protons,
-		       current_matrix_block.depth_protons,
-		       current_matrix_block.difference_energy_neutrons,
-		       current_matrix_block.difference_M_neutrons,
-		       current_matrix_block.depth_neutrons,
-		       current_matrix_block.num_proton_combinations,
-		       current_matrix_block.num_neutron_combinations,
-		       current_matrix_block.matrix_block_id);
+		transform_block_settings_t current_block =
+			setup_transform_block(current_matrix_block);
+		log_entry("%s p: %d %d %d n: %d %d %d,"
+			  "#PC: %lu #NC: %lu id: %lu\n",
+			  block_type_to_string(current_matrix_block.type),
+			  current_matrix_block.difference_energy_protons,
+			  current_matrix_block.difference_M_protons,
+			  current_matrix_block.depth_protons,
+			  current_matrix_block.difference_energy_neutrons,
+			  current_matrix_block.difference_M_neutrons,
+			  current_matrix_block.depth_neutrons,
+			  current_matrix_block.num_proton_combinations,
+			  current_matrix_block.num_neutron_combinations,
+			  current_matrix_block.matrix_block_id);
+		if (compare_transform_block_settings(&current_block,
+						     &transformed_block) != 0)
+		{
+			decouple_transform_3nf_block(manager,
+						     current_block);
+		}
+		mercury_matrix_block_t matrix_block =
+			get_transform_3nf_matrix_block(manager,
+						       current_matrix_block);
+		save_mercury_matrix_block(matrix_block,
+					  output_path_base);
+		free_mercury_matrix_block(matrix_block);
 	}
+	free_transform_3nf_block_manager(manager);
+	free_data_file(coupled_3nf_data);
 }
