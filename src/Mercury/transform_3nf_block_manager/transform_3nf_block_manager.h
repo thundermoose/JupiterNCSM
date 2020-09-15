@@ -14,7 +14,7 @@ void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 
 mercury_matrix_block_t
 get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
-			       matrix_block_setting_t block)
+			       matrix_block_setting_t block);
 
 void free_transform_3nf_block_manager(transform_3nf_block_manager_t manager);
 
