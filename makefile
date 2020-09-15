@@ -113,7 +113,6 @@ test_no_logging/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_obj
 	mkdir -p $$(@D)
 	echo "Linking $$@"
 	$$(linker) -o $$@ $$^ $$(linker_flags)
-	$$@ --run-all-tests
 endef
 
 $(foreach package, $(program_packages_names), $(eval $(call link_package,$(package))))
