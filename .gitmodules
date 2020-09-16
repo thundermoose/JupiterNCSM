@@ -1,0 +1,3 @@
+[submodule "jupterncsm_test_data"]
+	path = jupterncsm_test_data
+	url = git@git.chalmers.se:djarv/jupterncsm_test_data.git
