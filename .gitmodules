@@ -1,3 +1,6 @@
 [submodule "jupterncsm_test_data"]
 	path = jupterncsm_test_data
 	url = git@git.chalmers.se:djarv/jupterncsm_test_data.git
+[submodule "jupiterncsm_test_data"]
+	path = jupiterncsm_test_data
+	url = git@git.chalmers.se:djarv/jupiterncsm_test_data.git
