@@ -12,8 +12,8 @@ void transform_file(const char *index_list_path,
 	__attribute__((constructor(101)))
 void initialization()
 {
-	initiate_logging("MERCURY_LOGFILE",
-			 "mercury.log");
+	initiate_logging("AURORA_LOGFILE",
+			 "aurora.log");
 }
 
 int main(int num_arguments,

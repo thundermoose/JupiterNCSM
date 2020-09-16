@@ -9,7 +9,15 @@
 #include <output/out_file.h>
 #include <debug_mode/debug_mode.h>
 #include <unit_testing/test.h>
+#include <log/log.h>
 
+
+__attribute__((constructor(101)))
+void initialization()
+{
+	initiate_logging("NEPTUNE_LOGFILE",
+			 "neptune_jjj_to_m_scheme.log");
+}
 
 void usage(char* prg)
 {

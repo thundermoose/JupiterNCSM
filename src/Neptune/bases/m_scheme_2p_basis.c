@@ -684,8 +684,11 @@ new_test(generate_2p_block_trivial,
 	free_m_scheme_2p_basis(basis);
 );
 
+#define ANICR_BASES "anicr_basis_files/"
+
 new_test(read_anicr_basis,
-	 const char *anicr_basis = TEST_DATA"/anicr_bases/basis_energy_1";
+	 const char *anicr_basis = 
+	 TEST_DATA ANICR_BASES "anicr_bases/basis_energy_1";
 	 m_scheme_2p_basis_t basis = 
 	 new_m_scheme_2p_basis_from_files(2,NULL,anicr_basis); 
 	 print_m_scheme_2p_basis(basis);
@@ -693,9 +696,9 @@ new_test(read_anicr_basis,
 	);
 new_test(read_anicr_basis_np,
 	 const char *anicr_basis_protons = 
-	 TEST_DATA"/anicr_bases_protons_nmax2/p/basis_energy_0";
+	 TEST_DATA ANICR_BASES "anicr_bases_protons_nmax2/p/basis_energy_0";
 	 const char *anicr_basis_neutrons = 
-	 TEST_DATA"/anicr_bases_neutrons_nmax2/n/basis_energy_1";
+	 TEST_DATA ANICR_BASES "anicr_bases_neutrons_nmax2/n/basis_energy_1";
 	 m_scheme_2p_basis_t basis = 
 	 new_m_scheme_2p_basis_from_files(2,
 					  anicr_basis_protons,
@@ -704,7 +707,8 @@ new_test(read_anicr_basis_np,
 	 free_m_scheme_2p_basis(basis);
 	);
 new_test(cut_out_M_block,
-	 const char *anicr_basis = TEST_DATA"/anicr_bases/basis_energy_1";
+	 const char *anicr_basis = 
+	 TEST_DATA ANICR_BASES "anicr_bases/basis_energy_1";
 	 m_scheme_2p_basis_t basis =
 	 new_m_scheme_2p_basis_from_files(2,NULL,anicr_basis);
 	 m_scheme_2p_basis_t m_0_basis = cut_out_M_block(basis,0);
@@ -715,9 +719,9 @@ new_test(cut_out_M_block,
 	);
 new_test(search_anicre_basis_np,
 	 const char *anicr_basis_protons = 
-	 TEST_DATA"/anicr_bases_protons_nmax2/p/basis_energy_0";
+	 TEST_DATA ANICR_BASES "anicr_bases_protons_nmax2/p/basis_energy_0";
 	 const char *anicr_basis_neutrons = 
-	 TEST_DATA"/anicr_bases_neutrons_nmax2/n/basis_energy_1";
+	 TEST_DATA ANICR_BASES "anicr_bases_neutrons_nmax2/n/basis_energy_1";
 	 m_scheme_2p_basis_t basis = 
 	 new_m_scheme_2p_basis_from_files(2,
 					  anicr_basis_protons,

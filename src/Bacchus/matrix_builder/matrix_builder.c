@@ -90,7 +90,7 @@ void free_matrix_builder(matrix_builder_t builder)
 	free(builder);
 }
 
-
+#define BACCHUS_RUN "bacchus_run_data/he4/"
 new_test(explicit_matrix_nmax0,
 	 const char *matrix_out_path =
 	 get_test_file_path("hamiltonian.npy");
@@ -100,13 +100,14 @@ new_test(explicit_matrix_nmax0,
 	 	get_test_file_path("output");
 	 matrix_builder_settings_t settings =
 	 {
-		.combination_file_path = TEST_DATA "comb_nmax0.txt",
+		.combination_file_path = 
+		TEST_DATA BACCHUS_RUN "nmax0/comb.txt",
 		.minerva_instruction_path =
-	       		TEST_DATA "greedy_2_16_nmax0.txt",
+	       		TEST_DATA BACCHUS_RUN "nmax0/greedy_2_16.txt",
 		.index_list_path = 
-		TEST_DATA "he4_nmax0_2nf_index_lists_combined_phase",
+		TEST_DATA BACCHUS_RUN "nmax0/index_lists",
 		.interaction_path = 
-		TEST_DATA "he4_nmax0_2nf_interaction_new",
+		TEST_DATA BACCHUS_RUN "nmax0/interaction",
 		.input_vector_path =
 			copy_string(input_vector_path),
 		.output_vector_path =
@@ -138,13 +139,13 @@ new_test(explicit_matrix_nmax2,
 	 	get_test_file_path("output");
 	 matrix_builder_settings_t settings =
 	 {
-		.combination_file_path = TEST_DATA "nmax2_test_data_2020_07_14_combined_phase/comb.txt",
+		.combination_file_path = TEST_DATA BACCHUS_RUN "nmax2/comb.txt",
 		.minerva_instruction_path =
-	       		TEST_DATA "nmax2_test_data_2020_07_14_combined_phase/greedy_2_16.txt",
+	       		TEST_DATA BACCHUS_RUN "nmax2/greedy_2_16.txt",
 		.index_list_path = 
-		TEST_DATA "nmax2_test_data_2020_07_14_combined_phase/index_lists",
+		TEST_DATA BACCHUS_RUN "nmax2/index_lists",
 		.interaction_path = 
-		TEST_DATA "nmax2_test_data_2020_07_14_combined_phase/interaction",
+		TEST_DATA BACCHUS_RUN "nmax2/interaction",
 		.input_vector_path =
 			copy_string(input_vector_path),
 		.output_vector_path =
@@ -176,13 +177,13 @@ new_test(explicit_matrix_nmax4,
 	 	get_test_file_path("output");
 	 matrix_builder_settings_t settings =
 	 {
-		.combination_file_path = TEST_DATA "nmax4_test_data_2020_09_14/comb.txt",
+		.combination_file_path = TEST_DATA BACCHUS_RUN "nmax4/comb.txt",
 		.minerva_instruction_path =
-	       		TEST_DATA "nmax4_test_data_2020_09_14/greedy_2_16.txt",
+	       		TEST_DATA BACCHUS_RUN "nmax4/greedy_2_16.txt",
 		.index_list_path = 
-		TEST_DATA "nmax4_test_data_2020_09_14/index_lists",
+		TEST_DATA BACCHUS_RUN "nmax4/index_lists",
 		.interaction_path = 
-		TEST_DATA "nmax4_test_data_2020_09_14/interaction",
+		TEST_DATA BACCHUS_RUN "nmax4/interaction",
 		.input_vector_path =
 			copy_string(input_vector_path),
 		.output_vector_path =
@@ -211,13 +212,13 @@ new_test(single_matrix_vector_multiplication,
 	 const char *output_vector_path =
 	 	get_test_file_path("output");
 	 const char *execution_order_path =
-		TEST_DATA "nmax4_test_data_2020_09_14/greedy_2_16.txt";
+		TEST_DATA BACCHUS_RUN "nmax4/greedy_2_16.txt";
 	 const char *index_list_path =
-                TEST_DATA "nmax4_test_data_2020_09_14/index_lists";
+                TEST_DATA BACCHUS_RUN "nmax4/index_lists";
          const char *interaction_path =
-                TEST_DATA "nmax4_test_data_2020_09_14/interaction";	 
+                TEST_DATA BACCHUS_RUN "nmax4/interaction";	 
 	 const char *combination_table_path = 
-	 	TEST_DATA "nmax4_test_data_2020_09_14/comb.txt";
+	 	TEST_DATA BACCHUS_RUN "nmax4/comb.txt";
 	const size_t num_protons = 2;
 	const size_t num_neutrons = 2;
 	const size_t state_in_index = 73;
