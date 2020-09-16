@@ -2,6 +2,14 @@
 #include <stdio.h>
 #include <arguments/arguments.h>
 #include <index_list/index_list.h>
+#include <log/log.h>
+
+__attribute__((constructor(101)))
+void initialization()
+{
+	initiate_logging("AURORA_LOGFILE",
+		       "index_list_converter.log");
+}
 
 int main(int num_arguments,
 	 char **argument_list)

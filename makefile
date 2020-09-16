@@ -17,7 +17,7 @@ endif
 #endif
 
 ifndef test_data_path
-test_data_path := "\"./test_data/\""
+test_data_path := "\"./jupiterncsm_test_data/\""
 endif
 
 ifndef wigxjpf_path
