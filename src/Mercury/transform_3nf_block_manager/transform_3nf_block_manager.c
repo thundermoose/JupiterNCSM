@@ -150,12 +150,27 @@ static
 void setup_ket_basis(transform_3nf_block_manager_t manager,
 		     transform_block_settings_t block)
 {
-	
+	if (manager->ket_basis != NULL)
+		free_m_scheme_3p_basis(manager->ket_basis);
+	manager->ket_basis =
+		load_anicr_basis(manager->index_list_path,
+			 	 block.total_isospin,
+			  	 block.proton_energy_ket,
+				 block.neutron_energy_ket,
+			         manager->single_particle_energy_max);	 
 }
 static
 void setup_bra_basis(transform_3nf_block_manager_t manager,
 		     transform_block_settings_t block)
 {
+	if (manager->bra_basis != NULL)
+		free_m_scheme_3p_basis(manager->bra_basis);
+	manager->bra_basis =
+		load_anicr_basis(manager->index_list_path,
+			 	 block.total_isospin,
+			  	 block.proton_energy_bra,
+				 block.neutron_energy_bra,
+			         manager->single_particle_energy_max);	 
 }
 
 static
