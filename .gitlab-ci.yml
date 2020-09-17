@@ -4,6 +4,8 @@
 # try locally, or remove the redirect.
 
 .build: &build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
   before_script:
     - apt-get update -yq > /dev/null
     - apt-get install -y --no-install-recommends software-properties-common wget make gcc g++ flex bison gsl-bin libgsl-dev libhdf5-dev libconfig-dev libopenblas-dev liblapack-dev libconfig-dev > /dev/null
