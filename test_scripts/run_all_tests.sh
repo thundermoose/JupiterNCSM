@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+echo $PWD
 for programs in $(find ./test_no_logging -regex ".*\\.x")
 do
 	echo "Running testsin $programs"
