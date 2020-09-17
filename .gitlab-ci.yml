@@ -13,21 +13,27 @@
     - wget http://fy.chalmers.se/subatom/wigxjpf/wigxjpf-1.10.tar.gz
     - tar -zxf wigxjpf-1.10.tar.gz
     - (cd wigxjpf-1.10/ ; make)
-    - make test_no_logging -k wigxjpf_path=wigxjpf-1.10 hdf5_comp_flags=-I/usr/include/hdf5/serial/ "hdf5_link_flags=-L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5"
+    - make ${JOB_NAME[2]} -k wigxjpf_path=wigxjpf-1.10 hdf5_comp_flags=-I/usr/include/hdf5/serial/ "hdf5_link_flags=-L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5"
     - ./test_scripts/run_all_tests.sh
   tags:
     - docker
 
 ###
 
-build gcc-latest:
+build gcc-latest test_no_logging:
   image: gcc:latest
   <<: *build
 
-build debian-stretch:
+build debian-stretch test_no_logging:
   image: debian:stretch
   <<: *build
 
-build debian-buster:
+build debian-buster test_no_logging:
+  image: debian:buster
+  <<: *build
+
+# A quicker compile-only check:
+
+build debian-buster all:
   image: debian:buster
   <<: *build
