@@ -37,7 +37,7 @@ single_particle_state_t get_state(single_particle_basis_t basis,
 	return state;
 }
 
-SP_States *get_sp_basis(single_particle_basis_t basis)
+SP_States *get_sp_states(single_particle_basis_t basis)
 {
 	return basis->sp_states;
 }
