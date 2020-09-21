@@ -10,6 +10,8 @@
     - apt-get update -yq > /dev/null
     - apt-get install -y --no-install-recommends software-properties-common wget make gcc g++ flex bison gsl-bin libgsl-dev libhdf5-dev libconfig-dev libopenblas-dev liblapack-dev libconfig-dev > /dev/null
   script:
+    - echo $CI_BUILD_NAME
+    - JOB_NAME=( $CI_BUILD_NAME )
     - wget http://fy.chalmers.se/subatom/wigxjpf/wigxjpf-1.10.tar.gz
     - tar -zxf wigxjpf-1.10.tar.gz
     - (cd wigxjpf-1.10/ ; make)
