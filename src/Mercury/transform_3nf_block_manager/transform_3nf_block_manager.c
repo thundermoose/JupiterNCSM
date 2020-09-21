@@ -7,29 +7,6 @@ typedef struct
 	Dens_Matrix *matrix;
 } block_t;
 
-static
-void setup_ket_basis(transform_3nf_block_manager_t manager,
-		     transform_block_settings_t block);
-static
-void setup_bra_basis(transform_3nf_block_manager_t manager,
-		     transform_block_settings_t block);
-
-static
-int get_min_M(M_Scheme_3p_Basis basis);
-
-static
-int get_max_M(M_Scheme_3p_Basis basis);
-
-static
-void expand_block_list(transform_3nf_block_manager_t manager);
-
-static
-size_t get_ket_index(M_Scheme_3p_Basis basis,
-		     connection_t connection);
-
-static
-size_t get_bra_index(M_Scheme_3p_Basis basis,
-		     connection_t connection);
 
 struct _tranform_2nf_block_manager_
 {
@@ -46,6 +23,54 @@ struct _tranform_2nf_block_manager_
 	single_particle_basis_t single_particle_basis;
 	Clebsch_Gordan_Data *clebsch_gordan_data;
 };
+
+static
+void setup_ket_basis(transform_3nf_block_manager_t manager,
+		     transform_block_settings_t block);
+static
+void setup_bra_basis(transform_3nf_block_manager_t manager,
+		     transform_block_settings_t block);
+
+static
+int get_min_M(M_Scheme_3p_Basis basis);
+
+static
+int get_max_M(M_Scheme_3p_Basis basis);
+
+static
+void clear_blocks(transform_3nf_block_manager_t manager);
+
+static
+void expand_block_list(transform_3nf_block_manager_t manager);
+
+static
+size_t get_ket_index(M_Scheme_3p_Basis basis,
+		     connection_t connection,
+		     int *phase);
+
+static
+size_t get_bra_index(M_Scheme_3p_Basis basis,
+		     connection_t connection,
+		     int *phase);
+
+static
+M_Scheme_3p_State set_up_ket_state(connection_t connection);
+
+static
+M_Scheme_3p_State set_up_bra_state(connection_t connection);
+
+static
+sort_state(M_Scheme_3p_State *state, int *phase);
+
+static inline
+void swap(int *a,int *b);
+
+static
+M_Scheme_3p_Basis load_anicr_3p_basis(const char *index_list_path,
+				      int total_isospin,
+				      int proton_energy,
+				      int neutron_energy,
+				      SP_Basis *sp_basis);
 
 transform_3nf_block_manager_t 
 new_transform_3nf_block_manager(Data_File *coupled_3nf_data,
@@ -75,6 +100,7 @@ void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 			get_max_M(manager->bra_basis));
 	manager->min_M = min_M;
 	manager->num_blocks = (max_M-min_M)/2 + 1;
+	clear_blocks(manager);
 	if (manager->num_blocks > manager->num_allocated_blocks)
 		expand_block_list(manager);
 	for (size_t i = 0; i < manager->num_blocks; i++)
@@ -120,9 +146,11 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 		M_Scheme_3p_Basis bra_m_basis = manager->blocks[i].bra_basis;
 		int phase = 1;
 		size_t ket_index = get_ket_index(current_connection,
-						 ket_m_basis);
+						 ket_m_basis,
+						 &phase);
 		size_t bra_index = get_bra_index(current_connection,
-						 bra_m_basis);
+						 bra_m_basis,
+						 &phase);
 		elements[element_index++] =
 			phase*get_dens_matrix_element(current_matrix,
 						      bra_index,
@@ -152,12 +180,13 @@ void setup_ket_basis(transform_3nf_block_manager_t manager,
 {
 	if (manager->ket_basis != NULL)
 		free_m_scheme_3p_basis(manager->ket_basis);
+	SP_Basis *sp_basis = get_sp_basis(manager->single_particle_basis);
 	manager->ket_basis =
-		load_anicr_basis(manager->index_list_path,
-			 	 block.total_isospin,
-			  	 block.proton_energy_ket,
-				 block.neutron_energy_ket,
-			         manager->single_particle_energy_max);	 
+		load_anicr_3p_basis(manager->index_list_path,
+				    block.total_isospin,
+				    block.proton_energy_ket,
+				    block.neutron_energy_ket,
+				    sp_basis);	 
 }
 static
 void setup_bra_basis(transform_3nf_block_manager_t manager,
@@ -165,37 +194,197 @@ void setup_bra_basis(transform_3nf_block_manager_t manager,
 {
 	if (manager->bra_basis != NULL)
 		free_m_scheme_3p_basis(manager->bra_basis);
+	SP_Basis *sp_basis = get_sp_basis(manager->single_particle_basis);
 	manager->bra_basis =
-		load_anicr_basis(manager->index_list_path,
-			 	 block.total_isospin,
-			  	 block.proton_energy_bra,
-				 block.neutron_energy_bra,
-			         manager->single_particle_energy_max);	 
+		load_anicr_3p_basis(manager->index_list_path,
+				    block.total_isospin,
+				    block.proton_energy_bra,
+				    block.neutron_energy_bra,
+				    sp_basis);	 
 }
 
 static
 int get_min_M(M_Scheme_3p_Basis basis)
 {
+	SP_States *states = get_m_scheme_3p_states(basis);
+	return get_3p_M(states[0],basis->sp_states);
 }
 
 static
 int get_max_M(M_Scheme_3p_Basis basis)
 {
+	SP_States *states = get_m_scheme_3p_states(basis);
+	const size_t last_element = get_m_scheme_3p_dimension(basis) - 1;
+	return get_3p_M(states[last_element],basis->sp_states);
+}
+
+static
+void clear_blocks(transform_3nf_block_manager_t manager)
+{
+	for (size_t i = 0; i<manager->num_allocated_blocks; i++)
+	{
+		if (manager->blocks[i].ket_basis)
+			free_m_scheme_3p_basis(manager->blocks[i].ket_basis);
+		manager->blocks[i].ket_basis = NULL;
+		if (manager->blocks[i].bra_basis)
+			free_m_scheme_3p_basis(manager->blocks[i].bra_basis);
+		manager->blocks[i].bra_basis = NULL;
+		if (manager->blocks[i].matrix)
+			free_dens_matrix(manager->blocks[i].matrix);
+		manager->blocks[i].matrix = NULL;
+	}
 }
 
 static
 void expand_block_list(transform_3nf_block_manager_t manager)
 {
+	manager->num_allocated_blocks = manager->num_blocks;
+	free(manager->blocks);
+	manager->blocks = 
+		(block_t*)
+		malloc(manager->num_allocated_blocks*sizeof(block_t));
 }
 
 static
 size_t get_ket_index(M_Scheme_3p_Basis basis,
-		     connection_t connection)
+		     connection_t connection,
+		     int *phase)
 {
+	M_Scheme_3p_State state = set_up_ket_state(connection);
+	sort_state(&state,phase);
+	return find_m_scheme_3p_state(basis,state);
 }
 
 static
 size_t get_bra_index(M_Scheme_3p_Basis basis,
-		     connection_t connection)
+		     connection_t connection,
+		     int *phase)
 {
+	M_Scheme_3p_State state = set_up_bra_state(connection);
+	sort_state(&state,phase);
+	return find_m_scheme_3p_state(basis,state);
+}
+
+static
+M_Scheme_3p_State set_up_ket_state(connection_t connection)
+{
+	switch (count_protons(connection.type))
+	{
+		case 0:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[0]*2+1,
+				 connection.neutron_states[1]*2+1,
+				 connection.neutron_states[2]*2+1);
+				
+		case 1:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[0]*2+1,
+				 connection.neutron_states[1]*2+1,
+				 connection.proton_states[0]*2);
+		case 2:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[0]*2+1,
+				 connection.proton_states[0]*2,
+				 connection.proton_states[1]*2);
+		case 3:
+			return new_m_scheme_3p_state
+				(connection.proton_states[0]*2,
+				 connection.proton_states[1]*2,
+				 connection.proton_states[2]*2);
+	}
+}
+
+static
+M_Scheme_3p_State set_up_bra_state(connection_t connection)
+{
+	switch (count_protons(connection.type))
+	{
+		case 0:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[3]*2+1,
+				 connection.neutron_states[4]*2+1,
+				 connection.neutron_states[5]*2+1);
+				
+		case 1:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[2]*2+1,
+				 connection.neutron_states[3]*2+1,
+				 connection.proton_states[1]*2);
+		case 2:
+			return new_m_scheme_3p_state
+				(connection.neutron_states[1]*2+1,
+				 connection.proton_states[2]*2,
+				 connection.proton_states[3]*2);
+		case 3:
+			return new_m_scheme_3p_state
+				(connection.proton_states[3]*2,
+				 connection.proton_states[4]*2,
+				 connection.proton_states[5]*2);
+	}
+}
+
+static
+sort_state(M_Scheme_3p_State *state, int *phase)
+{
+	if (state->a > state->b) swap(&state->a,&state->b);
+	if (state->b > state->c) swap(&state->b,&state->c);
+	if (state->a > state->b) swap(&state->a,&state->b);
+}
+
+static inline
+void swap(int *a,int *b)
+{
+	int tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+static
+M_Scheme_3p_Basis load_anicr_3p_basis(const char *index_list_path,
+				      int total_isospin,
+				      int proton_energy,
+				      int neutron_energy,
+				      SP_Basis *sp_basis)
+{
+	static const char *proton_map[4] = {"ppp","pp","p",""};
+	static const char *neutron_map[4] = {"","n","nn","nnn"};
+	char *proton_basis_filename = 
+		setup_basis_filename(index_list_path,
+				     total_isospin,
+				     proton_energy,
+				     proton_map);
+	char *neutron_basis_filename = 
+		setup_basis_filename(index_list_path,
+				     total_isospin,
+				     neutron_energy,
+				     neutron_map);
+	const size_t num_neutrons = (total_isospin+3)/2;
+	const size_t num_protons = 3-num_neutrons;
+	M_Scheme_3p_Basis basis =
+	       	new_m_scheme_3p_basis_from_basis_file(proton_basis_filename,
+						      neutron_basis_filename,
+						      num_protons,
+						      num_neutrons,
+						      sp_basis);
+	free(proton_basis_filename);
+	free(neutron_basis_filename);
+	return basis;
+}
+
+static inline
+char *setup_basis_filename(const char *index_list_path,
+			   int total_isospin,
+			   int energy,
+			   const char *particle_map[4])
+{
+	const char *particle_pattern = particle_map[(total_isospin+3)/2];
+	size_t length_basis_filename = strlen(index_list_path) + 
+		strlen(particle_pattern) + 128;
+	char *basis_filename = (char*)malloc(length_basis_filename);
+	sprintf(basis_filename,
+		"%s/%s_inds_index_lists/basis_energy_%d",
+		index_list_path,
+		particle_pattern,
+		energy);
+	return basis_filename;
 }
