@@ -2,6 +2,7 @@
 #define __SINGLE_PARTICLE_BASIS__
 
 #include <stdlib.h>
+#include <bases/sp_states.h>
 
 struct _single_particle_basis_;
 typedef struct _single_particle_basis_ *single_particle_basis_t;
@@ -16,6 +17,8 @@ single_particle_basis_t new_single_particle_basis(int energy_max);
 
 single_particle_state_t get_state(single_particle_basis_t basis,
 				  size_t index);
+
+SP_States *get_sp_states(single_particle_basis_t basis);
 
 void free_single_particle_basis(single_particle_basis_t basis);
 
