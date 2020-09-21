@@ -57,16 +57,16 @@ M_Scheme_3p_State* get_m_scheme_3p_states(M_Scheme_3p_Basis *mp_basis);
 
 void list_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
 
-M_Scheme_3p_State new_m_scheme_3p_state(sp_state_index a,
-					sp_state_index b,
-					sp_state_index c);
-
 size_t get_m_scheme_3p_dimension(M_Scheme_3p_Basis *basis);
 
 size_t find_m_scheme_3p_state(M_Scheme_3p_Basis *basis,
 			      M_Scheme_3p_State state);
 
 void free_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
+
+M_Scheme_3p_State new_m_scheme_3p_state(sp_state_index a,
+					sp_state_index b,
+					sp_state_index c);
 
 int get_3p_M(M_Scheme_3p_State state,
 	     SP_States *sp_states);
