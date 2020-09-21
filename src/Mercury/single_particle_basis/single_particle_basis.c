@@ -42,6 +42,11 @@ SP_States *get_sp_states(single_particle_basis_t basis)
 	return basis->sp_states;
 }
 
+size_t get_single_particle_dimension(single_particle_basis_t basis)
+{
+	return basis->sp_states->dimension;
+}
+
 void free_single_particle_basis(single_particle_basis_t basis)
 {
 	free_sp_states(basis->sp_states);
@@ -57,7 +62,7 @@ int get_m(single_particle_state_t state)
 new_test(nmax2_single_particle_basis,
 	 {
 	 single_particle_basis_t basis = new_single_particle_basis(2);
-	 for (size_t i = 0; i<basis->num_states; i++)
+	 for (size_t i = 0; i<get_single_particle_dimension(basis); i++)
 	 {
 	 	single_particle_state_t state = get_state(basis,i);
 		printf("(%lu) %d %d %d %d %d (%lu)\n",

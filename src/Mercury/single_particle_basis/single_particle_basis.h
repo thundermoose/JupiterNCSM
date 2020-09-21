@@ -20,6 +20,8 @@ single_particle_state_t get_state(single_particle_basis_t basis,
 
 SP_States *get_sp_states(single_particle_basis_t basis);
 
+size_t get_single_particle_dimension(single_particle_basis_t basis);
+
 void free_single_particle_basis(single_particle_basis_t basis);
 
 int get_m(single_particle_state_t state);
