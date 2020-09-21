@@ -42,6 +42,7 @@ new_m_scheme_3p_basis_from_basis_file(const char *proton_basis_file,
 				      size_t num_neutrons,
 				      SP_States *sp_states);
 
+
 M_Scheme_3p_Basis* generate_block(M_Scheme_3p_Basis *mp_basis,
 				  quantum_number tz,
 				  quantum_number m_tot,
@@ -52,6 +53,9 @@ M_Scheme_3p_State* get_m_scheme_3p_states(M_Scheme_3p_Basis *mp_basis);
 
 void list_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
 
+M_Scheme_3p_State new_m_scheme_3p_state(sp_state_index a,
+					sp_state_index b,
+					sp_state_index c);
 
 void free_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
 
