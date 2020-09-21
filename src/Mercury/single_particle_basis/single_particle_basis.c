@@ -23,8 +23,8 @@ single_particle_basis_t new_single_particle_basis(int energy_max)
 single_particle_state_t get_state(single_particle_basis_t basis,
 				  size_t index)
 {
-	SP_State sp_state = basis->sp_state->sp_states[index];
-	Shell shell = basis->shells->shells[sp_states.shell];
+	SP_State sp_state = basis->sp_states->sp_states[index];
+	Shell shell = basis->shells->shells[sp_state.shell];
 	single_particle_state_t state =
 	{
 		.n = shell.n,
