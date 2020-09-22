@@ -94,12 +94,7 @@ new_transform_2nf_block_manager(antoine_2nf_file_t coupled_2nf_data,
 {
 	transform_2nf_block_manager_t manager =
 		(transform_2nf_block_manager_t)
-		malloc(sizeof(struct _transform_2nf_block_manager_));
-	manager->ket_basis = NULL;
-	manager->bra_basis = NULL;
-	manager->blocks = NULL;
-	manager->num_blocks = 0;
-	manager->num_allocated_blocks = 0;
+		calloc(1,sizeof(struct _transform_2nf_block_manager_));
 	manager->coupled_2nf_data = coupled_2nf_data;
 	manager->basis_files_path = copy_string(basis_files_path);
 	manager->index_list_path = copy_string(index_list_path);

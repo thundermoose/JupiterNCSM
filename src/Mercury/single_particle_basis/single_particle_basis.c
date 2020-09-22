@@ -6,65 +6,51 @@
 
 struct _single_particle_basis_
 {
-	single_particle_state_t *states;	
-	size_t num_states;
+	SP_States *sp_states;
+	Shells *shells;
 };
-
-int compare_neptune_states(const single_particle_state_t *state_a,
-			   const single_particle_state_t *state_b);
 
 single_particle_basis_t new_single_particle_basis(int energy_max)
 {
 	single_particle_basis_t basis =
 		(single_particle_basis_t)
-		calloc(1,sizeof(struct _single_particle_basis_));
-	array_builder_t basis_builder =
-		new_array_builder((void**)&basis->states,
-				  &basis->num_states,
-				  sizeof(single_particle_state_t));
-	single_particle_state_t current_state;
-	current_state.neptune_index = 0;
-	for (int energy = 0; energy <= energy_max; energy++)
-	{
-		for (current_state.l = energy % 2;
-		     current_state.l <= energy;
-		     current_state.l += 2)
-		{
-			current_state.n = (energy-current_state.l)/2;
-			for (current_state.j = abs(current_state.l*2-1);
-			     current_state.j <= current_state.l*2+1;
-			     current_state.j += 2)
-			{
-
-				for (current_state.m = current_state.j;
-				     current_state.m >= -current_state.j;
-				     current_state.m -= 2)
-				{
-					current_state.tz = -1;
-					append_array_element(basis_builder,
-							     &current_state);
-					current_state.neptune_index++;
-					current_state.tz = 1;
-					append_array_element(basis_builder,
-							     &current_state);
-					current_state.neptune_index++;
-				}
-			}
-		}
-	}
-	free_array_builder(basis_builder);
+		malloc(sizeof(struct _single_particle_basis_));	
+	basis->shells = new_shells(energy_max);
+	basis->sp_states = new_sp_states(basis->shells);
 	return basis;
 }
 
 single_particle_state_t get_state(single_particle_basis_t basis,
 				  size_t index)
 {
-	return basis->states[index];
+	SP_State sp_state = basis->sp_states->sp_states[index];
+	Shell shell = basis->shells->shells[sp_state.shell];
+	single_particle_state_t state =
+	{
+		.n = shell.n,
+		.l = shell.l,
+		.j = shell.j,
+		.m = sp_state.m,
+		.tz = shell.tz,
+		.neptune_index = index
+	};
+	return state;
+}
+
+SP_States *get_sp_states(single_particle_basis_t basis)
+{
+	return basis->sp_states;
+}
+
+size_t get_single_particle_dimension(single_particle_basis_t basis)
+{
+	return basis->sp_states->dimension;
 }
 
 void free_single_particle_basis(single_particle_basis_t basis)
 {
-	free(basis->states);
+	free_sp_states(basis->sp_states);
+	free_shells(basis->shells);
 	free(basis);
 }
 
@@ -73,39 +59,20 @@ int get_m(single_particle_state_t state)
 	return state.m;
 }
 
-int compare_neptune_states(const single_particle_state_t *state_a,
-			   const single_particle_state_t *state_b)
-{
-	int diff;
-	int Na = state_a->n*2+state_a->l;
-	int Nb = state_b->n*2+state_b->l;
-	diff = Na-Nb;
-	if (diff)
-		return diff;
-#define compare(sign,quantum_number)\
-	diff = sign*(state_a->quantum_number-state_b->quantum_number);\
-	if (diff)\
-		return diff;
-	compare(1,l);
-	compare(-1,j);
-	compare(-1,m);
-	compare(1,tz);
-	return 0;
-}
-
 new_test(nmax2_single_particle_basis,
 	 {
 	 single_particle_basis_t basis = new_single_particle_basis(2);
-	 for (size_t i = 0; i<basis->num_states; i++)
+	 for (size_t i = 0; i<get_single_particle_dimension(basis); i++)
 	 {
+	 	single_particle_state_t state = get_state(basis,i);
 		printf("(%lu) %d %d %d %d %d (%lu)\n",
 		       i,
-		       basis->states[i].n,
-		       basis->states[i].l,
-		       basis->states[i].j,
-		       basis->states[i].m,
-		       basis->states[i].tz,
-		       basis->states[i].neptune_index);
+		       state.n,
+		       state.l,
+		       state.j,
+		       state.m,
+		       state.tz,
+		       state.neptune_index);
 	 }
 	 free_single_particle_basis(basis);
 	 });

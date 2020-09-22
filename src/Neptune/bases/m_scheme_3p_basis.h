@@ -1,6 +1,7 @@
 #ifndef __M_SCHEME_3P_BASIS__
 #define __M_SCHEME_3P_BASIS__
 #include "sp_states.h"
+#include <hash_map/hash_map.h>
 
 typedef struct _m_scheme_3p_state_
 {
@@ -16,6 +17,8 @@ typedef struct _m_scheme_3p_basis_
 	size_t dimension;
 	SP_States *sp_states;
 	quantum_number e_max;
+	hash_map_t state_to_index_map;
+
 } M_Scheme_3p_Basis;
 
 M_Scheme_3p_Basis* new_m_scheme_3p_basis_no_m_rest(quantum_number e_max,
@@ -42,17 +45,30 @@ new_m_scheme_3p_basis_from_basis_file(const char *proton_basis_file,
 				      size_t num_neutrons,
 				      SP_States *sp_states);
 
+
 M_Scheme_3p_Basis* generate_block(M_Scheme_3p_Basis *mp_basis,
 				  quantum_number tz,
 				  quantum_number m_tot,
 				  quantum_number E,
 				  size_t *offset);
 
+
 M_Scheme_3p_State* get_m_scheme_3p_states(M_Scheme_3p_Basis *mp_basis);
 
 void list_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
 
+size_t get_m_scheme_3p_dimension(M_Scheme_3p_Basis *basis);
+
+size_t find_m_scheme_3p_state(M_Scheme_3p_Basis *basis,
+			      M_Scheme_3p_State state);
 
 void free_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis);
+
+M_Scheme_3p_State new_m_scheme_3p_state(sp_state_index a,
+					sp_state_index b,
+					sp_state_index c);
+
+int get_3p_M(M_Scheme_3p_State state,
+	     SP_States *sp_states);
 
 #endif

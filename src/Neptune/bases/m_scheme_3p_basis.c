@@ -8,6 +8,7 @@
 #include <utils/permutation_tools.h>
 #include <read_packed_states/read_packed_states.h>
 #include <debug_mode/debug_mode.h>
+#include <global_constants/global_constants.h>
 
 static
 void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
@@ -20,6 +21,16 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 				  const char *neutron_basis_filename,
 				  const size_t num_protons,
 				  const size_t num_neutrons);
+
+static
+void setup_state_to_index_map(M_Scheme_3p_Basis *basis);
+
+static
+int compare_m_scheme_3p_state(M_Scheme_3p_State *state_a,
+			      M_Scheme_3p_State *state_b);
+
+static
+uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state);
 
 M_Scheme_3p_State sort_on_shells(M_Scheme_3p_State s,
 				 SP_States* sp_states)
@@ -150,6 +161,7 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis_no_m_rest(quantum_number e_max,
 		sizeof(M_Scheme_3p_State),
 		comp_m_scheme_3p_basis,
 		sp_states);
+	setup_state_to_index_map(mp_basis);
 	return mp_basis;
 }
 
@@ -210,6 +222,7 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis(quantum_number e_max,
 					    sizeof(M_Scheme_3p_State)*mp_basis->dimension);
 	qsort_r(mp_basis->states,mp_basis->dimension,sizeof(M_Scheme_3p_State),
 		comp_m_scheme_3p_basis,sp_states);
+	setup_state_to_index_map(mp_basis);
 	return mp_basis;
 }
 
@@ -270,6 +283,7 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis2(quantum_number e_min,
 					    sizeof(M_Scheme_3p_State)*mp_basis->dimension);
 	qsort_r(mp_basis->states,mp_basis->dimension,sizeof(M_Scheme_3p_State),
 		comp_m_scheme_3p_basis,sp_states);
+	setup_state_to_index_map(mp_basis);
 	return mp_basis;
 }
 
@@ -277,7 +291,16 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis2(quantum_number e_min,
 void free_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis)
 {
 	free(mp_basis->states);
+	free_hash_map(mp_basis->state_to_index_map);
 	free(mp_basis);
+}
+
+int get_3p_M(M_Scheme_3p_State state,
+	     SP_States *sp_states)
+{
+	return sp_states->sp_states[state.a].m +
+		sp_states->sp_states[state.b].m +
+		sp_states->sp_states[state.c].m;
 }
 
 
@@ -340,6 +363,7 @@ M_Scheme_3p_Basis* new_m_scheme_3p_basis3(quantum_number e_max,
 					    sizeof(M_Scheme_3p_State)*mp_basis->dimension);
 	qsort_r(mp_basis->states,mp_basis->dimension,sizeof(M_Scheme_3p_State),
 		comp_m_scheme_3p_basis,sp_states);
+	setup_state_to_index_map(mp_basis);
 	return mp_basis;
 }
 
@@ -373,6 +397,7 @@ new_m_scheme_3p_basis_from_basis_file(const char *proton_basis_filename,
 					     num_protons,
 					     num_neutrons);
 	}
+	setup_state_to_index_map(basis);
 	return basis;
 }
 
@@ -516,6 +541,11 @@ M_Scheme_3p_State* get_m_scheme_3p_states(M_Scheme_3p_Basis *mp_basis)
 	return states;
 }
 
+size_t get_m_scheme_3p_dimension(M_Scheme_3p_Basis *basis)
+{
+	return basis->dimension;
+}
+
 void list_m_scheme_3p_basis(M_Scheme_3p_Basis* mp_basis)
 {
 	size_t i;
@@ -573,6 +603,29 @@ M_Scheme_3p_Basis* generate_block(M_Scheme_3p_Basis *mp_basis,
 	       out->dimension);
 	*offset = start;
 	return out;
+}
+
+size_t find_m_scheme_3p_state(M_Scheme_3p_Basis *basis,
+			      M_Scheme_3p_State state)
+{
+	size_t index = no_index;
+	if (hash_map_get(basis->state_to_index_map, &state, &index))
+		return index;
+	else
+		return no_index;
+}
+
+M_Scheme_3p_State new_m_scheme_3p_state(sp_state_index a,
+					sp_state_index b,
+					sp_state_index c)
+{
+	M_Scheme_3p_State state =
+	{
+		.a = a,
+		.b = b,
+		.c = c
+	};
+	return state;
 }
 
 static
@@ -666,4 +719,44 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 	}
 	free(packed_proton_states);
 	free(packed_neutron_states);
+}
+
+static
+void setup_state_to_index_map(M_Scheme_3p_Basis *basis)
+{
+	basis->state_to_index_map = 
+		new_hash_map(basis->dimension,
+			     2,
+			     sizeof(size_t),
+			     sizeof(M_Scheme_3p_State),
+			     (__compar_fn_t)compare_m_scheme_3p_state,
+			     (__hash_fn_t)compute_m_scheme_3p_hash);
+	for (size_t i = 0; i < basis->dimension; i++)
+	{
+		hash_map_insert(basis->state_to_index_map,
+				(void*)&basis->states[i],
+				(void*)&i);
+	}
+}
+
+static
+int compare_m_scheme_3p_state(M_Scheme_3p_State *state_a,
+			      M_Scheme_3p_State *state_b)
+{
+	int diff = state_a->a - state_b->a;
+	if (diff)
+		return diff;
+	diff = state_a->b - state_b->b;
+	if (diff)
+		return diff;
+	return state_a->c - state_b->c;
+}
+
+static
+uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state)
+{
+	uint64_t h1 = (uint64_t)state->a ^ (((uint64_t)state->b)<<13);
+	uint64_t h2 = (((uint64_t)state->b)<<3) ^ (((uint64_t)state->c)<<17);
+	static const uint64_t magic_number = 0xFEDCBA9876543210;
+	return h1 ^ __builtin_bswap64(h2) ^ magic_number;
 }
