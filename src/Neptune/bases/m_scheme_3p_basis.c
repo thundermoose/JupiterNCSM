@@ -674,15 +674,18 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 			   &num_neutron_states,
 			   num_neutrons*sizeof(short),
 			   neutron_basis_filename);	
+	log_entry("Read %lu protons states and %lu neutron states",
+		  num_proton_states,num_neutron_states);
 	const size_t num_states = num_proton_states*num_neutron_states;
 	basis->states = 
 		(M_Scheme_3p_State*)
 		malloc(num_states*sizeof(M_Scheme_3p_State));
+	basis->dimension = num_states;
 	size_t state_index = 0;
 	uint64_t proton_mask = 
 		num_protons > 1 ? 0x00000000FFFFFFFF : 0x000000000000FFFF;
-	uint64_t neutron_mask =
-		num_neutrons > 1 ? 0x0000FFFFFFFF0000 : 0x0000FFFF00000000;
+//	uint64_t neutron_mask =
+//		num_neutrons > 1 ? 0x0000FFFFFFFF0000 : 0x0000FFFF00000000;
 	uint64_t particle_strids = 
 		num_neutrons > 1 ?
 		 0x0000000100010000 : 0x0000000100000000;
@@ -690,33 +693,42 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 	     proton_state_index < num_proton_states;
 	     proton_state_index++)
 	{
-		int *current_proton_state = 
-			(int*)(packed_proton_states +
-			       num_protons*proton_state_index);
-		uint64_t current_packed_state = 
-			(uint64_t)(*current_proton_state) & proton_mask;
+		short *current_proton_state = 
+			(short*)(packed_proton_states +
+				 num_protons*proton_state_index);
+		uint64_t current_packed_state = 0;
+		for (size_t i = 0; i < num_protons; i++)
+			current_packed_state |= 
+				(((uint64_t)
+				  (current_proton_state[i])) <<
+				(16*i)) << 1;
 		for (size_t neutron_state_index = 0;
 		     neutron_state_index < num_neutron_states;
 		     neutron_state_index++)
 		{
-			int *current_neutron_state =
-				(int*)(packed_neutron_states +
+			short *current_neutron_state =
+				(short*)(packed_neutron_states +
 				       num_neutrons*neutron_state_index);
 			current_packed_state &= proton_mask;	
-			current_packed_state |= 
-				((uint64_t)(*current_neutron_state) << 
-				 (16*num_protons)) & neutron_mask;
-			current_packed_state = 
-				(current_packed_state<<1) | particle_strids;
+			for (size_t i = 0; i < num_neutrons; i++)
+				current_packed_state |=
+					(((uint64_t)
+					 (current_neutron_state[i])) <<
+					(16*(i+num_protons)))<<1;
+			current_packed_state |= particle_strids;
+			log_entry("current_packed_state %lu: %lx",
+				  state_index,
+				  current_packed_state);
 			basis->states[state_index].a = 
 				(sp_state_index)(current_packed_state &
 						 0x000000000000FFFF);
 			basis->states[state_index].b = 
 				(sp_state_index)((current_packed_state &
-						 0x00000000FFFF0000) >> 16);
+						  0x00000000FFFF0000) >> 16);
 			basis->states[state_index].c = 
 				(sp_state_index)((current_packed_state &
-						 0x0000FFFF00000000) >> 32);
+						  0x0000FFFF00000000) >> 32);
+			state_index++;
 		}
 	}
 	free(packed_proton_states);
