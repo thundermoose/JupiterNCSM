@@ -9,6 +9,8 @@
 #include <read_packed_states/read_packed_states.h>
 #include <debug_mode/debug_mode.h>
 #include <global_constants/global_constants.h>
+#include <unit_testing/test.h>
+#include <log/log.h>
 
 static
 void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
@@ -760,3 +762,43 @@ uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state)
 	static const uint64_t magic_number = 0xFEDCBA9876543210;
 	return h1 ^ __builtin_bswap64(h2) ^ magic_number;
 }
+
+new_test(m_scheme_3p_nnp_basis_nmax_2,
+	 const char *proton_basis_filename =
+	 TEST_DATA
+	 "anicr_basis_files/anicr_bases_protons_nmax2/p/basis_energy_1";
+	 const char *neutron_basis_filename =
+	 TEST_DATA
+	 "anicr_basis_files/anicr_bases_neutrons_nmax2/nn/basis_energy_1";
+	 Shells *shells = new_shells(2);
+	 SP_States *sp_states = new_sp_states(shells);
+	 M_Scheme_3p_Basis *basis =
+	 new_m_scheme_3p_basis_from_basis_file(proton_basis_filename,
+					       neutron_basis_filename,
+					       1,2,
+					       sp_states);
+	list_m_scheme_3p_basis(basis);
+       	free_m_scheme_3p_basis(basis);
+	free_sp_states(sp_states);
+	free_shells(shells);
+	);	
+
+new_test(m_scheme_3p_npp_basis_nmax_2,
+	 const char *proton_basis_filename =
+	 TEST_DATA
+	 "anicr_basis_files/anicr_bases_protons_nmax2/pp/basis_energy_1";
+	 const char *neutron_basis_filename =
+	 TEST_DATA
+	 "anicr_basis_files/anicr_bases_neutrons_nmax2/n/basis_energy_1";
+	 Shells *shells = new_shells(2);
+	 SP_States *sp_states = new_sp_states(shells);
+	 M_Scheme_3p_Basis *basis =
+	 new_m_scheme_3p_basis_from_basis_file(proton_basis_filename,
+					       neutron_basis_filename,
+					       2,1,
+					       sp_states);
+	list_m_scheme_3p_basis(basis);
+       	free_m_scheme_3p_basis(basis);
+	free_sp_states(sp_states);
+	free_shells(shells);
+	);	
