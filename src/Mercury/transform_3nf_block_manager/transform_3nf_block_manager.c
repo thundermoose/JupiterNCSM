@@ -277,7 +277,7 @@ void expand_block_list(transform_3nf_block_manager_t manager)
 	free(manager->blocks);
 	manager->blocks = 
 		(block_t*)
-		malloc(manager->num_allocated_blocks*sizeof(block_t));
+		calloc(manager->num_allocated_blocks,sizeof(block_t));
 }
 
 	static
