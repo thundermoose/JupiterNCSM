@@ -603,6 +603,7 @@ M_Scheme_3p_Basis* generate_block(M_Scheme_3p_Basis *mp_basis,
 	       mp_basis->states+start,
 	       sizeof(M_Scheme_3p_State)*
 	       out->dimension);
+	setup_state_to_index_map(out);
 	*offset = start;
 	return out;
 }
