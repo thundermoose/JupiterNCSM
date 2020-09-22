@@ -201,11 +201,14 @@ void free_transform_3nf_block_manager(transform_3nf_block_manager_t manager)
 {
 	free(manager->index_list_path);
 	clear_blocks(manager);
+	if (manager->blocks)
+		free(manager->blocks);
 	if (manager->ket_basis)
 		free_m_scheme_3p_basis(manager->ket_basis);
 	if (manager->bra_basis)
 		free_m_scheme_3p_basis(manager->bra_basis);
 	free_single_particle_basis(manager->single_particle_basis);
+	free_clebsch_gordan(manager->clebsch_gordan_data);
 	free(manager);
 }
 
@@ -242,7 +245,9 @@ void setup_bra_basis(transform_3nf_block_manager_t manager,
 int get_min_M(M_Scheme_3p_Basis *basis)
 {
 	M_Scheme_3p_State *states = get_m_scheme_3p_states(basis);
-	return get_3p_M(states[0],basis->sp_states);
+	int m = get_3p_M(states[0],basis->sp_states); 
+	free(states);
+	return m;
 }
 
 	static
@@ -250,7 +255,9 @@ int get_max_M(M_Scheme_3p_Basis *basis)
 {
 	M_Scheme_3p_State *states = get_m_scheme_3p_states(basis);
 	const size_t last_element = get_m_scheme_3p_dimension(basis) - 1;
-	return get_3p_M(states[last_element],basis->sp_states);
+	int m = get_3p_M(states[last_element],basis->sp_states); 
+	free(states);
+	return m;
 }
 
 	static
