@@ -12,6 +12,10 @@
 #include <unit_testing/test.h>
 #include <log/log.h>
 
+// Evil global variables
+static
+SP_States *current_sp_states = NULL;
+
 static
 void read_single_particle_type_file(M_Scheme_3p_Basis *basis,
 				    const char *basis_filename,
@@ -36,6 +40,11 @@ uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state);
 
 static
 void sort_state(M_Scheme_3p_State *state);
+
+static
+int compare_m_scheme_3p_states_m(M_Scheme_3p_State *state_a,
+				 M_Scheme_3p_State *state_b);
+
 
 M_Scheme_3p_State sort_on_shells(M_Scheme_3p_State s,
 				 SP_States* sp_states)
@@ -738,6 +747,12 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 	}
 	free(packed_proton_states);
 	free(packed_neutron_states);
+	current_sp_states = basis->sp_states;
+	qsort(basis->states,
+	      basis->dimension,
+	      sizeof(M_Scheme_3p_State),
+	      (__compar_fn_t)compare_m_scheme_3p_states_m);
+	current_sp_states = NULL;
 }
 
 static
@@ -795,6 +810,21 @@ void sort_state(M_Scheme_3p_State *state)
 		swap(state->b,state->c);
 	if (state->a > state->b)
 		swap(state->a,state->b);
+}
+
+static
+int compare_m_scheme_3p_states_m(M_Scheme_3p_State *state_a,
+				 M_Scheme_3p_State *state_b)
+{
+	int M_a = 
+		current_sp_states->sp_states[state_a->a].m +
+		current_sp_states->sp_states[state_a->b].m +
+		current_sp_states->sp_states[state_a->c].m; 
+	int M_b = 
+		current_sp_states->sp_states[state_b->a].m +
+		current_sp_states->sp_states[state_b->b].m +
+		current_sp_states->sp_states[state_b->c].m; 
+	return M_a-M_b;
 }
 
 new_test(m_scheme_3p_nnp_basis_nmax_2,
