@@ -34,6 +34,9 @@ int compare_m_scheme_3p_state(M_Scheme_3p_State *state_a,
 static
 uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state);
 
+static
+void sort_state(M_Scheme_3p_State *state);
+
 M_Scheme_3p_State sort_on_shells(M_Scheme_3p_State s,
 				 SP_States* sp_states)
 {
@@ -729,6 +732,7 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 			basis->states[state_index].c = 
 				(sp_state_index)((current_packed_state &
 						  0x0000FFFF00000000) >> 32);
+			sort_state(&basis->states[state_index]);
 			state_index++;
 		}
 	}
@@ -774,6 +778,23 @@ uint64_t compute_m_scheme_3p_hash(M_Scheme_3p_State *state)
 	uint64_t h2 = (((uint64_t)state->b)<<3) ^ (((uint64_t)state->c)<<17);
 	static const uint64_t magic_number = 0xFEDCBA9876543210;
 	return h1 ^ __builtin_bswap64(h2) ^ magic_number;
+}
+
+static
+void sort_state(M_Scheme_3p_State *state)
+{
+#define swap(a,b)\
+	{\
+		sp_state_index tmp = a;\
+		a = b;\
+		b = tmp;\
+	}
+	if (state->a > state->b)
+		swap(state->a,state->b);
+	if (state->b > state->c)
+		swap(state->b,state->c);
+	if (state->a > state->b)
+		swap(state->a,state->b);
 }
 
 new_test(m_scheme_3p_nnp_basis_nmax_2,
