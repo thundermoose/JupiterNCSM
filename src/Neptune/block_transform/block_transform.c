@@ -315,7 +315,6 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 							jjj_matrix,
 							ket_transform);
 				DEBUG_CALL({
-						printf("Test!!!!!!!!!!!!!!!!!!!!!!\n");
 						char title[256];
 						sprintf(title,
 								"JJJ_Block: %d %d %d",
