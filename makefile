@@ -98,6 +98,7 @@ release/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 
 profiling_$1: $$(package_programs_$1:%.x=profiling/%.x)
 profiling/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNDEBUG -DNLOGING -pg -ggdb 
+profiling/$1/%.x: linker_flags+=-pg
 profiling/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
