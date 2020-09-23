@@ -8,6 +8,7 @@
 #include <transform_3nf_block_manager/transform_3nf_block_manager.h>
 #include <combination_table/combination_table.h>
 #include <log/log.h>
+#include <time.h>
 
 	__attribute__((constructor(101)))
 void initialization()
@@ -145,10 +146,15 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 		 get_single_particle_energy_argument(arguments));
 	transform_block_settings_t transformed_block = {INT_MAX};
 	const char *output_path_base = get_output_path_argument(arguments);					
+	struct timespec time_start;
+	struct timespec time_end;
 	while (has_next_3nf_block(combination_table))
 	{
+		clock_gettime(CLOCK_REALTIME,&time_start);
 		matrix_block_setting_t current_matrix_block = 
 			next_3nf_block_iterator(combination_table);
+		printf("Compute 3NF block %lu\n",
+		       current_matrix_block.matrix_block_id);
 		transform_block_settings_t current_block =
 			setup_transform_block(current_matrix_block);
 		log_entry("%s p: %d %d %d n: %d %d %d,"
@@ -175,6 +181,10 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 		save_mercury_matrix_block(matrix_block,
 					  output_path_base);
 		free_mercury_matrix_block(matrix_block);
+		clock_gettime(CLOCK_REALTIME,&time_end);
+		double elapsed_time = (time_end.tv_sec-time_start.tv_sec)*1e6 +
+			(time_end.tv_nsec-time_start.tv_sec)*1e-3;
+		printf("Time: %lg µs\n",elapsed_time);
 	}
 	free_transform_3nf_block_manager(manager);
 	free_data_file(coupled_3nf_data);
