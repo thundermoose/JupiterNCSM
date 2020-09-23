@@ -76,6 +76,19 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 	return matrix_block;
 }
 
+mercury_matrix_block_t
+new_zero_mercury_matrix_block(connection_list_t connection_list)
+{
+	mercury_matrix_block_t matrix_block =
+		(mercury_matrix_block_t)
+		malloc(sizeof(struct _mercury_matrix_block_));
+	matrix_block->settings = get_matrix_block_setting(connection_list);
+	matrix_block->num_elements = num_connections(connection_list);
+	matrix_block->elements = (double*)calloc(matrix_block->num_elements,
+						 sizeof(double));
+	return matrix_block;
+}
+
 mercury_matrix_block_t 
 new_mercury_matrix_block_from_data(double *elements,
 				   size_t num_elements,

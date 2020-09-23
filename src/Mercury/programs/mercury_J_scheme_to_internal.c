@@ -59,22 +59,21 @@ void generate_1nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
 	printf("1NF blocks only:\n");
+	const char *output_path_base = get_output_path_argument(arguments);
+	const char *index_list_path = get_index_list_path_argument(arguments);
 	while (has_next_1nf_block(combination_table))
 	{
 		matrix_block_setting_t current_matrix_block = 
 			next_1nf_block_iterator(combination_table);
-		printf("%s p: %d %d %d n: %d %d %d,"
-		       "#PC: %lu #NC: %lu id: %lu\n",
-		       block_type_to_string(current_matrix_block.type),
-		       current_matrix_block.difference_energy_protons,
-		       current_matrix_block.difference_M_protons,
-		       current_matrix_block.depth_protons,
-		       current_matrix_block.difference_energy_neutrons,
-		       current_matrix_block.difference_M_neutrons,
-		       current_matrix_block.depth_neutrons,
-		       current_matrix_block.num_proton_combinations,
-		       current_matrix_block.num_neutron_combinations,
-		       current_matrix_block.matrix_block_id);
+		connection_list_t connection_list =
+			read_connection_files(index_list_path,
+					      current_matrix_block);
+		mercury_matrix_block_t current_block =
+			new_zero_mercury_matrix_block(connection_list);
+		save_mercury_matrix_block(current_block,
+					  output_path_base);
+		free_mercury_matrix_block(current_block);
+		free_connection_list(connection_list);
 	}
 }
 

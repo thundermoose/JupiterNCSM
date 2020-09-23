@@ -13,6 +13,9 @@ mercury_matrix_block_t new_mercury_matrix_block(interaction_t interaction,
 						single_particle_basis_t basis);
 
 mercury_matrix_block_t 
+new_zero_mercury_matrix_block(connection_list_t connections);
+						     
+mercury_matrix_block_t 
 new_mercury_matrix_block_from_data(double *elements,
 				   size_t num_elements,
 				   matrix_block_setting_t settings);
