@@ -52,6 +52,9 @@ program_package_sources=$(filter ./$(source_path)/$(1)/%.c,$(all_sources))
 all: $(mode_path)/release.mode $(all_sources)
 	make $(program_packages_names:%=release_%)
 
+profiling: $(mode_path)/profiling.mode $(all_sources)
+	make $(program_packages_names:%=profiling_%)
+
 debug: $(mode_path)/debug.mode $(all_sources)
 	make $(program_packages_names:%=debug_%)
 
@@ -92,6 +95,14 @@ release/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
 	$$(linker) -o $$@ $$^ $$(linker_flags)
+
+profiling_$1: $$(package_programs_$1:%.x=profiling/%.x)
+profiling/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNDEBUG -DNLOGING -pg -ggdb 
+profiling/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
+	mkdir -p $$(@D)
+	echo "Linking $$@"
+	$$(linker) -o $$@ $$^ $$(linker_flags)
+
 debug_$1: $$(package_programs_$1:%.x=debug/%.x)
 debug/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb
 debug/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
