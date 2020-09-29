@@ -3,7 +3,7 @@
 
 #include "terminal_colors.h"
 
-#ifndef NDEBUG
+#ifdef DEBUG
 #ifdef COLOR
 
 #define DEBUG_MESS(message...)			\

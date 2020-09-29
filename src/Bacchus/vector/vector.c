@@ -46,11 +46,9 @@ FILE* open_block_file(vector_t vector,
 		      vector_block_t block,
 		      const char *file_mode);
 
-#ifndef NDEBUG
 static
 int compare_blocks(vector_block_t first_block,
 		   vector_block_t second_block);
-#endif
 
 static
 void expand_element_buffer(double **buffer,
@@ -68,6 +66,9 @@ void save_vector_elements(double *vector_elements,
 			  vector_block_t vector_block);
 vector_settings_t setup_vector_settings(combination_table_t combination_table)
 {
+#ifndef DEBUG
+	(void)(compare_blocks);
+#endif
 	reset_basis_block_iterator(combination_table);
 	vector_settings_t settings = 
 	{
@@ -492,8 +493,7 @@ FILE* open_block_file(vector_t vector,
 	return vector_file;
 }
 
-#ifndef NDEBUG
-	static
+static
 int compare_blocks(vector_block_t first_block,
 		   vector_block_t second_block)
 {
@@ -501,7 +501,6 @@ int compare_blocks(vector_block_t first_block,
 		first_block.block_length == second_block.block_length &&
 		first_block.block_id == second_block.block_id;
 }
-#endif
 
 	static
 void expand_element_buffer(double **buffer,

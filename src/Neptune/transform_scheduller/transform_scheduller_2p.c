@@ -6,7 +6,7 @@
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
 
-#ifndef NDEBUG
+#ifdef DEBUG
 static inline
 void log_matrix(Dens_Matrix *matrix)
 {
@@ -74,7 +74,7 @@ void task_handler(Data_Block current_block,
 				 J_max,
 				 data_file,
 				 cgd);
-#ifndef NDEBUG
+#ifdef DEBUG
 	log_matrix(matrix_block);
 #endif
 	size_t *bra_indices = m_scheme_2p_corresponding_indices(bra_basis);

@@ -7,6 +7,7 @@
 #include <block_transform/block_transform.h>
 #include <string.h>
 #include <error/error.h>
+#include <time.h>
 
 typedef struct
 {
@@ -112,6 +113,8 @@ new_transform_3nf_block_manager(Data_File *coupled_3nf_data,
 void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 				  transform_block_settings_t block)
 {
+	struct timespec time_start;
+	clock_gettime(CLOCK_REALTIME,&time_start);
 	setup_ket_basis(manager,block);
 	setup_bra_basis(manager,block);
 	int min_M = max(get_min_M(manager->ket_basis),
@@ -157,12 +160,21 @@ void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 			free_m_scheme_3p_basis(manager->blocks[i].bra_basis);
 		manager->blocks[i].bra_basis = bra_m_basis;
 	}
+	struct timespec time_end;
+	clock_gettime(CLOCK_REALTIME,&time_end);
+	double time_difference = 
+		(time_end.tv_sec-time_start.tv_sec)*1e6+
+		(time_end.tv_nsec-time_start.tv_nsec)*1e-3;
+	printf("decouple_transfrom_2nf_block: %lg µs\n",
+	       time_difference);
 }
 
 	mercury_matrix_block_t
 get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 			       matrix_block_setting_t settings)
 {
+	struct timespec time_start;
+	clock_gettime(CLOCK_REALTIME,&time_start);
 	connection_list_t connection_list = 
 		read_connection_files(manager->index_list_path,
 				      settings);
@@ -192,6 +204,13 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 						      ket_index);
 	}
 	free_connection_list(connection_list);
+	struct timespec time_end;
+	clock_gettime(CLOCK_REALTIME,&time_end);
+	double time_difference = 
+		(time_end.tv_sec-time_start.tv_sec)*1e6+
+		(time_end.tv_nsec-time_start.tv_nsec)*1e-3;
+	printf("get_transform_3nf_matrix_block: %lg µs\n",
+	       time_difference);
 	return new_mercury_matrix_block_from_data(elements,
 						  num_elements,
 						  settings);
@@ -374,9 +393,21 @@ M_Scheme_3p_State set_up_bra_state(connection_t connection)
 	static
 void sort_state(M_Scheme_3p_State *state, int *phase)
 {
-	if (state->a > state->b) swap(&state->a,&state->b);
-	if (state->b > state->c) swap(&state->b,&state->c);
-	if (state->a > state->b) swap(&state->a,&state->b);
+	if (state->a > state->b) 
+	{
+		*phase = -*phase;
+		swap(&state->a,&state->b);
+	}
+	if (state->b > state->c) 
+	{
+		*phase = -*phase;
+		swap(&state->b,&state->c);
+	}
+	if (state->a > state->b) 
+	{
+		*phase = -*phase;
+		swap(&state->a,&state->b);
+	}
 }
 
 	static inline

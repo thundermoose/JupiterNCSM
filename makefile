@@ -97,7 +97,7 @@ release/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	$$(linker) -o $$@ $$^ $$(linker_flags)
 
 profiling_$1: $$(package_programs_$1:%.x=profiling/%.x)
-profiling/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNDEBUG -DNLOGING -pg -ggdb 
+profiling/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNLOGING -pg -ggdb 
 profiling/$1/%.x: linker_flags+=-pg
 profiling/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
@@ -105,14 +105,14 @@ profiling/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$
 	$$(linker) -o $$@ $$^ $$(linker_flags)
 
 debug_$1: $$(package_programs_$1:%.x=debug/%.x)
-debug/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb
+debug/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DDEBUG
 debug/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@ with $$^"
 	$$(linker) -o $$@ $$^ $$(linker_flags)
 
 test_$1: $$(package_programs_$1:%.x=test/%.x)
-test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path)
+test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DDEBUG -DTEST -DTEST_DATA=$(test_data_path)
 test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
@@ -120,7 +120,7 @@ test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 #$$@ --run-all-tests
 
 test_no_logging_$1: $$(package_programs_$1:%.x=test_no_logging/%.x)
-test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DTEST -DTEST_DATA=$(test_data_path) -DNLOGING
+test_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DDEBUG -DTEST -DTEST_DATA=$(test_data_path) -DNLOGING
 test_no_logging/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"

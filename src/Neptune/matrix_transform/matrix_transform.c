@@ -7,6 +7,7 @@
 #include <utils/assertion.h>
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
+#include <assert.h>
 
 Dens_Matrix* new_zero_matrix(size_t m,
 			     size_t n){
@@ -288,9 +289,7 @@ int is_unitary(Sparse_Matrix *spm)
 	// Declaring general purpose index variables
 	size_t i,j;
 	// Makeing sure we got correct input
-	ASSERT(spm != NULL,
-	       exit(1),
-	       "Can't check if null pointer spm is unitary\n");
+	assert(spm != NULL);
 
 	// An empty sparse matrix is a matrix filed with zeros
 	// and therefore can not be unitary
@@ -302,10 +301,7 @@ int is_unitary(Sparse_Matrix *spm)
 	// checks if M^TM == I (I is nxn)
 	Dens_Matrix *res = new_zero_matrix(spm->n,
 					   spm->n);
-	ASSERT(res != NULL,
-	       exit(1),
-	       "Couldn't create %d x %d zero dens matrix needed for unitarity test\n",
-	       spm->n,spm->n);
+	assert(res != NULL);
 	// now perform the sparse sparse matrix multiplication
 	for (i = 0; i<spm->num_elements; i++)
 	{
@@ -340,10 +336,7 @@ int is_unitary(Sparse_Matrix *spm)
 
 	// now we check if MM^T = I (I is a m x m matrix)
 	res = new_zero_matrix(spm->m,spm->m);
-	ASSERT(res != NULL,
-	       exit(1),
-	       "Couldn't create %ld x %ld zero dens matrix needed for unitarity test\n",
-	       spm->m,spm->m);
+	assert(res != NULL);
 	// now perform the sparse sparse matrix multiplication
 	for (i = 0; i<spm->num_elements; i++)
 	{

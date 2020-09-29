@@ -3,7 +3,7 @@
 #include <log/log.h>
 #include <string.h>
 #include <errno.h>
-#ifndef NDEBUG
+#ifdef DEBUG
 
 void *logging_malloc(size_t bytes_to_allocate,
 		     const char *file_name,

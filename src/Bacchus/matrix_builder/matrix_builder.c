@@ -141,7 +141,7 @@ new_test(explicit_matrix_nmax2,
 	 {
 		.combination_file_path = TEST_DATA BACCHUS_RUN "nmax2/comb.txt",
 		.minerva_instruction_path =
-	       		TEST_DATA BACCHUS_RUN "nmax2/greedy_2_16.txt",
+	       		TEST_DATA BACCHUS_RUN "nmax2/greedy_3_16.txt",
 		.index_list_path = 
 		TEST_DATA BACCHUS_RUN "nmax2/index_lists",
 		.interaction_path = 

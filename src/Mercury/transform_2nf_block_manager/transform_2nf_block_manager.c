@@ -81,7 +81,7 @@ void free_blocks(transform_2nf_block_manager_t manager);
 static inline
 void swap(int *a,int *b);
 
-#ifndef NDEBUG
+#ifdef DEBUG
 static inline
 void log_matrix(Dens_Matrix *matrix);
 #endif
@@ -150,7 +150,7 @@ void decouple_transform_2nf_block(transform_2nf_block_manager_t manager,
 					 manager->J_max,
 					 manager->coupled_2nf_data,
 					 manager->clebsch_gordan_data);
-#ifndef NDEBUG
+#ifdef DEBUG
 		log_matrix(manager->blocks[i].matrix);
 #endif
 		if (manager->blocks[i].ket_basis)
@@ -517,7 +517,7 @@ void swap(int *a,int *b)
 	*b = tmp;
 }
 
-#ifndef NDEBUG
+#ifdef DEBUG
 static inline
 void log_matrix(Dens_Matrix *matrix)
 {

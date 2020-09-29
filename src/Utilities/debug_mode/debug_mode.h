@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#ifndef NDEBUG
+#ifdef DEBUG
 #ifndef BACKEND_DEBUG_MODE
 #define malloc(bytes_to_allocate) logging_malloc(bytes_to_allocate,\
 						 __builtin_FILE(),\

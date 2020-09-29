@@ -11,7 +11,7 @@
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
 
-#ifndef NDEBUG
+#ifdef DEBUG
 static inline
 void log_matrix(Dens_Matrix *matrix)
 {
@@ -392,7 +392,7 @@ Dens_Matrix* compute_jt_block(m_scheme_2p_basis_t bra_basis,
 						   jt_block_basis,
 						   Tz);
 			log_entry("jt_potential:");
-#ifndef NDEBUG
+#ifdef DEBUG
 			log_matrix(jt_potential);
 #endif
 			Sparse_Matrix *bra_transform = 
@@ -408,7 +408,7 @@ Dens_Matrix* compute_jt_block(m_scheme_2p_basis_t bra_basis,
 						 jt_potential,
 						 ket_transform);
 			log_entry("transformed_matrix:");
-#ifndef NDEBUG
+#ifdef DEBUG
 			log_matrix(transformed_matrix);
 #endif
 			accumulate_matrix(*accumulator,

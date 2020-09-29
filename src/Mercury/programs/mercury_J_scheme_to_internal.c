@@ -174,6 +174,7 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 		{
 			decouple_transform_3nf_block(manager,
 						     current_block);
+			transformed_block = current_block;
 		}
 		mercury_matrix_block_t matrix_block =
 			get_transform_3nf_matrix_block(manager,
@@ -183,7 +184,7 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 		free_mercury_matrix_block(matrix_block);
 		clock_gettime(CLOCK_REALTIME,&time_end);
 		double elapsed_time = (time_end.tv_sec-time_start.tv_sec)*1e6 +
-			(time_end.tv_nsec-time_start.tv_sec)*1e-3;
+			(time_end.tv_nsec-time_start.tv_nsec)*1e-3;
 		printf("Time: %lg µs\n",elapsed_time);
 	}
 	free_transform_3nf_block_manager(manager);
