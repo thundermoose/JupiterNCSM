@@ -314,14 +314,6 @@ Dens_Matrix* compute_jjj_block(M_Scheme_3p_Basis* bra_basis,
 					transform_matrix(bra_transform,
 							jjj_matrix,
 							ket_transform);
-				DEBUG_CALL({
-						char title[256];
-						sprintf(title,
-								"JJJ_Block: %d %d %d",
-								jabc,tz,parity);
-						create_matrix_plot(*jjj_matrix,
-								title);
-						});	 
 
 #pragma omp critical(to_stdout)
 				{

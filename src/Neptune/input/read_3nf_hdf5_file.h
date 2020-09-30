@@ -20,6 +20,7 @@ typedef struct _block_
 	double* matrix_elements;
 	size_t num_matrix_elements;
 	int score; // Number of threads that uses this block
+	int in_use;
 } Block;
 
 typedef struct _channel_
@@ -50,6 +51,8 @@ typedef struct _hdf5_data_
 	size_t max_num_configurations;
 	Block** open_blocks;
 	size_t max_num_open_blocks;
+	size_t loaded_memory;
+	size_t max_loaded_memory;
 	double weights[5];
 	Shells* shells;
 } HDF5_Data;
