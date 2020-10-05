@@ -136,6 +136,8 @@ static
 void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
+	if (get_interaction_path_3nf_argument(arguments) == NULL)
+		return;
 	printf("3NF blocks only:\n");
 	Data_File *coupled_3nf_data =
 		open_data_file(get_interaction_path_3nf_argument(arguments));
