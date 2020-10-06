@@ -31,6 +31,9 @@ static
 vector_settings_t get_krylow_vector_settings(lanczos_environment_t environment,
 					     size_t index);
 
+static
+size_t min(size_t a, size_t b);
+
 lanczos_environment_t new_lanczos_environment(lanczos_settings_t settings)
 {
 	lanczos_environment_t environment = 
@@ -150,9 +153,12 @@ void diagonalize(lanczos_environment_t environment)
 	initialize_first_krylow_vector(environment);
 	log_entry("environment->settings.max_num_iterations = %lu",
 		  environment->settings.max_num_iterations);
+	size_t max_num_iterations =
+	       	min(environment->settings.dimension,
+		    environment->settings.max_num_iterations);
 	size_t iteration;
 	for (iteration = 0;
-	     iteration < environment->settings.max_num_iterations;
+	     iteration < max_num_iterations;
 	     iteration++)
 	{
 		lanczos_iteration(environment, iteration);
@@ -209,6 +215,12 @@ vector_settings_t get_krylow_vector_settings(lanczos_environment_t environment,
 		index);
 	settings.directory_name = copy_string(directory_name);
 	return settings;
+}
+
+static
+size_t min(size_t a, size_t b)
+{
+	return a<b ? a : b;
 }
 
 new_test(diagonalize_3x3_matrix,
