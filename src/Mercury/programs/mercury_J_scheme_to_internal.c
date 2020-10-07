@@ -32,6 +32,9 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 int main(int num_arguments,
 	 char **argument_list)
 {
+	struct timespec t_start,t_end;
+	printf("Mercury starts:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	arguments_t arguments =
 	       	parse_argument_list(num_arguments, argument_list);	    
 	if (to_few_arguments(arguments))
@@ -53,13 +56,21 @@ int main(int num_arguments,
 				   arguments);
 	free_combination_table(combination_table);
 	free_arguments(arguments);
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double mercury_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Mercury ends after %lg µs\n",mercury_time);
+	return EXIT_SUCCESS;
 }
 
 static
 void generate_1nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
-	printf("1NF blocks only:\n");
+	struct timespec t_start,t_end;
+	printf("Generate 1nf matrix blocks:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	const char *output_path_base = get_output_path_argument(arguments);
 	const char *index_list_path = get_index_list_path_argument(arguments);
 	while (has_next_1nf_block(combination_table))
@@ -76,13 +87,21 @@ void generate_1nf_matrix_blocks(combination_table_t combination_table,
 		free_mercury_matrix_block(current_block);
 		free_connection_list(connection_list);
 	}
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double generate_1nf_matrix_blocks_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Geneerate 1nf matrix blocks ends after %lg µs\n",
+	       generate_1nf_matrix_blocks_time);
 }
 
 static
 void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
-	printf("2NF blocks only:\n");
+	struct timespec t_start,t_end;
+	printf("Generate 2nf matrix blocks:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	log_entry("num_particle_argument = %lu",
 		  get_num_particles_argument(arguments));
 	antoine_2nf_file_t coupled_2nf_data =
@@ -130,6 +149,12 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 	}
 	free_transform_2nf_block_manager(manager);
 	free_antoine_2nf_file(coupled_2nf_data);
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double generate_2nf_matrix_blocks_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Geneerate 2nf matrix blocks ends after %lg µs\n",
+	       generate_2nf_matrix_blocks_time);
 }
 
 static
@@ -138,6 +163,9 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 {
 	if (get_interaction_path_3nf_argument(arguments) == NULL)
 		return;
+	struct timespec t_start,t_end;
+	printf("Generate 3nf matrix blocks:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	printf("3NF blocks only:\n");
 	Data_File *coupled_3nf_data =
 		open_data_file(get_interaction_path_3nf_argument(arguments));
@@ -191,4 +219,10 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 	}
 	free_transform_3nf_block_manager(manager);
 	free_data_file(coupled_3nf_data);
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double generate_3nf_matrix_blocks_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Geneerate 3nf matrix blocks ends after %lg µs\n",
+	       generate_3nf_matrix_blocks_time);
 }
