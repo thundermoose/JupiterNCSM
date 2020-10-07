@@ -9,6 +9,7 @@
 #include <log/log.h>
 #include <math.h>
 #include <errno.h>
+#include <time.h>
 
 
 const size_t first = 0;
@@ -72,7 +73,9 @@ void initialize_first_krylow_vector(lanczos_environment_t environment)
 void lanczos_iteration(lanczos_environment_t environment,
 		       size_t iteration)
 {
-
+	struct timespec t_start,t_end;
+	printf("Lanczos iteration %lu start:\n",iteration+1);
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	/* Before the Lanczos iteration can begin, it is necessary
 	 * initialize the new Krylow-vector.
 	 */
@@ -137,6 +140,12 @@ void lanczos_iteration(lanczos_environment_t environment,
 	log_entry("scale %lg",
 		  scalar_multiplication(environment->krylow_vectors[iteration+1],
 					environment->krylow_vectors[iteration]));
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double iteration_time = 
+		(t_end.tv_sec-t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec-t_start.tv_nsec)*1e-3;
+	printf("Lanczos iteration %lu end after %lg µs\n", 
+	       iteration, iteration_time);
 }
 
 void orthogonalize_krylow_basis(lanczos_environment_t environment,
@@ -150,6 +159,9 @@ void orthogonalize_krylow_basis(lanczos_environment_t environment,
 
 void diagonalize(lanczos_environment_t environment)
 {
+	struct timespec t_start,t_end;
+	printf("Diagonalzation start:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	initialize_first_krylow_vector(environment);
 	log_entry("environment->settings.max_num_iterations = %lu",
 		  environment->settings.max_num_iterations);
@@ -165,6 +177,12 @@ void diagonalize(lanczos_environment_t environment)
 		orthogonalize_krylow_basis(environment, iteration);
 	}
 	environment->dimension_krylow_space--;
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double diagonalzation_time =
+		(t_end.tv_sec-t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec-t_start.tv_nsec)*1e-3;
+	printf("Diagonalization end after %lg µs\n",
+	       diagonalzation_time);
 }
 
 eigen_system_t get_eigensystem(lanczos_environment_t environment)

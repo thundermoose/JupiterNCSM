@@ -8,6 +8,7 @@
 #include <unit_testing/test.h>
 #include <scheduler/scheduler.h>
 #include <math.h>
+#include <time.h>
 
 typedef enum
 {
@@ -66,6 +67,9 @@ void matrix_vector_multiplication(vector_t result_vector,
 				  const matrix_t matrix,
 				  const vector_t vector)
 {
+	printf("Matrix vector multiplication start:\n");
+	struct timespec t_start,t_end;
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	switch (matrix->type)
 	{
 		case EXPLICIT_MATRIX:
@@ -81,6 +85,12 @@ void matrix_vector_multiplication(vector_t result_vector,
 				 matrix->scheduler);
 			break;
 	}
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double multiplication_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Matrix vector multiplication end after %lg µs\n",
+	       multiplication_time);
 }
 
 size_t get_num_rows(matrix_t matrix)

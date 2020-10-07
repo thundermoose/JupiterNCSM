@@ -9,6 +9,7 @@
 #include <lanczos/lanczos.h>
 #include <eigen_system/eigen_system.h>
 #include <string_tools/string_tools.h>
+#include <time.h>
 
 
 __attribute__((constructor(101)))
@@ -20,6 +21,9 @@ void setting_up_log()
 
 int main(int num_arguments, char **argument_list)
 {
+	struct timespec t_start,t_end;
+	printf("Bacchus starts:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	settings_t settings = parse_settings(num_arguments,
 					     argument_list);
 	if (should_show_help_text(settings))
@@ -63,6 +67,12 @@ int main(int num_arguments, char **argument_list)
 	free_combination_table(combination_table);
 	free_settings(settings);
 	free(lanczos_settings.krylow_vectors_directory_name);
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double bacchus_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Bacchus ends after %lg µs\n",
+	       bacchus_time);
 	return EXIT_SUCCESS;
 }
 
