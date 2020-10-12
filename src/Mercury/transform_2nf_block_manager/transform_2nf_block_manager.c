@@ -130,6 +130,7 @@ void decouple_transform_2nf_block(transform_2nf_block_manager_t manager,
 	manager->min_M = min_M;
 	if (num_blocks > manager->num_allocated_blocks)
 		expand_block_list(manager,num_blocks);
+#pragma omp parallel for
 	for (size_t i = 0; i < num_blocks; i++)
 	{	
 		int M = min_M+i*2;
