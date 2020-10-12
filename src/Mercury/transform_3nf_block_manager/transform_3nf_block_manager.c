@@ -216,6 +216,27 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 						  settings);
 }
 
+transformed_block_t 
+get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
+			       matrix_energy_block_t block)
+{
+	transformed_block_t transformed_block =
+	       	new_empty_transformed_block(block);
+	set_ket_basis(transformed_block, new_ket_basis(manager,block));
+	set_bra_basis(transformed_block, new_bra_basis(manager,block));
+	int min_M = get_transformed_block_min_M(transformed_block);
+	int bra_energy = get_bra_energy(block);
+	int ket_energy = get_ket_energy(block);
+	int total_isosping = get_total_isosping(block);
+	size_t num_blocks = get_num_M_blocks(transformed_block);
+	for (size_t i = 0; i<num_blocks; i++)
+	{
+		int M = min_M + i*2;
+
+	}
+		
+}
+
 void free_transform_3nf_block_manager(transform_3nf_block_manager_t manager)
 {
 	free(manager->index_list_path);
