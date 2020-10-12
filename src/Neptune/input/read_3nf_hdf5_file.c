@@ -82,7 +82,7 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 	data_file->open_blocks = NULL;
 	data_file->max_num_open_blocks = 0;
 	data_file->loaded_memory = 0;
-	data_file->max_loaded_memory = (size_t)(1)<<32;
+	data_file->max_loaded_memory = 80*(size_t)(1)<<30;
 	data_file->weights[0] = -0.03957471;// CE
 	data_file->weights[1] = 0.81680589;// CD
 	data_file->weights[2] = -1.12152120;// C1
