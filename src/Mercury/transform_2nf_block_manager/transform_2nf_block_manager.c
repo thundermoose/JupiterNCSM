@@ -102,7 +102,11 @@ new_transform_2nf_block_manager(antoine_2nf_file_t coupled_2nf_data,
 	manager->single_particle_basis =
 	       	new_single_particle_basis(single_particle_energy_max);
 	manager->J_max = 2*(single_particle_energy_max*2+1);
-	manager->clebsch_gordan_data = initiate_clebsch_gordan(manager->J_max);
+#pragma omp parallel
+	{
+		manager->clebsch_gordan_data = 
+			initiate_clebsch_gordan(manager->J_max);
+	}
 	return manager;
 }
 
