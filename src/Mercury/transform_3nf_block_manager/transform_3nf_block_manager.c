@@ -222,19 +222,49 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 {
 	transformed_block_t transformed_block =
 	       	new_empty_transformed_block(block);
-	set_ket_basis(transformed_block, new_ket_basis(manager,block));
-	set_bra_basis(transformed_block, new_bra_basis(manager,block));
+	M_Scheme_3p_Basis *ket_basis = new_ket_basis(manager,block);
+	set_transformed_block_ket_basis(transformed_block,
+				       	ket_basis);
+	M_Scheme_3p_Basis *bra_basis = new_bra_basis(manager,block);
+	set_transformed_block_bra_basis(transformed_block,
+				       	bra_basis);
 	int min_M = get_transformed_block_min_M(transformed_block);
 	int bra_energy = get_bra_energy(block);
 	int ket_energy = get_ket_energy(block);
-	int total_isosping = get_total_isosping(block);
+	int total_isospin = get_total_isosping(block);
 	size_t num_blocks = get_num_M_blocks(transformed_block);
 	for (size_t i = 0; i<num_blocks; i++)
 	{
 		int M = min_M + i*2;
-
+		size_t ket_offset = 0;
+		M_Scheme_3p_Basis *ket_m_basis =
+			generate_block(ket_basis,
+				       total_isospin,
+				       M,
+				       ket_energy,
+				       &ket_offset);
+		size_t bra_offset = 0;	
+		M_Scheme_3p_Basis *bra_m_basis =
+			generate_block(bra_basis,
+				       total_isospin,
+				       M,
+				       bra_energy,
+				       &bra_offset);
+		transformed_3nf_M_block_t current_M_block =
+		{
+			.ket_basis = ket_m_basis,
+			.bra_basis = bra_m_basis,
+			.matrix =
+			       	compute_jjj_block(bra_m_basis,
+						  ket_m_basis,
+						  manager->coupled_3nf_data,
+						  manager->clebsch_gordan_data)
+				
+		};
+		set_transformed_block_m_block(transformed_block,
+					      current_M_block,i);
 	}
-		
+	return transformed_block;
 }
 
 void free_transform_3nf_block_manager(transform_3nf_block_manager_t manager)

@@ -7,6 +7,7 @@
 #include <transform_2nf_block_manager/transform_2nf_block_manager.h>
 #include <transform_3nf_block_manager/transform_3nf_block_manager.h>
 #include <combination_table/combination_table.h>
+#include <matrix_energy_block/matrix_energy_block.h>
 #include <log/log.h>
 #include <time.h>
 

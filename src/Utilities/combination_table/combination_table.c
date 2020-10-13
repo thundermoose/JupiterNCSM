@@ -667,12 +667,12 @@ static
 int is_in_same_energy_block(matrix_block_setting_t block_a,
 			    matrix_block_setting_t block_b)
 {
-	return block_a->depth_protons == block_b->depth_protons &&
-		block_a->difference_energy_protons == 
-		block_b->difference_energy_protons &&
-		block_a->depth_neutrons == block_b->depth_neutrons &&
-		block_a->difference_energy_neutrons == 
-		block_b->difference_energy_neutrons; 
+	return block_a.depth_protons == block_b.depth_protons &&
+		block_a.difference_energy_protons == 
+		block_b.difference_energy_protons &&
+		block_a.depth_neutrons == block_b.depth_neutrons &&
+		block_a.difference_energy_neutrons == 
+		block_b.difference_energy_neutrons; 
 }
 
 new_test(interpreting_id_string,
