@@ -63,6 +63,16 @@ void set_transformed_block_m_block(transformed_block_t block,
 	block->M_blocks[index] = M_block;
 }
 
+int get_transformed_block_min_M(transformed_block_t block)
+{
+	return block->min_M;
+}
+
+size_t get_num_M_blocks(transformed_block_t block)
+{
+	return block->num_M_blocks;
+}
+
 mercury_matrix_block_t get_3nf_mercury_matrix(transformed_block_t block,
 					      matrix_block_setting_t settings)
 {

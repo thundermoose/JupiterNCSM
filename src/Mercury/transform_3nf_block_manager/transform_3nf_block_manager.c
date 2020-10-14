@@ -34,6 +34,13 @@ void setup_bra_basis(transform_3nf_block_manager_t manager,
 		     transform_block_settings_t block);
 
 static
+M_Scheme_3p_Basis *new_ket_basis(transform_3nf_block_manager_t manager,
+				matrix_energy_block_t block);
+static
+M_Scheme_3p_Basis *new_bra_basis(transform_3nf_block_manager_t manager,
+				matrix_energy_block_t block);
+
+static
 int get_min_M(M_Scheme_3p_Basis *basis);
 
 static
@@ -162,7 +169,7 @@ void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 	       time_difference);
 }
 
-	mercury_matrix_transformed_3nf_M_block_t
+	mercury_matrix_block_t
 get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 			       matrix_block_setting_t settings)
 {
@@ -209,12 +216,14 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 						  settings);
 }
 
-transformed_transformed_3nf_M_block_t 
-get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
-			       matrix_energy_transformed_3nf_M_block_t block)
+transformed_block_t 
+get_transformed_block(transform_3nf_block_manager_t manager,
+		      matrix_energy_block_t block)
 {
-	transformed_transformed_3nf_M_block_t transformed_block =
-	       	new_empty_transformed_block(block);
+	transformed_block_t transformed_block =
+	       	new_empty_transformed_block(block,
+					    manager->index_list_path,
+					    manager->single_particle_basis);
 	M_Scheme_3p_Basis *ket_basis = new_ket_basis(manager,block);
 	set_transformed_block_ket_basis(transformed_block,
 				       	ket_basis);
@@ -224,7 +233,7 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 	int min_M = get_transformed_block_min_M(transformed_block);
 	int bra_energy = get_bra_energy(block);
 	int ket_energy = get_ket_energy(block);
-	int total_isospin = get_total_isosping(block);
+	int total_isospin = get_total_isospin(block);
 	size_t num_blocks = get_num_M_blocks(transformed_block);
 	for (size_t i = 0; i<num_blocks; i++)
 	{
@@ -243,7 +252,7 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 				       M,
 				       bra_energy,
 				       &bra_offset);
-		transformed_3nf_M_transformed_3nf_M_block_t current_M_block =
+		transformed_3nf_M_block_t current_M_block =
 		{
 			.ket_basis = ket_m_basis,
 			.bra_basis = bra_m_basis,
@@ -304,6 +313,27 @@ void setup_bra_basis(transform_3nf_block_manager_t manager,
 				    sp_basis);	 
 }
 
+M_Scheme_3p_Basis *new_ket_basis(transform_3nf_block_manager_t manager,
+		     matrix_energy_block_t block)
+{
+	SP_States *sp_basis = get_sp_states(manager->single_particle_basis);
+	return load_anicr_3p_basis(manager->index_list_path,
+				   get_total_isospin(block),
+				   get_proton_energy_ket(block),
+				   get_neutron_energy_ket(block),
+				   sp_basis);	 
+}
+	static
+M_Scheme_3p_Basis *new_bra_basis(transform_3nf_block_manager_t manager,
+		     matrix_energy_block_t block)
+{
+	SP_States *sp_basis = get_sp_states(manager->single_particle_basis);
+	return load_anicr_3p_basis(manager->index_list_path,
+				   get_total_isospin(block),
+				   get_proton_energy_bra(block),
+				   get_neutron_energy_bra(block),
+				   sp_basis);	 
+}
 	static
 int get_min_M(M_Scheme_3p_Basis *basis)
 {

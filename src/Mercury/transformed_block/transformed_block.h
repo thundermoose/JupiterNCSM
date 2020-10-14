@@ -25,6 +25,10 @@ void set_transformed_block_m_block(transformed_block_t block,
 				   transformed_3nf_M_block_t M_block,
 				   size_t index);
 
+int get_transformed_block_min_M(transformed_block_t block);
+
+size_t get_num_M_blocks(transformed_block_t block);
+
 mercury_matrix_block_t get_3nf_mercury_matrix(transformed_block_t block,
 					      matrix_block_setting_t settings);
 

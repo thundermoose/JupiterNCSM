@@ -13,6 +13,20 @@ int has_next_energy_matrix_block(matrix_energy_block_t block);
 
 matrix_block_setting_t next_energy_matrix_block(matrix_energy_block_t block);
 
+int get_total_isospin(matrix_energy_block_t block);
+
+int get_proton_energy_bra(matrix_energy_block_t block);
+
+int get_proton_energy_ket(matrix_energy_block_t block);
+
+int get_neutron_energy_bra(matrix_energy_block_t block);
+
+int get_neutron_energy_ket(matrix_energy_block_t block);
+
+int get_bra_energy(matrix_energy_block_t block);
+
+int get_ket_energy(matrix_energy_block_t block);
+
 void free_matrix_energy_block(matrix_energy_block_t block);
 
 #endif
