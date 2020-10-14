@@ -26,9 +26,17 @@ static
 void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments);
 
-static
 void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments);
+
+static
+void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
+					 arguments_t arguments);
+
+static
+void process_matrix_energy_block(matrix_energy_block_t current_block,
+				 transform_3nf_block_manager_t manager,
+				 const char *output_path_base);
 
 int main(int num_arguments,
 	 char **argument_list)
@@ -53,8 +61,8 @@ int main(int num_arguments,
 				   arguments);
 	generate_2nf_matrix_blocks(combination_table,
 				   arguments);
-	generate_3nf_matrix_blocks(combination_table,
-				   arguments);
+	generate_3nf_matrix_blocks_parallel(combination_table,
+					    arguments);
 	free_combination_table(combination_table);
 	free_arguments(arguments);
 	clock_gettime(CLOCK_REALTIME,&t_end);
@@ -158,7 +166,6 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 	       generate_2nf_matrix_blocks_time);
 }
 
-static
 void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
@@ -245,16 +252,14 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 		(coupled_3nf_data,
 		 get_index_list_path_argument(arguments),
 		 get_single_particle_energy_argument(arguments));
-	transform_block_settings_t transformed_block = {INT_MAX};
 	const char *output_path_base = get_output_path_argument(arguments);					
-	struct timespec time_start;
-	struct timespec time_end;
 	while (has_next_3nf_matrix_energy_block(combination_table))
 	{
 		matrix_energy_block_t current_energy_block =
 			next_3nf_matrix_energy_block(combination_table);
 		process_matrix_energy_block(current_energy_block,
-					    manager);
+					    manager,
+					    output_path_base);
 	}
 	free_transform_3nf_block_manager(manager);
 	free_data_file(coupled_3nf_data);
@@ -268,7 +273,8 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 
 static
 void process_matrix_energy_block(matrix_energy_block_t current_block,
-				 transform_3nf_block_manager_t manager)
+				 transform_3nf_block_manager_t manager,
+				 const char *output_path_base)
 {
 
 	transformed_block_t current_transformed_block = 
@@ -276,13 +282,13 @@ void process_matrix_energy_block(matrix_energy_block_t current_block,
 	while (has_next_energy_matrix_block(current_block))
 	{
 		matrix_block_setting_t current_matrix_block_settings =
-			next_energy_matrix_block(current_energy_block);
+			next_energy_matrix_block(current_block);
 		mercury_matrix_block_t matrix_block =
 			get_3nf_mercury_matrix(current_transformed_block,
 					       current_matrix_block_settings);
-		save_mercury_matrix_block(matrix_block);
+		save_mercury_matrix_block(matrix_block,output_path_base);
 		free_mercury_matrix_block(matrix_block);
 	}	
 	free_transformed_block(current_transformed_block);
-	free_matrix_energy_block(current_energy_block);
+	free_matrix_energy_block(current_block);
 }

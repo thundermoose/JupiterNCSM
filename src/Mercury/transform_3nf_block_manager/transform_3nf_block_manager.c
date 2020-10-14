@@ -334,6 +334,7 @@ M_Scheme_3p_Basis *new_bra_basis(transform_3nf_block_manager_t manager,
 				   get_neutron_energy_bra(block),
 				   sp_basis);	 
 }
+
 	static
 int get_min_M(M_Scheme_3p_Basis *basis)
 {
