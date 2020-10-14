@@ -5,17 +5,10 @@
 #include <clebsch_gordan/clebsch_gordan.h>
 #include <matrix_transform/matrix_transform.h>
 #include <block_transform/block_transform.h>
+#include <transformed_3nf_M_block/transformed_3nf_M_block.h>
 #include <string.h>
 #include <error/error.h>
 #include <time.h>
-
-typedef struct
-{
-	M_Scheme_3p_Basis *ket_basis;
-	M_Scheme_3p_Basis *bra_basis;
-	Dens_Matrix *matrix;
-} block_t;
-
 
 struct _tranform_2nf_block_manager_
 {
@@ -23,7 +16,7 @@ struct _tranform_2nf_block_manager_
 	M_Scheme_3p_Basis *bra_basis;
 	Data_File *coupled_3nf_data;
 	char *index_list_path;
-	block_t *blocks;
+	transformed_3nf_M_block_t *blocks;
 	size_t num_blocks;
 	size_t num_allocated_blocks;
 	int min_M;
@@ -169,7 +162,7 @@ void decouple_transform_3nf_block(transform_3nf_block_manager_t manager,
 	       time_difference);
 }
 
-	mercury_matrix_block_t
+	mercury_matrix_transformed_3nf_M_block_t
 get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 			       matrix_block_setting_t settings)
 {
@@ -216,11 +209,11 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 						  settings);
 }
 
-transformed_block_t 
+transformed_transformed_3nf_M_block_t 
 get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
-			       matrix_energy_block_t block)
+			       matrix_energy_transformed_3nf_M_block_t block)
 {
-	transformed_block_t transformed_block =
+	transformed_transformed_3nf_M_block_t transformed_block =
 	       	new_empty_transformed_block(block);
 	M_Scheme_3p_Basis *ket_basis = new_ket_basis(manager,block);
 	set_transformed_block_ket_basis(transformed_block,
@@ -250,7 +243,7 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 				       M,
 				       bra_energy,
 				       &bra_offset);
-		transformed_3nf_M_block_t current_M_block =
+		transformed_3nf_M_transformed_3nf_M_block_t current_M_block =
 		{
 			.ket_basis = ket_m_basis,
 			.bra_basis = bra_m_basis,
@@ -353,8 +346,8 @@ void expand_block_list(transform_3nf_block_manager_t manager)
 	manager->num_allocated_blocks = manager->num_blocks;
 	free(manager->blocks);
 	manager->blocks = 
-		(block_t*)
-		calloc(manager->num_allocated_blocks,sizeof(block_t));
+		(transformed_3nf_M_block_t*)
+		calloc(manager->num_allocated_blocks,sizeof(transformed_3nf_M_block_t));
 }
 
 	static
