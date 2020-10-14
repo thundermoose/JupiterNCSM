@@ -7,6 +7,7 @@
 #include <transform_2nf_block_manager/transform_2nf_block_manager.h>
 #include <transform_3nf_block_manager/transform_3nf_block_manager.h>
 #include <combination_table/combination_table.h>
+#include <matrix_energy_block/matrix_energy_block.h>
 #include <log/log.h>
 #include <time.h>
 
@@ -25,9 +26,17 @@ static
 void generate_2nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments);
 
-static
 void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments);
+
+static
+void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
+					 arguments_t arguments);
+
+static
+void process_matrix_energy_block(matrix_energy_block_t current_block,
+				 transform_3nf_block_manager_t manager,
+				 const char *output_path_base);
 
 int main(int num_arguments,
 	 char **argument_list)
@@ -52,8 +61,8 @@ int main(int num_arguments,
 				   arguments);
 	generate_2nf_matrix_blocks(combination_table,
 				   arguments);
-	generate_3nf_matrix_blocks(combination_table,
-				   arguments);
+	generate_3nf_matrix_blocks_parallel(combination_table,
+					    arguments);
 	free_combination_table(combination_table);
 	free_arguments(arguments);
 	clock_gettime(CLOCK_REALTIME,&t_end);
@@ -157,7 +166,6 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 	       generate_2nf_matrix_blocks_time);
 }
 
-static
 void generate_3nf_matrix_blocks(combination_table_t combination_table,
 				arguments_t arguments)
 {
@@ -225,4 +233,62 @@ void generate_3nf_matrix_blocks(combination_table_t combination_table,
 		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
 	printf("Geneerate 3nf matrix blocks ends after %lg µs\n",
 	       generate_3nf_matrix_blocks_time);
+}
+
+static
+void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
+					 arguments_t arguments)
+{
+	if (get_interaction_path_3nf_argument(arguments) == NULL)
+		return;
+	struct timespec t_start,t_end;
+	printf("Generate 3nf matrix blocks:\n");
+	clock_gettime(CLOCK_REALTIME,&t_start);
+	printf("3NF blocks only:\n");
+	Data_File *coupled_3nf_data =
+		open_data_file(get_interaction_path_3nf_argument(arguments));
+	transform_3nf_block_manager_t manager =
+	       	new_transform_3nf_block_manager
+		(coupled_3nf_data,
+		 get_index_list_path_argument(arguments),
+		 get_single_particle_energy_argument(arguments));
+	const char *output_path_base = get_output_path_argument(arguments);					
+	while (has_next_3nf_matrix_energy_block(combination_table))
+	{
+		matrix_energy_block_t current_energy_block =
+			next_3nf_matrix_energy_block(combination_table);
+		process_matrix_energy_block(current_energy_block,
+					    manager,
+					    output_path_base);
+	}
+	free_transform_3nf_block_manager(manager);
+	free_data_file(coupled_3nf_data);
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double generate_3nf_matrix_blocks_time = 
+		(t_end.tv_sec - t_start.tv_sec)*1e6 +
+		(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+	printf("Geneerate 3nf matrix blocks ends after %lg µs\n",
+	       generate_3nf_matrix_blocks_time);
+}
+
+static
+void process_matrix_energy_block(matrix_energy_block_t current_block,
+				 transform_3nf_block_manager_t manager,
+				 const char *output_path_base)
+{
+
+	transformed_block_t current_transformed_block = 
+		get_transformed_block(manager,current_block);
+	while (has_next_energy_matrix_block(current_block))
+	{
+		matrix_block_setting_t current_matrix_block_settings =
+			next_energy_matrix_block(current_block);
+		mercury_matrix_block_t matrix_block =
+			get_3nf_mercury_matrix(current_transformed_block,
+					       current_matrix_block_settings);
+		save_mercury_matrix_block(matrix_block,output_path_base);
+		free_mercury_matrix_block(matrix_block);
+	}	
+	free_transformed_block(current_transformed_block);
+	free_matrix_energy_block(current_block);
 }

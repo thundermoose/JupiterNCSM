@@ -30,6 +30,7 @@ struct _combination_table_
 	size_t index_to_3nf_blocks;
 	size_t length_3nf_blocks;
 	size_t iterator_index_3nf_blocks;
+	size_t index_to_next_3nf_energy_block;
 	size_t *id_to_index_map;
 	size_t num_ids;
 };
@@ -67,6 +68,10 @@ size_t interpret_id_string(const char *id_string);
 static
 int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 				  matrix_block_setting_t *block_b);
+
+static
+int is_in_same_energy_block(matrix_block_setting_t block_a,
+			    matrix_block_setting_t block_b);
 
 combination_table_t new_combination_table(const char *filename,
 					  size_t num_protons,
@@ -273,6 +278,43 @@ int has_next_3nf_block(combination_table_t combination_table)
 	       	combination_table->length_3nf_blocks;
 }
 
+void reset_3nf_energy_block_iterator(combination_table_t combination_table)
+{
+	combination_table->index_to_next_3nf_energy_block = 0;
+}
+
+int has_next_3nf_matrix_energy_block(combination_table_t combination_table)
+{
+	return combination_table->index_to_next_3nf_energy_block <
+		combination_table->length_3nf_blocks;
+}
+
+matrix_energy_block_t
+next_3nf_matrix_energy_block(combination_table_t combination_table)
+{
+	size_t index_to_first = 
+		combination_table->index_to_next_3nf_energy_block +
+		combination_table->index_to_3nf_blocks;
+	matrix_block_setting_t first_matrix_block = 
+		combination_table->matrix_block_settings[index_to_first];
+	size_t length_energy_block = 1;
+	for (size_t i = index_to_first+1; 
+	     i < combination_table->num_matrix_block_settings;
+	     i++, length_energy_block++)
+	{
+		matrix_block_setting_t current_matrix_block =
+			combination_table->matrix_block_settings[i];
+		if (!is_in_same_energy_block(first_matrix_block,
+					     current_matrix_block))
+			break;
+	}
+	combination_table->index_to_next_3nf_energy_block += 
+		length_energy_block;
+	matrix_block_setting_t *head = 
+		combination_table->matrix_block_settings + index_to_first;
+	return new_matrix_energy_block(head,length_energy_block);
+}
+
 size_t get_num_arrays(combination_table_t combination_table)
 {
 	return combination_table->num_ids;
@@ -432,11 +474,6 @@ void read_matrix_block_settings(FILE *table_file,
 			.num_neutron_combinations = atoll(words[9]),
 			.matrix_block_id = interpret_id_string(words[13])
 		};
-		//size_t index =
-		//       	num_array_elements(matrix_block_settings_builder);
-		//set_array_element(id_to_index_map_builder,
-		//		  current_setting.matrix_block_id,
-		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -502,11 +539,6 @@ void read_matrix_block_settings(FILE *table_file,
 			};
 			current_setting = proton_setting;
 		}
-		//size_t index =
-		//       	num_array_elements(matrix_block_settings_builder);
-		//set_array_element(id_to_index_map_builder,
-		//		  current_setting.matrix_block_id,
-		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -515,7 +547,6 @@ void read_matrix_block_settings(FILE *table_file,
 				free(words[i]);
 			free(words);
 		}
-		
 	}
 	if (current_row != NULL)
 		free(current_row);
@@ -630,6 +661,18 @@ int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 	if (diff)
 		return diff;
 	return 0;
+}
+
+static
+int is_in_same_energy_block(matrix_block_setting_t block_a,
+			    matrix_block_setting_t block_b)
+{
+	return block_a.depth_protons == block_b.depth_protons &&
+		block_a.difference_energy_protons == 
+		block_b.difference_energy_protons &&
+		block_a.depth_neutrons == block_b.depth_neutrons &&
+		block_a.difference_energy_neutrons == 
+		block_b.difference_energy_neutrons; 
 }
 
 new_test(interpreting_id_string,

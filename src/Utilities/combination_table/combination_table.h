@@ -6,6 +6,7 @@
 #include <basis_block/basis_block.h>
 #include <index_list_setting/index_list_setting.h>
 #include <matrix_block_setting/matrix_block_setting.h>
+#include <matrix_energy_block/matrix_energy_block.h>
 
 struct _combination_table_;
 typedef struct _combination_table_ *combination_table_t;
@@ -68,6 +69,13 @@ matrix_block_setting_t
 next_3nf_block_iterator(combination_table_t combination_table);
 
 int has_next_3nf_block(combination_table_t combination_table);
+
+void reset_3nf_energy_block_iterator(combination_table_t combination_table);
+
+int has_next_3nf_matrix_energy_block(combination_table_t combination_table);
+
+matrix_energy_block_t
+next_3nf_matrix_energy_block(combination_table_t combination_table);
 
 size_t get_num_arrays(combination_table_t combination_table);
 

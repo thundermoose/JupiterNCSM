@@ -5,17 +5,10 @@
 #include <clebsch_gordan/clebsch_gordan.h>
 #include <matrix_transform/matrix_transform.h>
 #include <block_transform/block_transform.h>
+#include <transformed_3nf_M_block/transformed_3nf_M_block.h>
 #include <string.h>
 #include <error/error.h>
 #include <time.h>
-
-typedef struct
-{
-	M_Scheme_3p_Basis *ket_basis;
-	M_Scheme_3p_Basis *bra_basis;
-	Dens_Matrix *matrix;
-} block_t;
-
 
 struct _tranform_2nf_block_manager_
 {
@@ -23,7 +16,7 @@ struct _tranform_2nf_block_manager_
 	M_Scheme_3p_Basis *bra_basis;
 	Data_File *coupled_3nf_data;
 	char *index_list_path;
-	block_t *blocks;
+	transformed_3nf_M_block_t *blocks;
 	size_t num_blocks;
 	size_t num_allocated_blocks;
 	int min_M;
@@ -39,6 +32,13 @@ void setup_ket_basis(transform_3nf_block_manager_t manager,
 static
 void setup_bra_basis(transform_3nf_block_manager_t manager,
 		     transform_block_settings_t block);
+
+static
+M_Scheme_3p_Basis *new_ket_basis(transform_3nf_block_manager_t manager,
+				matrix_energy_block_t block);
+static
+M_Scheme_3p_Basis *new_bra_basis(transform_3nf_block_manager_t manager,
+				matrix_energy_block_t block);
 
 static
 int get_min_M(M_Scheme_3p_Basis *basis);
@@ -216,6 +216,59 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 						  settings);
 }
 
+transformed_block_t 
+get_transformed_block(transform_3nf_block_manager_t manager,
+		      matrix_energy_block_t block)
+{
+	transformed_block_t transformed_block =
+	       	new_empty_transformed_block(block,
+					    manager->index_list_path,
+					    manager->single_particle_basis);
+	M_Scheme_3p_Basis *ket_basis = new_ket_basis(manager,block);
+	set_transformed_block_ket_basis(transformed_block,
+				       	ket_basis);
+	M_Scheme_3p_Basis *bra_basis = new_bra_basis(manager,block);
+	set_transformed_block_bra_basis(transformed_block,
+				       	bra_basis);
+	int min_M = get_transformed_block_min_M(transformed_block);
+	int bra_energy = get_bra_energy(block);
+	int ket_energy = get_ket_energy(block);
+	int total_isospin = get_total_isospin(block);
+	size_t num_blocks = get_num_M_blocks(transformed_block);
+	for (size_t i = 0; i<num_blocks; i++)
+	{
+		int M = min_M + i*2;
+		size_t ket_offset = 0;
+		M_Scheme_3p_Basis *ket_m_basis =
+			generate_block(ket_basis,
+				       total_isospin,
+				       M,
+				       ket_energy,
+				       &ket_offset);
+		size_t bra_offset = 0;	
+		M_Scheme_3p_Basis *bra_m_basis =
+			generate_block(bra_basis,
+				       total_isospin,
+				       M,
+				       bra_energy,
+				       &bra_offset);
+		transformed_3nf_M_block_t current_M_block =
+		{
+			.ket_basis = ket_m_basis,
+			.bra_basis = bra_m_basis,
+			.matrix =
+			       	compute_jjj_block(bra_m_basis,
+						  ket_m_basis,
+						  manager->coupled_3nf_data,
+						  manager->clebsch_gordan_data)
+				
+		};
+		set_transformed_block_m_block(transformed_block,
+					      current_M_block,i);
+	}
+	return transformed_block;
+}
+
 void free_transform_3nf_block_manager(transform_3nf_block_manager_t manager)
 {
 	free(manager->index_list_path);
@@ -260,6 +313,28 @@ void setup_bra_basis(transform_3nf_block_manager_t manager,
 				    sp_basis);	 
 }
 
+M_Scheme_3p_Basis *new_ket_basis(transform_3nf_block_manager_t manager,
+		     matrix_energy_block_t block)
+{
+	SP_States *sp_basis = get_sp_states(manager->single_particle_basis);
+	return load_anicr_3p_basis(manager->index_list_path,
+				   get_total_isospin(block),
+				   get_proton_energy_ket(block),
+				   get_neutron_energy_ket(block),
+				   sp_basis);	 
+}
+	static
+M_Scheme_3p_Basis *new_bra_basis(transform_3nf_block_manager_t manager,
+		     matrix_energy_block_t block)
+{
+	SP_States *sp_basis = get_sp_states(manager->single_particle_basis);
+	return load_anicr_3p_basis(manager->index_list_path,
+				   get_total_isospin(block),
+				   get_proton_energy_bra(block),
+				   get_neutron_energy_bra(block),
+				   sp_basis);	 
+}
+
 	static
 int get_min_M(M_Scheme_3p_Basis *basis)
 {
@@ -302,8 +377,8 @@ void expand_block_list(transform_3nf_block_manager_t manager)
 	manager->num_allocated_blocks = manager->num_blocks;
 	free(manager->blocks);
 	manager->blocks = 
-		(block_t*)
-		calloc(manager->num_allocated_blocks,sizeof(block_t));
+		(transformed_3nf_M_block_t*)
+		calloc(manager->num_allocated_blocks,sizeof(transformed_3nf_M_block_t));
 }
 
 	static
