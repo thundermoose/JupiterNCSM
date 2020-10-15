@@ -640,14 +640,14 @@ int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 	diff = count_neutrons(block_a->type) - count_neutrons(block_b->type);
 	if (diff)
 		return diff;
-	diff = block_a->depth_protons - block_b->depth_protons;
+	diff = block_b->depth_protons - block_a->depth_protons;
 	if (diff)
 		return diff;
 	diff = block_a->difference_energy_protons -
 	       	block_b->difference_energy_protons;
 	if (diff)
 		return diff;
-	diff = block_a->depth_neutrons - block_b->depth_neutrons;
+	diff = block_b->depth_neutrons - block_a->depth_neutrons;
 	if (diff)
 		return diff;
 	diff = block_a->difference_energy_neutrons -

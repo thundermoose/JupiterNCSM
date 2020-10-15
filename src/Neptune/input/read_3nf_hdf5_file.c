@@ -318,9 +318,9 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			{
 				log_entry("current_block = NULL");
 			}
-			release_block(current_block);
 #pragma omp critical (hdf5)
 			{
+				release_block(current_block);
 				current_block =
 					get_hdf5_block(data_file,needed_chan);
 			}
