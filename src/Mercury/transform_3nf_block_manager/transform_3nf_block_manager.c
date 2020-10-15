@@ -106,7 +106,11 @@ new_transform_3nf_block_manager(Data_File *coupled_3nf_data,
 	manager->single_particle_basis =
 		new_single_particle_basis(single_particle_energy);
 	manager->J_max = 3*(single_particle_energy*2+1);
-	manager->clebsch_gordan_data = initiate_clebsch_gordan(manager->J_max);
+#pragma omp parallel
+	{
+		manager->clebsch_gordan_data =
+		       	initiate_clebsch_gordan(manager->J_max);
+	}
 	return manager;
 }
 
@@ -230,6 +234,7 @@ get_transformed_block(transform_3nf_block_manager_t manager,
 	M_Scheme_3p_Basis *bra_basis = new_bra_basis(manager,block);
 	set_transformed_block_bra_basis(transformed_block,
 				       	bra_basis);
+	initialized_M_blocks(transformed_block);
 	int min_M = get_transformed_block_min_M(transformed_block);
 	int bra_energy = get_bra_energy(block);
 	int ket_energy = get_ket_energy(block);

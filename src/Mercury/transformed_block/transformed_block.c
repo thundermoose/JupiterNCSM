@@ -64,6 +64,21 @@ new_empty_transformed_block(matrix_energy_block_t energy_block,
 	return block;
 }
 
+void initialized_M_blocks(transformed_block_t block)
+{
+	assert(block->ket_basis);
+	assert(block->bra_basis);
+	block->M_min = max(get_min_M(block->ket_basis),
+			   get_min_M(block->bra_basis));
+	int M_max = min(get_max_M(block->ket_basis),
+			get_max_M(block->bra_basis));
+	block->num_M_blocks = (M_max - block->M_min)/2+1;
+	block->M_blocks = 
+		(transformed_3nf_M_block_t*)
+		calloc(block->num_M_blocks,
+		       sizeof(transformed_3nf_M_block_t));
+}
+
 void set_transformed_block_ket_basis(transformed_block_t block,
 				     M_Scheme_3p_Basis *ket_basis)
 {
@@ -80,21 +95,6 @@ void set_transformed_block_m_block(transformed_block_t block,
 				   transformed_3nf_M_block_t M_block,
 				   size_t index)
 {
-	assert(block->ket_basis);
-	assert(block->bra_basis);
-	if (block->M_blocks == NULL)
-	{
-		block->M_min = max(get_min_M(block->ket_basis),
-				   get_min_M(block->bra_basis));
-		int M_max = min(get_max_M(block->ket_basis),
-				get_max_M(block->bra_basis));
-		block->num_M_blocks = (M_max - block->M_min)/2+1;
-		block->M_blocks = 
-			(transformed_3nf_M_block_t*)
-			calloc(block->num_M_blocks,
-			       sizeof(transformed_3nf_M_block_t));
-
-	}
 	block->M_blocks[index] = M_block;
 }
 
