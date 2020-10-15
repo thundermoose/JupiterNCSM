@@ -248,18 +248,25 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 	Data_File *coupled_3nf_data =
 		open_data_file(get_interaction_path_3nf_argument(arguments));
 	transform_3nf_block_manager_t manager =
-	       	new_transform_3nf_block_manager
+		new_transform_3nf_block_manager
 		(coupled_3nf_data,
 		 get_index_list_path_argument(arguments),
 		 get_single_particle_energy_argument(arguments));
 	const char *output_path_base = get_output_path_argument(arguments);					
-	while (has_next_3nf_matrix_energy_block(combination_table))
+#pragma omp parallel
 	{
-		matrix_energy_block_t current_energy_block =
-			next_3nf_matrix_energy_block(combination_table);
-		process_matrix_energy_block(current_energy_block,
-					    manager,
-					    output_path_base);
+#pragma omp single
+		{
+			while (has_next_3nf_matrix_energy_block(combination_table))
+			{
+				matrix_energy_block_t current_energy_block =
+					next_3nf_matrix_energy_block(combination_table);
+#pragma omp task
+				process_matrix_energy_block(current_energy_block,
+							    manager,
+							    output_path_base);
+			}
+		}
 	}
 	free_transform_3nf_block_manager(manager);
 	free_data_file(coupled_3nf_data);
