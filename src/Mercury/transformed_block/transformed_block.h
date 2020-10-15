@@ -15,6 +15,8 @@ new_empty_transformed_block(matrix_energy_block_t energy_block,
 			    char *index_list_path,
 			    single_particle_basis_t single_particle_basis);
 
+void initialized_M_blocks(transformed_block_t block);
+
 void set_transformed_block_ket_basis(transformed_block_t block,
 				     M_Scheme_3p_Basis *ket_basis);
 

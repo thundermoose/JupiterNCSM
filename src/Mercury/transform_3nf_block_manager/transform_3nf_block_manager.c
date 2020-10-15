@@ -230,6 +230,7 @@ get_transformed_block(transform_3nf_block_manager_t manager,
 	M_Scheme_3p_Basis *bra_basis = new_bra_basis(manager,block);
 	set_transformed_block_bra_basis(transformed_block,
 				       	bra_basis);
+	initialized_M_blocks(transformed_block);
 	int min_M = get_transformed_block_min_M(transformed_block);
 	int bra_energy = get_bra_energy(block);
 	int ket_energy = get_ket_energy(block);
