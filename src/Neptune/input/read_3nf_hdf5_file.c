@@ -306,23 +306,23 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			exit(1);
 		}
 
-#pragma omp critical (hdf5)
+		if (current_block == NULL ||
+		    current_block->channel_number != needed_chan)
 		{
-			if (current_block == NULL ||
-			    current_block->channel_number != needed_chan)
+			log_entry("needed_chan = %d",needed_chan);
+			if (current_block)
 			{
-				log_entry("needed_chan = %d",needed_chan);
-				if (current_block)
-				{
-					log_entry("current_block->channel_number = %d", current_block->channel_number);
-				}
-				else
-				{
-					log_entry("current_block = NULL");
-				}
-				release_block(current_block);
+				log_entry("current_block->channel_number = %d", current_block->channel_number);
+			}
+			else
+			{
+				log_entry("current_block = NULL");
+			}
+			release_block(current_block);
+#pragma omp critical (hdf5)
+			{
 				current_block =
-				       	get_hdf5_block(data_file,needed_chan);
+					get_hdf5_block(data_file,needed_chan);
 			}
 		}
 		if (current_block == NULL)
