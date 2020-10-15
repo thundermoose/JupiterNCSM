@@ -10,6 +10,7 @@
 #include <matrix_energy_block/matrix_energy_block.h>
 #include <log/log.h>
 #include <time.h>
+#include <omp.h>
 
 	__attribute__((constructor(101)))
 void initialization()
@@ -283,7 +284,6 @@ void process_matrix_energy_block(matrix_energy_block_t current_block,
 				 transform_3nf_block_manager_t manager,
 				 const char *output_path_base)
 {
-
 	transformed_block_t current_transformed_block = 
 		get_transformed_block(manager,current_block);
 	while (has_next_energy_matrix_block(current_block))
