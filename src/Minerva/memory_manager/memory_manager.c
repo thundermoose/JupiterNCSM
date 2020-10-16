@@ -265,7 +265,7 @@ static
 void unload_array(memory_manager_t manager,
 		  size_t id)
 {
-	array_t array = manager->all_arrays[id-1];
+	array_t array = fetched_array(manager,id);
 	switch (array.type)
 	{
 		case VECTOR_BLOCK:
