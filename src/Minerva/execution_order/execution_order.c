@@ -130,6 +130,7 @@ int has_next_instruction(execution_order_t execution_order)
 
 void free_execution_order(execution_order_t execution_order)
 {
+	omp_destroy_lock(&execution_order->fetch_lock);
 	free(execution_order->instructions);
 	free(execution_order);
 }
