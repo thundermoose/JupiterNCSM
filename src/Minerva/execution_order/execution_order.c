@@ -2,11 +2,13 @@
 #include <array_builder/array_builder.h>
 #include <string_tools/string_tools.h>
 #include <global_constants/global_constants.h>
+#include <unit_testing/test.h>
 #include <log/log.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <omp.h>
+#include <unistd.h>
 
 const execution_instruction_t empty_instruction = {
 	.type = unknown,
@@ -201,3 +203,40 @@ void parse_row(const char *row,
 		free(words);
 	}
 }
+
+void parallel_instruction_fetching_main_code()
+{
+	const char *instruction_filepath=
+		TEST_DATA"bacchus_run_data/he4/nmax2/greedy_3_16.txt";
+	const char *comb_filepath=
+		TEST_DATA"bacchus_run_data/he4/nmax2/comb.txt";
+	combination_table_t combination_table = 
+		new_combination_table(comb_filepath,
+				      2,2);
+	execution_order_t execution_order =
+		read_execution_order(instruction_filepath,
+				     combination_table);
+#pragma omp parallel
+	{
+		size_t thread_id = omp_get_thread_num();
+		while(has_next_instruction(execution_order))
+		{
+			execution_instruction_t instruction = 
+				next_instruction(execution_order);
+			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			       thread_id,
+			       instruction.type,
+			       instruction.vector_block_in,
+			       instruction.vector_block_out,
+			       instruction.matrix_element_file,
+			       instruction.neutron_index,
+			       instruction.proton_index);
+			usleep(1000);
+		}
+	}
+	free_execution_order(execution_order);
+}
+
+new_test(parallel_instruction_fetching,
+	 parallel_instruction_fetching_main_code();
+	);
