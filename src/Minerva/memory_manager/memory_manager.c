@@ -3,6 +3,7 @@
 #include <log/log.h>
 #include <error/error.h>
 #include <assert.h>
+#include <omp.h>
 
 typedef enum
 {
@@ -11,12 +12,14 @@ typedef enum
 	INDEX_LIST = 2,
 	MATRIX_BLOCK = 3
 } array_type_t;
+
 typedef struct
 {
 	array_type_t type;
 	void *primary_array;
 	void *secondary_array;
 } array_t;
+
 struct _memory_manager_
 {	
 	array_t *all_arrays;
@@ -27,6 +30,9 @@ struct _memory_manager_
 	char *matrix_base_directory;
 	combination_table_t combination_table;
 };
+
+static
+array_t *fetch_array(memory_manager_t manager,size_t array_id);
 
 static
 void unload_array(memory_manager_t manager,
@@ -59,8 +65,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 vector_block_t load_input_vector_block(memory_manager_t manager,
 				       size_t vector_block_id)
 {
-	assert(vector_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[vector_block_id-1];
+	array_t *current_array = fetch_array(manager,vector_block_id);
 	if (current_array->primary_array == NULL)
 	{
 		basis_block_t basis_block =
@@ -87,8 +92,7 @@ vector_block_t load_input_vector_block(memory_manager_t manager,
 vector_block_t load_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id)
 {
-	assert(vector_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[vector_block_id-1];
+	array_t *current_array = fetch_array(manager,vector_block_id);
 	if (current_array->secondary_array == NULL)
 	{
 		basis_block_t basis_block =
@@ -117,8 +121,7 @@ index_list_t load_index_list(memory_manager_t manager,
 {
 	log_entry("load_index_list(%lu)",
 		  index_list_id);
-	assert(index_list_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[index_list_id-1];
+	array_t *current_array = fetch_array(manager,index_list_id);
 	index_list_t index_list = current_array->primary_array; 
 	log_entry("current_array->primary_array = %p",
 		  current_array->primary_array);
@@ -148,8 +151,7 @@ index_list_t load_index_list(memory_manager_t manager,
 matrix_block_t load_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id)
 {
-	assert(matrix_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[matrix_block_id-1];	
+	array_t *current_array = fetch_array(manager,matrix_block_id);
 	if (current_array->primary_array == NULL)
 	{
 		matrix_block_t matrix_block =
@@ -171,11 +173,10 @@ matrix_block_t load_matrix_block(memory_manager_t manager,
 	}
 }
 
-void unload_input_vector_block(memory_manager_t manager,
+void unload_input_vector_block(memory_manager_t manager, 
 			       size_t vector_block_id)
 {
-	assert(vector_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[vector_block_id-1];
+	array_t *current_array = fetch_array(manager,vector_block_id);
 	if (current_array->type != VECTOR_BLOCK)
 		error("The array %lu is not a vector block\n",
 		      vector_block_id);
@@ -189,8 +190,7 @@ void unload_input_vector_block(memory_manager_t manager,
 void unload_output_vector_block(memory_manager_t manager,
 				size_t vector_block_id)
 {
-	assert(vector_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[vector_block_id-1];
+	array_t *current_array = fetch_array(manager,vector_block_id);
 	if (current_array->type != VECTOR_BLOCK)
 		error("The array %lu is not a vector block\n",
 		      vector_block_id);
@@ -204,13 +204,12 @@ void unload_output_vector_block(memory_manager_t manager,
 	current_array->secondary_array = NULL;
 }
 
-void unload_index_list(memory_manager_t manager,
+void unload_index_list(memory_manager_t manager, 
 		       size_t index_list_id)
 {
 	log_entry("unload_index_list(%lu)",
 		  index_list_id);
-	assert(index_list_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[index_list_id-1];
+	array_t *current_array = fetch_array(manager,index_list_id);
 	if (current_array->type != INDEX_LIST)
 		error("Array %lu is not an index list\n",
 		      index_list_id);
@@ -221,11 +220,10 @@ void unload_index_list(memory_manager_t manager,
 	current_array->primary_array = NULL;
 }
 
-void unload_matrix_block(memory_manager_t manager,
+void unload_matrix_block(memory_manager_t manager, 
 			 size_t matrix_block_id)
 {
-	assert(matrix_block_id <= manager->num_arrays);
-	array_t *current_array = &manager->all_arrays[matrix_block_id-1];
+	array_t *current_array = fetch_array(manager,matrix_block_id);
 	if (current_array->type != MATRIX_BLOCK)
 		error("Array %lu is not a matrix block\n",
 		      matrix_block_id);
@@ -249,6 +247,18 @@ void free_memory_manager(memory_manager_t manager)
 	free(manager->index_list_base_directory);
 	free(manager->matrix_base_directory);
 	free(manager);
+}
+
+static
+array_t *fetch_array(memory_manager_t manager,size_t array_id)
+{
+	assert(array_id <= manager->num_arrays);
+	array_t *fetched_array = NULL;
+#pragma omp critical (fetch_array)
+	{
+		fetch_array = &manager->all_arrays[array_id - 1];
+	}
+	return fetched_array;
 }
 
 static
