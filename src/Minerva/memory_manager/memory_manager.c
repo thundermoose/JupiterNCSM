@@ -256,7 +256,7 @@ array_t *fetch_array(memory_manager_t manager,size_t array_id)
 	array_t *fetched_array = NULL;
 #pragma omp critical (fetch_array)
 	{
-		fetch_array = &manager->all_arrays[array_id - 1];
+		fetched_array = &manager->all_arrays[array_id - 1];
 	}
 	return fetched_array;
 }
@@ -265,7 +265,7 @@ static
 void unload_array(memory_manager_t manager,
 		  size_t id)
 {
-	array_t array = fetched_array(manager,id);
+	array_t array = *fetch_array(manager,id);
 	switch (array.type)
 	{
 		case VECTOR_BLOCK:
