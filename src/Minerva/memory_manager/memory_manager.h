@@ -28,6 +28,14 @@ index_list_t load_index_list(memory_manager_t manager,
 matrix_block_t load_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id);
 
+void release_input_vector(memory_manager_t manager, size_t array_id);
+
+void release_output_vector(memory_manager_t manager, size_t array_id);
+
+void release_index_list(memory_manager_t manager, size_t array_id);
+
+void release_matrix_block(memory_manager_t manager, size_t array_id);
+
 void unload_input_vector_block(memory_manager_t manager,
 			       size_t vector_block_id);
 

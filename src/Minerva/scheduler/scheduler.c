@@ -5,6 +5,7 @@
 #include <global_constants/global_constants.h>
 #include <log/log.h>
 #include <error/error.h>
+#include <omp.h>
 
 struct _scheduler_
 {
@@ -82,13 +83,25 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table);
-	while (has_next_instruction(scheduler->execution_order))
+#pragma omp parallel shared(memory_manager,scheduler)
 	{
-		execution_instruction_t instruction =
-			next_instruction(scheduler->execution_order);
-		execute_instruction(instruction,
-				    memory_manager,
-				    scheduler);
+		size_t thread_id = omp_get_thread_num();
+		while (has_next_instruction(scheduler->execution_order))
+		{
+			execution_instruction_t instruction =
+				next_instruction(scheduler->execution_order);
+			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			       thread_id,
+			       instruction.type,
+			       instruction.vector_block_in,
+			       instruction.vector_block_out,
+			       instruction.matrix_element_file,
+			       instruction.neutron_index,
+			       instruction.proton_index);
+			execute_instruction(instruction,
+					    memory_manager,
+					    scheduler);
+		}
 	}
 	free_memory_manager(memory_manager);
 }
@@ -191,6 +204,10 @@ void diagonal_neutron_case(memory_manager_t memory_manager,
 				input_vector_block,
 				matrix_block,
 				list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
 }
 
 	static
@@ -214,6 +231,10 @@ void diagonal_proton_case(memory_manager_t memory_manager,
 			       input_vector_block,
 			       matrix_block,
 			       list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -241,6 +262,11 @@ void diagonal_neutron_proton_case(memory_manager_t memory_manager,
 					matrix_block,
 					neutron_list,
 					proton_list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -272,6 +298,12 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 					 input_vector_block_right,
 					 matrix_block,
 					 list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
 }
 
 	static
@@ -303,6 +335,12 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 					input_vector_block_right,
 					matrix_block,
 					list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -338,6 +376,13 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 					matrix_block,
 					neutron_list,
 					proton_list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static

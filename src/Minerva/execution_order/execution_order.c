@@ -204,6 +204,7 @@ void parse_row(const char *row,
 	}
 }
 
+#ifdef TEST
 void parallel_instruction_fetching_main_code()
 {
 	const char *instruction_filepath=
@@ -216,7 +217,7 @@ void parallel_instruction_fetching_main_code()
 	execution_order_t execution_order =
 		read_execution_order(instruction_filepath,
 				     combination_table);
-#pragma omp parallel
+#pragma omp parallel shared(execution_order)
 	{
 		size_t thread_id = omp_get_thread_num();
 		while(has_next_instruction(execution_order))
@@ -236,6 +237,7 @@ void parallel_instruction_fetching_main_code()
 	}
 	free_execution_order(execution_order);
 }
+#endif
 
 new_test(parallel_instruction_fetching,
 	 parallel_instruction_fetching_main_code();
