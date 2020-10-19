@@ -138,8 +138,8 @@ vector_block_t load_output_vector_block(memory_manager_t manager,
 					vector_block_id);
 		current_array->secondary_array = 
 			(void*)
-			new_vector_block(manager->output_vector_base_directory,
-					 basis_block);
+			new_output_vector_block(manager->output_vector_base_directory,
+					       basis_block);
 		current_array->type = VECTOR_BLOCK;
 		omp_unset_lock(&current_array->array_lock);
 		return (vector_block_t) current_array->secondary_array;
@@ -245,7 +245,6 @@ void unload_input_vector_block(memory_manager_t manager,
 {
 	array_t *current_array = fetch_array(manager,vector_block_id);
 	omp_set_lock(&current_array->array_lock);
-	printf("unloading input vector block %lu\n",vector_block_id);
 	wait_for_primary_release(current_array);
 	if (current_array->type != VECTOR_BLOCK)
 		error("The array %lu is not a vector block\n",
@@ -263,7 +262,6 @@ void unload_output_vector_block(memory_manager_t manager,
 {
 	array_t *current_array = fetch_array(manager,vector_block_id);
 	omp_set_lock(&current_array->array_lock);
-	printf("unloading output vector block %lu\n",vector_block_id);
 	wait_for_secondary_release(current_array);
 	if (current_array->type != VECTOR_BLOCK)
 		error("The array %lu is not a vector block\n",
@@ -286,7 +284,6 @@ void unload_index_list(memory_manager_t manager,
 		  index_list_id);
 	array_t *current_array = fetch_array(manager,index_list_id);
 	omp_set_lock(&current_array->array_lock);
-	printf("unloading index list %lu\n",index_list_id);
 	wait_for_primary_release(current_array);
 	if (current_array->type != INDEX_LIST)
 		error("Array %lu is not an index list\n",
@@ -304,7 +301,6 @@ void unload_matrix_block(memory_manager_t manager,
 {
 	array_t *current_array = fetch_array(manager,matrix_block_id);
 	omp_set_lock(&current_array->array_lock);
-	printf("unloading matrix block %lu\n",matrix_block_id);
 	wait_for_primary_release(current_array);
 	if (current_array->type != MATRIX_BLOCK)
 		error("Array %lu is not a matrix block\n",
@@ -337,7 +333,6 @@ array_t *fetch_array(memory_manager_t manager,size_t array_id)
 {
 	assert(array_id <= manager->num_arrays);
 	array_t *fetched_array = NULL;
-	printf("fetching array %lu\n",array_id);
 #pragma omp critical (fetch_array)
 	{
 		fetched_array = &manager->all_arrays[array_id - 1];

@@ -85,19 +85,19 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->combination_table);
 #pragma omp parallel shared(memory_manager,scheduler)
 	{
-		size_t thread_id = omp_get_thread_num();
+		//size_t thread_id = omp_get_thread_num();
 		while (has_next_instruction(scheduler->execution_order))
 		{
 			execution_instruction_t instruction =
 				next_instruction(scheduler->execution_order);
-			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
-			       thread_id,
-			       instruction.type,
-			       instruction.vector_block_in,
-			       instruction.vector_block_out,
-			       instruction.matrix_element_file,
-			       instruction.neutron_index,
-			       instruction.proton_index);
+			//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			//       thread_id,
+			//       instruction.type,
+			//       instruction.vector_block_in,
+			//       instruction.vector_block_out,
+			//       instruction.matrix_element_file,
+			//       instruction.neutron_index,
+			//       instruction.proton_index);
 			execute_instruction(instruction,
 					    memory_manager,
 					    scheduler);
@@ -390,6 +390,7 @@ void unload_arrays(memory_manager_t memory_manager,
 		   execution_instruction_t instruction)
 {
 	log_entry("Unloading arrays");
+	return;
 
 	if (instruction.vector_block_in != no_index)
 		unload_input_vector_block(memory_manager,
