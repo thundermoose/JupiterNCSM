@@ -27,4 +27,6 @@ calculation_block_t next_calculation_block(calculation_blocks_t blocks);
 
 void free_calculation_blocks(calculation_blocks_t calculation_blocks);
 
+size_t get_calculation_block_num_particles(calculation_block_t *block);
+
 #endif
