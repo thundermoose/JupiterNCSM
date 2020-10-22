@@ -5,7 +5,12 @@
 #include <global_constants/global_constants.h>
 #include <log/log.h>
 #include <error/error.h>
+#include <math.h>
+#include <time.h>
 #include <omp.h>
+
+#define min(a,b) ((a)<(b) ? (a) : (b))
+#define max(a,b) ((a)>(b) ? (a) : (b))
 
 struct _scheduler_
 {
@@ -83,6 +88,9 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table);
+	double fastest_block_time = INFINITY;
+	double slowes_block_time = -INFINITY;
+	double total_block_time = 0;
 #pragma omp parallel shared(memory_manager,scheduler)
 	{
 		//size_t thread_id = omp_get_thread_num();
@@ -90,6 +98,9 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 		{
 			execution_instruction_t instruction =
 				next_instruction(scheduler->execution_order);
+
+			struct timespec t_start,t_end;
+			clock_gettime(CLOCK_REALTIME,&t_start);
 			//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
 			//       thread_id,
 			//       instruction.type,
@@ -101,9 +112,29 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 			execute_instruction(instruction,
 					    memory_manager,
 					    scheduler);
+			clock_gettime(CLOCK_REALTIME,&t_end);
+			double block_time = 
+				(t_end.tv_sec - t_start.tv_sec)*1e6+
+				(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+			if (instruction.type != unload)
+			{
+#pragma omp critical
+				fastest_block_time = 
+					min(fastest_block_time,block_time);
+#pragma omp critical
+				slowes_block_time= 
+					max(slowes_block_time,block_time);
+#pragma omp critical
+				total_block_time += block_time;
+			}
 		}
 	}
 	free_memory_manager(memory_manager);
+	printf("Fastest block: %lg µs\n",fastest_block_time);
+	printf("Slowest block: %lg µs\n",slowes_block_time);
+	printf("Average block: %lg µs\n",
+	       total_block_time /
+	       get_num_instructions(scheduler->execution_order));
 }
 
 void free_scheduler(scheduler_t scheduler)
