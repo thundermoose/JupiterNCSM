@@ -83,22 +83,25 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table);
-	//size_t thread_id = omp_get_thread_num();
-	while (has_next_instruction(scheduler->execution_order))
+#pragma omp parallel shared(memory_manager,scheduler)
 	{
-		execution_instruction_t instruction =
-			next_instruction(scheduler->execution_order);
-		//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
-		//       thread_id,
-		//       instruction.type,
-		//       instruction.vector_block_in,
-		//       instruction.vector_block_out,
-		//       instruction.matrix_element_file,
-		//       instruction.neutron_index,
-		//       instruction.proton_index);
-		execute_instruction(instruction,
-				    memory_manager,
-				    scheduler);
+		//size_t thread_id = omp_get_thread_num();
+		while (has_next_instruction(scheduler->execution_order))
+		{
+			execution_instruction_t instruction =
+				next_instruction(scheduler->execution_order);
+			//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			//       thread_id,
+			//       instruction.type,
+			//       instruction.vector_block_in,
+			//       instruction.vector_block_out,
+			//       instruction.matrix_element_file,
+			//       instruction.neutron_index,
+			//       instruction.proton_index);
+			execute_instruction(instruction,
+					    memory_manager,
+					    scheduler);
+		}
 	}
 	free_memory_manager(memory_manager);
 }
