@@ -17,4 +17,7 @@ typedef struct
 	size_t num_neutron_combinations;
 	size_t matrix_block_id;
 } matrix_block_setting_t;
+
+size_t get_matrix_block_length(matrix_block_setting_t settings);
+
 #endif
