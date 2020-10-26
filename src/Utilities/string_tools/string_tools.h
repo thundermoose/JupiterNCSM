@@ -26,4 +26,6 @@ int is_integer(const char *string);
 
 char *concatinate_strings(const char *string_1, const char *string_2);
 
+char *jump_back_word(char *str, char *current_word);
+
 #endif

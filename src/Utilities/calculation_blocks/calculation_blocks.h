@@ -15,9 +15,17 @@ typedef struct _calculation_block_
 	size_t primary_index_list;
 	size_t secondary_index_list;
 	size_t matrix_element_block;
+	size_t num_multiplications;
 } calculation_block_t;
 
+calculation_blocks_t new_calculation_blocks(calculation_block_t *blocks,
+					    size_t num_blocks);
+
 calculation_blocks_t parse_calculation_blocks(FILE* combination_file);
+
+size_t get_num_calculation_blocks(calculation_blocks_t blocks);
+
+calculation_block_t *get_calculation_blocks_array(calculation_blocks_t block);
 
 void reset_calculation_block_iterator(calculation_blocks_t blocks);
 

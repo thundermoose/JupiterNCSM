@@ -1,4 +1,5 @@
 #include <bucket_sort/bucket_sort.h>
+#include <string.h>
 
 void bucket_sort(void *array,
 		 size_t num_elements,
@@ -10,7 +11,7 @@ void bucket_sort(void *array,
 	char *array_bytes = (char*)array;
 	for (size_t i = 0; i<num_elements; i++)
 		buckets[bucket_index_function((void*)(array_bytes+
-						      i*size_element))]++;
+						      i*size_element))-1]++;
 	size_t position = 0;
 	for (size_t i = 0; i<num_buckets; i++)
 	{
@@ -23,8 +24,8 @@ void bucket_sort(void *array,
 	{
 		void *current_element = (void*)(array_bytes+i*size_element);
 		size_t target_index =
-			buckets[bucket_index_function(current_element)]++;
-		void target_element =
+			buckets[bucket_index_function(current_element)-1]++;
+		void *target_element =
 		       	(void*)(sorted_array+target_index*size_element);
 		memcpy(target_element,
 		       current_element,

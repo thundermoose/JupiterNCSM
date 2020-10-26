@@ -322,6 +322,24 @@ size_t get_num_arrays(combination_table_t combination_table)
 	return combination_table->num_ids;
 }
 
+size_t *get_array_sizes(combination_table_t table)
+{
+	size_t *array_sizes =
+	       	(size_t*)malloc(table->num_ids*sizeof(size_t));
+	for (size_t i = 0; i<table->num_basis_blocks; i++)
+		array_sizes[table->basis_blocks[i].block_id - 1] =
+			table->basis_blocks[i].num_proton_states *	
+			table->basis_blocks[i].num_neutron_states;
+	for (size_t i = 0; i<table->num_index_list_settings; i++)
+		array_sizes[table->index_list_settings[i].index_list_id-1] =
+			table->index_list_settings[i].length;
+	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+		array_sizes[table->matrix_block_settings[i].matrix_block_id-1]=
+			10*get_matrix_block_length
+			(table->matrix_block_settings[i]);
+	return array_sizes;
+}
+
 calculation_blocks_t
 get_calculation_blocks(combination_table_t combination_table)
 {

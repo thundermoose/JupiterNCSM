@@ -110,6 +110,18 @@ char *concatinate_strings(const char *string_1,
 	return string;
 }
 
+char *jump_back_word(char *string, char *current_word)
+{
+	current_word--;
+	while (current_word > string &&
+	       white_character(*current_word))
+		current_word--;	
+	while (current_word > string &&
+	       !white_character(*current_word))
+		current_word--;	
+	return current_word++;
+}
+
 static
 size_t count_words(const char *string)
 {
