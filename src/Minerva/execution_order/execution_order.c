@@ -23,6 +23,12 @@ struct _execution_order_
 {
 	execution_instruction_t *instructions;
 	size_t num_instruction;
+};
+
+struct _execution_order_iterator_
+{
+	execution_instruction_t *instructions;
+	size_t num_instruction;
 	size_t current_instruction_index;
 	omp_lock_t fetch_lock;
 };
@@ -97,7 +103,6 @@ execution_order_t read_execution_order(const char *filename,
 		}
 		execution_order->instructions[i] = instruction;
 	}
-	omp_init_lock(&execution_order->fetch_lock);
 	return execution_order;
 }
 
@@ -106,12 +111,27 @@ size_t get_num_instructions(execution_order_t execution_order)
 	return execution_order->num_instruction;
 }
 
-void reset_execution_order(execution_order_t execution_order)
+
+execution_order_iterator_t 
+get_execution_order_iterator(execution_order_t execution_order)
+{
+	execution_order_iterator_t iterator =
+	       	(execution_order_iterator_t)
+		malloc(sizeof(struct _execution_order_iterator_));
+	iterator->instructions = execution_order->instructions;
+	iterator->num_instruction = execution_order->num_instruction;
+	iterator->current_instruction_index = 0;
+	omp_init_lock(&iterator->fetch_lock);
+	return iterator;	
+}
+
+void reset_execution_order(execution_order_iterator_t iterator)
 {
 	execution_order->current_instruction_index = 0;
 }
 
-execution_instruction_t next_instruction(execution_order_t execution_order)
+execution_instruction_t 
+next_instruction(execution_order_iterator_t iterator)
 {
 	execution_instruction_t instruction;
 	assert(execution_order->current_instruction_index <
@@ -123,7 +143,7 @@ execution_instruction_t next_instruction(execution_order_t execution_order)
 	return instruction;
 }
 
-int has_next_instruction(execution_order_t execution_order)
+int has_next_instruction(execution_order_iterator_t iterator)
 {
 	omp_set_lock(&execution_order->fetch_lock);
 	int next_instruction_is_avilable = 
@@ -135,9 +155,14 @@ int has_next_instruction(execution_order_t execution_order)
 
 }
 
+void free_execution_order_iterator(execution_order_iterator_t iterator)
+{
+	omp_destroy_lock(&iterator->fetch_lock);
+	free(iterator);
+}
+
 void free_execution_order(execution_order_t execution_order)
 {
-	omp_destroy_lock(&execution_order->fetch_lock);
 	free(execution_order->instructions);
 	free(execution_order);
 }

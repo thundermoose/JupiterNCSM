@@ -7,6 +7,9 @@
 struct _execution_order_;
 typedef struct _execution_order_ *execution_order_t;
 
+struct _execution_order_iterator_;
+typedef struct _execution_order_iterator_ *execution_order_iterator_t;
+
 typedef enum
 {
 	unknown,
@@ -31,11 +34,17 @@ execution_order_t read_execution_order(const char *filename,
 
 size_t get_num_instructions(execution_order_t execution_order);
 
-void reset_execution_order(execution_order_t execution_order);
+execution_order_iterator_t 
+get_execution_order_iterator(execution_order_t execution_order);
 
-execution_instruction_t next_instruction(execution_order_t execution_order);
+void reset_execution_order(execution_order_iterator_t iterator);
 
-int has_next_instruction(execution_order_t execution_order);
+execution_instruction_t 
+next_instruction(execution_order_iterator_t iterator);
+
+int has_next_instruction(execution_order_iterator_t iterator);
+
+void free_execution_order_iterator(execution_order_iterator_t iterator);
 
 void free_execution_order(execution_order_t execution_order);
 
