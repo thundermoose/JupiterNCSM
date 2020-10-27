@@ -88,16 +88,18 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table);
+	execution_order_iterator_t instruction_iterator =
+		get_execution_order_iterator(scheduler->execution_order);
 	double fastest_block_time = INFINITY;
 	double slowes_block_time = -INFINITY;
 	double total_block_time = 0;
-#pragma omp parallel shared(memory_manager,scheduler)
+#pragma omp parallel shared(memory_manager,scheduler,instruction_iterator)
 	{
 		launch_memory_manager_thread(memory_manager);
-		while (has_next_instruction(scheduler->execution_order))
+		while (has_next_instruction(instruction_iterator))
 		{
 			execution_instruction_t instruction =
-				next_instruction(scheduler->execution_order);
+				next_instruction(instruction_iterator);
 
 			struct timespec t_start,t_end;
 			clock_gettime(CLOCK_REALTIME,&t_start);
@@ -122,6 +124,7 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 		}
 	}
 	free_memory_manager(memory_manager);
+	free_execution_order_iterator(instruction_iterator);
 	printf("Fastest block: %lg µs\n",fastest_block_time);
 	printf("Slowest block: %lg µs\n",slowes_block_time);
 	printf("Average block: %lg µs\n",
