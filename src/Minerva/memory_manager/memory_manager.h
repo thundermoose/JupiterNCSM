@@ -14,18 +14,21 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    const char *output_vector_base_directory,
 				    const char *index_list_base_directory,
 				    const char *matrix_base_directory,
-				    combination_table_t combination_table);
+				    combination_table_t combination_table,
+				    execution_order_t execution_order);
 
-vector_block_t load_input_vector_block(memory_manager_t manager,
+void launch_memory_manager_thread(memory_manager_t manager);
+
+vector_block_t request_input_vector_block(memory_manager_t manager,
 				       size_t vector_block_id);
 
-vector_block_t load_output_vector_block(memory_manager_t manager,
+vector_block_t request_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id);
 
-index_list_t load_index_list(memory_manager_t manager,
+index_list_t request_index_list(memory_manager_t manager,
 			     size_t index_list_id);
 
-matrix_block_t load_matrix_block(memory_manager_t manager,
+matrix_block_t request_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id);
 
 void release_input_vector(memory_manager_t manager, size_t array_id);

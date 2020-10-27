@@ -93,7 +93,7 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 	double total_block_time = 0;
 #pragma omp parallel shared(memory_manager,scheduler)
 	{
-		//size_t thread_id = omp_get_thread_num();
+		launch_memory_manager_thread(memory_manager);
 		while (has_next_instruction(scheduler->execution_order))
 		{
 			execution_instruction_t instruction =
@@ -101,14 +101,6 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 
 			struct timespec t_start,t_end;
 			clock_gettime(CLOCK_REALTIME,&t_start);
-			//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
-			//       thread_id,
-			//       instruction.type,
-			//       instruction.vector_block_in,
-			//       instruction.vector_block_out,
-			//       instruction.matrix_element_file,
-			//       instruction.neutron_index,
-			//       instruction.proton_index);
 			execute_instruction(instruction,
 					    memory_manager,
 					    scheduler);
@@ -220,16 +212,16 @@ void diagonal_neutron_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the neutron only case");
 	vector_block_t input_vector_block =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t output_vector_block =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t list = 
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.neutron_index);
 	multiplication_neutrons(output_vector_block,
 				input_vector_block,
@@ -247,16 +239,16 @@ void diagonal_proton_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the proton only case");
 	vector_block_t input_vector_block =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t output_vector_block =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t list = 
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.proton_index);
 	multiplication_protons(output_vector_block,
 			       input_vector_block,
@@ -274,19 +266,19 @@ void diagonal_neutron_proton_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the neutron and proton case");
 	vector_block_t input_vector_block =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t output_vector_block =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t  neutron_list =
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.neutron_index);
 	index_list_t  proton_list =
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.proton_index);
 	multiplication_neutrons_protons(output_vector_block,
 					input_vector_block,
@@ -306,22 +298,22 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the neutron only case");
 	vector_block_t input_vector_block_left =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t input_vector_block_right =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_out);
 	vector_block_t output_vector_block_left =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	vector_block_t output_vector_block_right =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_in);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t list = 
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.neutron_index);
 	multiplication_neutrons_off_diag(output_vector_block_left,
 					 output_vector_block_right,
@@ -343,22 +335,22 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the proton only case");
 	vector_block_t input_vector_block_left =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t input_vector_block_right =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_out);	
 	vector_block_t output_vector_block_left =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	vector_block_t output_vector_block_right =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_in);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t list = 
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.proton_index);
 	multiplication_protons_off_diag(output_vector_block_left,
 					output_vector_block_right,
@@ -380,25 +372,25 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 {
 	log_entry("Running the neutron and proton case");
 	vector_block_t input_vector_block_left =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_in);	
 	vector_block_t input_vector_block_right =
-		load_input_vector_block(memory_manager,
+		request_input_vector_block(memory_manager,
 					instruction.vector_block_out);	
 	vector_block_t output_vector_block_left =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_out);	
 	vector_block_t output_vector_block_right =
-		load_output_vector_block(memory_manager,
+		request_output_vector_block(memory_manager,
 					 instruction.vector_block_in);	
 	matrix_block_t matrix_block =
-		load_matrix_block(memory_manager,
+		request_matrix_block(memory_manager,
 				  instruction.matrix_element_file);
 	index_list_t  neutron_list =
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.neutron_index);
 	index_list_t  proton_list =
-		load_index_list(memory_manager,
+		request_index_list(memory_manager,
 				instruction.proton_index);
 	multiplication_neutrons_protons_off_diag(output_vector_block_left,
 						 output_vector_block_right,
@@ -417,7 +409,7 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 }
 
 	static
-void unload_arrays(memory_manager_t memory_manager,
+void unrequest_arrays(memory_manager_t memory_manager,
 		   execution_instruction_t instruction)
 {
 	log_entry("Unloading arrays");

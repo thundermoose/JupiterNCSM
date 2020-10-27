@@ -29,13 +29,28 @@ typedef struct
 struct _memory_manager_
 {	
 	array_t *all_arrays;
+	size_t *array_sizes;
 	size_t num_arrays;
 	char *input_vector_base_directory;
 	char *output_vector_base_directory;
 	char *index_list_base_directory;
 	char *matrix_base_directory;
 	combination_table_t combination_table;
+	execution_order_t execution_order;
 };
+
+static
+void load_necessary_data(memory_manager_t manager,
+			 execution_instruction_t instruction);
+
+static
+size_t compute_needed_memory_to_load(memory_manager_t manager,
+				     execution_instruction_t instruction);
+
+static
+void unload_non_needed_arrays(memory_manager_t manager,
+			      size_t size_to_unload,
+			      execution_instruction_t instruction);
 
 static
 array_t *fetch_array(memory_manager_t manager,size_t array_id);
@@ -72,7 +87,8 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    const char *output_vector_base_directory,
 				    const char *index_list_base_directory,
 				    const char *matrix_base_directory,
-				    combination_table_t combination_table)
+				    combination_table_t combination_table,
+				    execution_order_t execution_order)
 {
 	memory_manager_t manager =
 		(memory_manager_t)malloc(sizeof(struct _memory_manager_));
@@ -91,10 +107,31 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->matrix_base_directory =
 		copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
+	manager->execution_order = execution_order;
 	return manager;
 }
 
-vector_block_t load_input_vector_block(memory_manager_t manager,
+void launch_memory_manager_thread(memory_manager_t manager)
+{
+	size_t thread_id = omp_get_thread_num();
+	if (thread_id > 0)
+	{
+		// Give the memory manager time to load
+		// data before the data is needed
+		usleep(50);
+		return;
+	}
+	execution_order_iterator_t instructions_to_load = 
+		get_execution_order_iterator(manager->execution_order);
+	while (has_next_instruction(instructions_to_load))
+	{
+		execution_instruction_t instruction =
+			next_instruction(instruction);
+		load_necessary_data(manager,instruction);
+	}
+}
+
+vector_block_t request_input_vector_block(memory_manager_t manager,
 				       size_t vector_block_id)
 {
 	array_t *current_array = fetch_array(manager,vector_block_id);
@@ -125,7 +162,7 @@ vector_block_t load_input_vector_block(memory_manager_t manager,
 	}
 }
 
-vector_block_t load_output_vector_block(memory_manager_t manager,
+vector_block_t request_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id)
 {
 	array_t *current_array = fetch_array(manager,vector_block_id);
@@ -156,7 +193,7 @@ vector_block_t load_output_vector_block(memory_manager_t manager,
 	}
 }
 
-index_list_t load_index_list(memory_manager_t manager,
+index_list_t request_index_list(memory_manager_t manager,
 			     const size_t index_list_id)
 {
 	log_entry("load_index_list(%lu)",
@@ -191,7 +228,7 @@ index_list_t load_index_list(memory_manager_t manager,
 	return (index_list_t)index_list;	
 }
 
-matrix_block_t load_matrix_block(memory_manager_t manager,
+matrix_block_t request_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id)
 {
 	array_t *current_array = fetch_array(manager,matrix_block_id);
@@ -326,6 +363,67 @@ void free_memory_manager(memory_manager_t manager)
 	free(manager->index_list_base_directory);
 	free(manager->matrix_base_directory);
 	free(manager);
+}
+
+static
+void load_necessary_data(memory_manager_t manager,
+			 execution_instruction_t instruction)
+{
+	size_t total_needed_memory_to_load = 
+		compute_needed_memory_to_load(manager,instruction);
+	if (manager->size_current_loaded_memory + 
+	    total_needed_memory_to_load >= manager->maximum_loaded_memory)
+	{
+		size_t memory_to_unload = 
+			manager->size_current_loaded_memory + 
+			total_needed_memory_to_load -
+			manager->maximum_loaded_memory;
+		unload_non_needed_arrays(manager,memory_to_unload,instruction);
+	}
+	if (!is_array_loaded(manager,instruction.vector_block_in))
+		load_vector_array(manager,instruction.vector_block_in);
+	if (!is_array_loaded(manager,instruction.vector_block_out))
+		load_vector_array(manager,instruction.vector_block_out);
+	if (!is_array_loaded(manager,instruction.matrix_element_file))
+		load_matrix_array(manager,instruction.matrix_element_file);
+	if (!is_array_loaded(manager,instruction.neutron_index))
+		load_index_array(manager,instruction.neutron_index);
+	if (!is_array_loaded(manager,instruction.proton_index))
+		load_index_array(manager,instruction.proton_index);
+}
+
+static
+size_t compute_needed_memory_to_load(memory_manager_t manager,
+				     execution_instruction_t instruction)
+{
+	size_t needed_memory = 0;
+	if (!is_array_loaded(manager,instruction.vector_block_in))
+		needed_memory +=
+			manager->array_sizes[instruction.vector_block_in-1];	    
+	if (instruction.vector_block_out != instruction.vector_block_in &&
+	    !is_array_loaded(instruction.vector_block_out))
+		needed_memory +=
+			manager->array_sizes[instruction.vector_block_out-1];
+	if (!is_array_loaded(manager,instruction.matrix_element_file))
+		needed_memory +=
+			manager->array_sizes[instruction.matrix_element_file-1];
+	if (!is_array_loaded(manager,instruction.neutron_index) &&
+	    instruction.neutron_index != no_index)
+		needed_memory +=
+			manager->array_sizes[instruction.neutron_index-1];
+	if (!is_array_loaded(manager,instruction.proton_index) &&
+	    instruction.proton_index != no_index)
+		needed_memory +=
+			manager->array_sizes[instruction.proton_index-1];
+	return needed_memory;
+}
+
+static
+void unload_non_needed_arrays(memory_manager_t manager,
+			      size_t size_to_unload,
+			      execution_instruction_t instruction)
+{
+
 }
 
 static
