@@ -6,7 +6,7 @@
 #include <bases/shells.h>
 #include <matrix_transform/matrix_transform.h>
 #include <input/read_3nf_file.h>
-#include <hash_map/hash_map.h>
+#include <utils/index_hash.h>
 
 typedef struct _block_configuration_
 {
@@ -17,12 +17,14 @@ typedef struct _block_configuration_
 typedef struct _block_
 {
 	int channel_number;
-	Block_Configuration* configurations;
-	double* matrix_elements;
-	hash_map_t configuration_to_element;
+	index_hash_t configuration_to_index;
+	double *matrix_elements;
 	size_t num_matrix_elements;
+	size_t min_conf_number;
+	size_t max_conf_number;
 	int score; // Number of threads that uses this block
 	int in_use;
+
 } Block;
 
 typedef struct _channel_
@@ -44,7 +46,6 @@ typedef struct _configuration_
 typedef struct _hdf5_data_
 {
 	hid_t file_handle;
-
 	Channel* channels;
 	size_t num_channels;
 	int e_max;
@@ -57,6 +58,11 @@ typedef struct _hdf5_data_
 	size_t max_loaded_memory;
 	double weights[5];
 	Shells* shells;
+	// Workspace for load_channel
+	double *out_array;
+	size_t allocated_out_array_size;
+	Block_Configuration *block_configurations;
+	size_t allocated_configurations_size;
 } HDF5_Data;
 
 #define LEC_CE(data) data->weights[0]
