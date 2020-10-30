@@ -21,6 +21,9 @@ void unload_low_score_channels(HDF5_Data *data_file,
 static
 int compare_hdf5_blocks(Block **block_a, Block **block_b);
 
+static
+int is_block_in_use(Block *block);
+
 
 int comp_confs(Configuration conf_a,
 	       Configuration conf_b)
@@ -80,8 +83,12 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 		data_file->configurations);
 	H5Dclose(configs);
 	// Initiate the block reading system, but not reading any blocks
-	data_file->open_blocks = NULL;
-	data_file->max_num_open_blocks = 0;
+	data_file->open_blocks = (Block**)calloc(data_file->num_channels,
+						 sizeof(Block*));
+	data_file->block_locks = (omp_lock_t*)malloc(data_file->num_channels*
+						     sizeof(omp_lock_t));
+	for (size_t i = 0; i<data_file->num_channels; i++)
+		omp_init_lock(&data_file->block_locks[i]);
 	data_file->loaded_memory = 0;
 	data_file->max_loaded_memory = 80*((size_t)(1)<<30);
 	data_file->weights[0] = -0.03957471;// CE
@@ -137,9 +144,6 @@ int get_channel_number(HDF5_Data* data_file,
 int is_channel_loaded(HDF5_Data* data_file,
 		      int channel_number)
 {
-	if (data_file->max_num_open_blocks<=channel_number)
-		return 0;
-
 	return data_file->open_blocks[channel_number] != NULL;
 }
 
@@ -150,32 +154,26 @@ Block* load_channel(HDF5_Data* data_file,
 {
 	char channel_name[64];
 	sprintf(channel_name, "Dataset_split_%.5d",channel_number+1);
+	Block* block = (Block*)malloc(sizeof(Block));
+	block->score = 0;
+	block->channel_number = channel_number;
+	Block_Configuration *configurations = NULL;
+	double *out_array = NULL;
+#pragma omp critical(hdf5)
+	{
 	hid_t group = H5Gopen(data_file->file_handle,
 			      channel_name,H5P_DEFAULT);
 	if (group<0)
 	{
 		printf("Tried and faild to open \"%s\"\n",
 		       channel_name);
-		return NULL;
 	}
-	Block* block = (Block*)malloc(sizeof(Block));
-	block->score = 0;
-	block->channel_number = channel_number;
 	hid_t conf = H5Dopen2(group,"Configurations",H5P_DEFAULT);
 	block->num_matrix_elements =
 		H5Dget_storage_size(conf)/sizeof(Block_Configuration);
-	if (block->num_matrix_elements > 
-	    data_file->allocated_configurations_size) 
-	{
-		data_file->allocated_configurations_size = 
-			block->num_matrix_elements;
-		data_file->block_configurations =
-		       	(Block_Configuration*)
-			realloc(data_file->block_configurations,
-				sizeof(Block_Configuration)*
-				data_file->allocated_configurations_size);
-	}
-	Block_Configuration *configurations = data_file->block_configurations;
+	configurations = 
+		(Block_Configuration*)malloc(block->num_matrix_elements*
+					     sizeof(Block_Configuration));
 	H5Dread(conf,
 		H5T_NATIVE_INT,
 		H5S_ALL,
@@ -189,14 +187,7 @@ Block* load_channel(HDF5_Data* data_file,
 
 	hid_t elem = H5Dopen2(group,"Elements",H5P_DEFAULT);
 	size_t out_array_size = H5Dget_storage_size(elem)/sizeof(double);
-	if (out_array_size > data_file->allocated_out_array_size)
-	{
-		data_file->allocated_out_array_size = out_array_size;
-		data_file->out_array =
-		       	(double*)realloc(data_file->out_array,
-					 sizeof(double)*out_array_size);
-	}
-	double *out_array = data_file->out_array;
+	out_array = (double*)malloc(sizeof(double)*out_array_size);
 	H5Dread(elem,
 		H5T_NATIVE_DOUBLE,
 		H5S_ALL,
@@ -204,6 +195,7 @@ Block* load_channel(HDF5_Data* data_file,
 		H5P_DEFAULT,
 		out_array);
 	H5Dclose(elem);
+	}
 	block->matrix_elements =
 	       	(double*)malloc(sizeof(double)*block->num_matrix_elements);
 	size_t i;
@@ -223,22 +215,9 @@ Block* load_channel(HDF5_Data* data_file,
 			  configurations[i].j,
 			  i);
 	}
-	if (channel_number>=data_file->max_num_open_blocks)
-	{
-		size_t old_len = data_file->max_num_open_blocks;
-		data_file->max_num_open_blocks = channel_number*2+1;
-		Block** tmp = (Block**)calloc(data_file->max_num_open_blocks,
-					      sizeof(Block*));
-
-		if (data_file->open_blocks != NULL){
-			memcpy(tmp,
-			       data_file->open_blocks,
-			       old_len*sizeof(Block*));
-			free(data_file->open_blocks);
-		}
-
-		data_file->open_blocks = tmp;
-	}
+	free(out_array);
+	free(configurations);
+	omp_init_lock(&block->in_use_lock);
 	data_file->open_blocks[channel_number] = block;
 	return block;
 }
@@ -247,10 +226,6 @@ Block* load_channel(HDF5_Data* data_file,
 Block* get_channel(HDF5_Data* data_file,
 		   int channel_number)
 {
-	if (__builtin_expect(channel_number>=data_file->max_num_open_blocks,0))
-	{
-		return NULL;
-	}
 	for (size_t i = 0; i <= channel_number; i++)
 		log_entry("data_file->open_blocks[%lu] = %p",
 			  i,data_file->open_blocks[channel_number]);
@@ -276,6 +251,7 @@ void discard_channel(HDF5_Data* data_file,
 		fprintf(stderr,"channel: %d\n",channel->channel_number);
 	}
 	data_file->open_blocks[channel->channel_number] = NULL;
+	omp_destroy_lock(&channel->in_use_lock);
 	free_index_hash(channel->configuration_to_index);
 	free(channel->matrix_elements);
 	free(channel);
@@ -322,16 +298,12 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			{
 				log_entry("current_block = NULL");
 			}
-#pragma omp critical (hdf5)
-			{
-				release_block(current_block);
-				current_block =
-					get_hdf5_block(data_file,needed_chan);
-			}
+			release_block(current_block);
+			current_block =
+				get_hdf5_block(data_file,needed_chan);
 		}
 		if (current_block == NULL)
 			continue;
-
 		size_t min_conf_number = current_block->min_conf_number;
 		size_t max_conf_number = current_block->max_conf_number;
 
@@ -372,15 +344,8 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			i_conf_num = ic;
 		}
 	}
-#pragma omp critical (hdf5)
-	{
-		if (current_block != NULL &&
-		    current_block->score<=1)
-		{
-			discard_channel(data_file,
-					current_block);
-		}
-	}
+	if (current_block != NULL)
+		release_block(current_block);
 	return mat;
 }
 
@@ -424,15 +389,17 @@ void free_hdf5_data(HDF5_Data* data_file)
 	free(data_file->channels);
 	free(data_file->configurations);
 	size_t i;
-	for (i = 0; i<data_file->max_num_open_blocks; i++)
+	for (i = 0; i<data_file->num_channels; i++)
 	{
 		if (data_file->open_blocks[i] != NULL)
 		{
 			discard_channel(data_file,
 					data_file->open_blocks[i]);
 		}
+		omp_destroy_lock(&data_file->block_locks[i]);
 	}
 	free(data_file->open_blocks);
+	free(data_file->block_locks);
 	free(data_file->out_array);
 	free(data_file->block_configurations);
 	free(data_file);
@@ -441,15 +408,18 @@ void free_hdf5_data(HDF5_Data* data_file)
 static
 Block *get_hdf5_block(HDF5_Data* data_file, int channel_number)
 {
+	Block *block = NULL;
+	omp_set_lock(&data_file->block_locks[channel_number]);
 	if (is_channel_loaded(data_file,channel_number))
 	{
-		Block *block = get_channel(data_file, channel_number);
+		block = get_channel(data_file, channel_number);
 		if (block)
 		{
 			block->score++;
+			omp_set_lock(&block->in_use_lock);
 			block->in_use++;
+			omp_unset_lock(&block->in_use_lock);
 		}
-		return block;
 	}
 	else
 	{
@@ -460,19 +430,25 @@ Block *get_hdf5_block(HDF5_Data* data_file, int channel_number)
 			unload_low_score_channels(data_file,
 						  size_of_needed_block);
 		data_file->loaded_memory+=size_of_needed_block;
-		Block *block = load_channel(data_file,channel_number);
+		block = load_channel(data_file,channel_number);
 		block->score=10;
+		omp_set_lock(&block->in_use_lock);
 		block->in_use=1;
-		return block;
+		omp_unset_lock(&block->in_use_lock);
 	}
-
+	omp_unset_lock(&data_file->block_locks[channel_number]);
+	return block;
 }
 
 static
 void release_block(Block *block)
 {
 	if (block)
+	{
+		omp_set_lock(&block->in_use_lock);
 		block->in_use--;
+		omp_unset_lock(&block->in_use_lock);
+	}
 }
 
 static
@@ -480,6 +456,9 @@ size_t get_size_of_block(HDF5_Data *data_file, int channel_number)
 {
 	char channel_name[64];
 	sprintf(channel_name, "Dataset_split_%.5d",channel_number+1);
+	size_t size_of_block = 0;
+#pragma omp critical (hdf5)
+	{
 	hid_t group = H5Gopen(data_file->file_handle,
 			      channel_name,H5P_DEFAULT);
 	if (group<0)
@@ -490,37 +469,49 @@ size_t get_size_of_block(HDF5_Data *data_file, int channel_number)
 	}
 	hid_t elements = H5Dopen2(group,"Elements",H5P_DEFAULT);
 	size_t total_size = sizeof(double) + sizeof(Block_Configuration);
-	size_t size_of_block = H5Dget_storage_size(elements)*total_size;
+	size_of_block = H5Dget_storage_size(elements)*total_size;
 	H5Dclose(elements);
 	H5Gclose(group);
+	}
 	return size_of_block;
 }
 
 static
 void unload_low_score_channels(HDF5_Data *data_file,size_t num_bytes_to_unload)
 {
-	Block **blocks =
-	       	(Block**)malloc(data_file->max_num_open_blocks*sizeof(Block*));
-	memcpy(blocks,
-	       data_file->open_blocks,
-	       data_file->max_num_open_blocks*sizeof(Block*));
-	qsort(blocks,
-	      data_file->max_num_open_blocks,
-	      sizeof(Block*),
-	      (__compar_fn_t)compare_hdf5_blocks);
-	size_t unloaded_memory = 0;
-	for (size_t i = 0; i<data_file->max_num_open_blocks; i++)
+#pragma omp critical (unload_blocks)
 	{
-		if (blocks[i]->in_use)
-			break;
-		unloaded_memory +=
-		       	blocks[i]->num_matrix_elements*
-			(sizeof(double)+sizeof(Block_Configuration));
-		discard_channel(data_file, blocks[i]);
-		if (unloaded_memory >= num_bytes_to_unload)
-			break;
+		Block **blocks =
+			(Block**)malloc(data_file->num_channels*
+					sizeof(Block*));
+		memcpy(blocks,
+		       data_file->open_blocks,
+		       data_file->num_channels*sizeof(Block*));
+		qsort(blocks,
+		      data_file->num_channels,
+		      sizeof(Block*),
+		      (__compar_fn_t)compare_hdf5_blocks);
+		size_t unloaded_memory = 0;
+		for (size_t i = 0; i<data_file->num_channels; i++)
+		{
+			if (blocks[i] == NULL)
+				break;
+			int channel_number = blocks[i]->channel_number;
+			omp_set_lock(&data_file->block_locks[channel_number]);
+			if (!is_block_in_use(blocks[i]))
+			{
+				unloaded_memory +=
+					get_size_of_block(data_file,
+							  channel_number);
+				discard_channel(data_file, blocks[i]);
+			}
+			omp_unset_lock(&data_file->block_locks[channel_number]);
+			if (unloaded_memory >= num_bytes_to_unload)
+				break;
+		}
+		free(blocks);
+		data_file->loaded_memory -= unloaded_memory;
 	}
-	free(blocks);
 }
 
 static
@@ -532,10 +523,6 @@ int compare_hdf5_blocks(Block **block_a, Block **block_b)
 		return 1;
 	else if (*block_a == NULL && *block_b == NULL)
 		return 0;
-	else if ((*block_a)->in_use < (*block_b)->in_use)
-		return -1;
-	else if ((*block_a)->in_use > (*block_b)->in_use)
-		return 1;
 	else if ((*block_a)->num_matrix_elements < 
 		 (*block_b)->num_matrix_elements)
 		return -1;
@@ -548,4 +535,14 @@ int compare_hdf5_blocks(Block **block_a, Block **block_b)
 		return 1;
 	else
 		return 0;	
+}
+
+static
+int is_block_in_use(Block *block)
+{
+	int is_in_use = 0;
+	omp_set_lock(&block->in_use_lock);
+	is_in_use = block->in_use > 0;
+	omp_unset_lock(&block->in_use_lock);
+	return is_in_use;
 }

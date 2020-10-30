@@ -7,6 +7,7 @@
 #include <matrix_transform/matrix_transform.h>
 #include <input/read_3nf_file.h>
 #include <utils/index_hash.h>
+#include <omp.h>
 
 typedef struct _block_configuration_
 {
@@ -24,7 +25,7 @@ typedef struct _block_
 	size_t max_conf_number;
 	int score; // Number of threads that uses this block
 	int in_use;
-
+	omp_lock_t in_use_lock;
 } Block;
 
 typedef struct _channel_
@@ -53,7 +54,7 @@ typedef struct _hdf5_data_
 	size_t num_configurations;
 	size_t max_num_configurations;
 	Block** open_blocks;
-	size_t max_num_open_blocks;
+	omp_lock_t *block_locks;
 	size_t loaded_memory;
 	size_t max_loaded_memory;
 	double weights[5];
