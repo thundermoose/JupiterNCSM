@@ -21,6 +21,13 @@ void unload_low_score_channels(HDF5_Data *data_file,
 static
 int compare_hdf5_blocks(Block **block_a, Block **block_b);
 
+static
+int compare_block_configuration(Block_Configuration *left_block,
+				Block_Configuration *right_block);
+
+static
+uint64_t hash_block_configuration(Block_Configuration *block);
+
 int comp_confs(Configuration conf_a,
 	       Configuration conf_b)
 {
@@ -185,6 +192,15 @@ Block* load_channel(HDF5_Data* data_file,
 		(double*)malloc(sizeof(double)*block->num_matrix_elements);
 	size_t i;
 	size_t len = block->num_matrix_elements;
+	printf("Creating hashmap (%d:%lu)\n",
+	       channel_number,block->num_matrix_elements);
+	block->configuration_to_element =
+		new_hash_map(block->num_matrix_elements,
+			     2,
+			     sizeof(double),
+			     sizeof(Block_Configuration),
+			     (__compar_fn_t)compare_block_configuration,
+			     (__hash_fn_t)hash_block_configuration);
 	for (i= 0; i<block->num_matrix_elements; i++)
 	{
 		block->matrix_elements[i] =
@@ -193,7 +209,11 @@ Block* load_channel(HDF5_Data* data_file,
 			 out_array[i+2*len]*data_file->weights[2]+
 			 out_array[i+3*len]*data_file->weights[3]+
 			 out_array[i+4*len]*data_file->weights[4]);
+		hash_map_insert(block->configuration_to_element,
+				&block->configurations[i],
+				&block->matrix_elements[i]);
 	}
+	printf("Created hashmap\n");
 	free(out_array);
 
 	if (channel_number>=data_file->max_num_open_blocks)
@@ -233,34 +253,14 @@ Block* get_channel(HDF5_Data* data_file,
 double get_element(Block* block,
 		   int i,int j)
 {
-	ssize_t p = 0;
-	ssize_t p_min = -1;
-	ssize_t p_max = block->num_matrix_elements;
-	while (p_max-p_min>1)
-	{
-		p = (p_max+p_min)/2;
-		int diff = i-block->configurations[p].i;
-		if (!diff)
-			diff = j-block->configurations[p].j;
-		if (diff>0)
-		{
-			p_min = p;
-		}
-		else if(diff<0)
-		{
-			p_max = p;
-		}
-		else
-		{
-			return block->matrix_elements[p];
-		}
-	}
-	if (i != block->configurations[p].i ||
-	    j != block->configurations[p].j)
-	{
-		return 0;
-	}
-	return block->matrix_elements[p];
+	Block_Configuration configuration = {.i = i,.j = j};
+	double element = 0.0;
+	if (hash_map_get(block->configuration_to_element,
+			  &configuration,
+			  &element))
+		return element;
+	else
+		return 0.0;
 }
 
 void discard_channel(HDF5_Data* data_file,
@@ -274,6 +274,7 @@ void discard_channel(HDF5_Data* data_file,
 	data_file->open_blocks[channel->channel_number] = NULL;
 	free(channel->configurations);
 	free(channel->matrix_elements);
+	free_hash_map(channel->configuration_to_element);
 	free(channel);
 }
 
@@ -544,4 +545,29 @@ int compare_hdf5_blocks(Block **block_a, Block **block_b)
 		return 1;
 	else
 		return 0;	
+}
+
+static
+int compare_block_configuration(Block_Configuration *left_block,
+				Block_Configuration *right_block)
+{
+	int diff = left_block->i - right_block->i;
+	if (diff)
+		return diff;
+	else
+		return left_block->j - right_block->j;
+}
+
+static
+uint64_t hash_block_configuration(Block_Configuration *block)
+{
+	union {
+		uint64_t hash;
+		Block_Configuration block;
+	} hash_block;
+	hash_block.block = *block;
+#define magic_number 0xFEDCBA9876543210
+	return hash_block.hash ^ 
+		__builtin_bswap64(hash_block.hash) ^ 
+		magic_number;
 }
