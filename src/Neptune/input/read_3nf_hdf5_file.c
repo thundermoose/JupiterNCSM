@@ -21,12 +21,6 @@ void unload_low_score_channels(HDF5_Data *data_file,
 static
 int compare_hdf5_blocks(Block **block_a, Block **block_b);
 
-static
-int compare_block_configuration(Block_Configuration *left_block,
-				Block_Configuration *right_block);
-
-static
-uint64_t hash_block_configuration(Block_Configuration *block);
 
 int comp_confs(Configuration conf_a,
 	       Configuration conf_b)
@@ -95,6 +89,10 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 	data_file->weights[2] = -1.12152120;// C1
 	data_file->weights[3] = -3.92500586;// C3
 	data_file->weights[4] = 3.76568716;// C4
+	data_file->out_array = NULL;
+	data_file->allocated_out_array_size = 0;
+	data_file->block_configurations = NULL;
+	data_file->allocated_configurations_size = 0;
 	return data_file;
 }
 
@@ -166,20 +164,39 @@ Block* load_channel(HDF5_Data* data_file,
 	hid_t conf = H5Dopen2(group,"Configurations",H5P_DEFAULT);
 	block->num_matrix_elements =
 		H5Dget_storage_size(conf)/sizeof(Block_Configuration);
-	block->configurations =
-		(Block_Configuration*)malloc(sizeof(Block_Configuration)*
-					     block->num_matrix_elements);
+	if (block->num_matrix_elements > 
+	    data_file->allocated_configurations_size) 
+	{
+		data_file->allocated_configurations_size = 
+			block->num_matrix_elements;
+		data_file->block_configurations =
+		       	(Block_Configuration*)
+			realloc(data_file->block_configurations,
+				sizeof(Block_Configuration)*
+				data_file->allocated_configurations_size);
+	}
+	Block_Configuration *configurations = data_file->block_configurations;
 	H5Dread(conf,
 		H5T_NATIVE_INT,
 		H5S_ALL,
 		H5S_ALL,
 		H5P_DEFAULT,
-		block->configurations);
+		configurations);
 	H5Dclose(conf);
+	block->min_conf_number = configurations[0].i;
+	block->max_conf_number = 
+		configurations[block->num_matrix_elements-1].i;
 
 	hid_t elem = H5Dopen2(group,"Elements",H5P_DEFAULT);
 	size_t out_array_size = H5Dget_storage_size(elem)/sizeof(double);
-	double* out_array = (double*)malloc(sizeof(double)*out_array_size);
+	if (out_array_size > data_file->allocated_out_array_size)
+	{
+		data_file->allocated_out_array_size = out_array_size;
+		data_file->out_array =
+		       	(double*)realloc(data_file->out_array,
+					 sizeof(double)*out_array_size);
+	}
+	double *out_array = data_file->out_array;
 	H5Dread(elem,
 		H5T_NATIVE_DOUBLE,
 		H5S_ALL,
@@ -187,20 +204,12 @@ Block* load_channel(HDF5_Data* data_file,
 		H5P_DEFAULT,
 		out_array);
 	H5Dclose(elem);
-
 	block->matrix_elements =
-		(double*)malloc(sizeof(double)*block->num_matrix_elements);
+	       	(double*)malloc(sizeof(double)*block->num_matrix_elements);
 	size_t i;
 	size_t len = block->num_matrix_elements;
-	printf("Creating hashmap (%d:%lu)\n",
-	       channel_number,block->num_matrix_elements);
-	block->configuration_to_element =
-		new_hash_map(block->num_matrix_elements,
-			     2,
-			     sizeof(double),
-			     sizeof(Block_Configuration),
-			     (__compar_fn_t)compare_block_configuration,
-			     (__hash_fn_t)hash_block_configuration);
+	block->configuration_to_index = 
+		new_index_hash(block->num_matrix_elements*2);
 	for (i= 0; i<block->num_matrix_elements; i++)
 	{
 		block->matrix_elements[i] =
@@ -209,13 +218,11 @@ Block* load_channel(HDF5_Data* data_file,
 			 out_array[i+2*len]*data_file->weights[2]+
 			 out_array[i+3*len]*data_file->weights[3]+
 			 out_array[i+4*len]*data_file->weights[4]);
-		hash_map_insert(block->configuration_to_element,
-				&block->configurations[i],
-				&block->matrix_elements[i]);
+		set_index(block->configuration_to_index,
+			  configurations[i].i,
+			  configurations[i].j,
+			  i);
 	}
-	printf("Created hashmap\n");
-	free(out_array);
-
 	if (channel_number>=data_file->max_num_open_blocks)
 	{
 		size_t old_len = data_file->max_num_open_blocks;
@@ -253,14 +260,11 @@ Block* get_channel(HDF5_Data* data_file,
 double get_element(Block* block,
 		   int i,int j)
 {
-	Block_Configuration configuration = {.i = i,.j = j};
-	double element = 0.0;
-	if (hash_map_get(block->configuration_to_element,
-			  &configuration,
-			  &element))
-		return element;
-	else
+	size_t index = get_index(block->configuration_to_index, i, j);
+	if (index == no_index)
 		return 0.0;
+	else
+		return block->matrix_elements[index];
 }
 
 void discard_channel(HDF5_Data* data_file,
@@ -272,9 +276,8 @@ void discard_channel(HDF5_Data* data_file,
 		fprintf(stderr,"channel: %d\n",channel->channel_number);
 	}
 	data_file->open_blocks[channel->channel_number] = NULL;
-	free(channel->configurations);
+	free_index_hash(channel->configuration_to_index);
 	free(channel->matrix_elements);
-	free_hash_map(channel->configuration_to_element);
 	free(channel);
 }
 
@@ -329,10 +332,8 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 		if (current_block == NULL)
 			continue;
 
-		size_t min_conf_number = current_block->configurations[0].i-1;
-		size_t max_conf_index = current_block->num_matrix_elements-1;
-		size_t max_conf_number =
-			current_block->configurations[max_conf_index].i;
+		size_t min_conf_number = current_block->min_conf_number;
+		size_t max_conf_number = current_block->max_conf_number;
 
 		int i_conf_num = get_config_number(data_file,
 						   m_basis->states[i],
@@ -432,6 +433,8 @@ void free_hdf5_data(HDF5_Data* data_file)
 		}
 	}
 	free(data_file->open_blocks);
+	free(data_file->out_array);
+	free(data_file->block_configurations);
 	free(data_file);
 }
 
@@ -545,29 +548,4 @@ int compare_hdf5_blocks(Block **block_a, Block **block_b)
 		return 1;
 	else
 		return 0;	
-}
-
-static
-int compare_block_configuration(Block_Configuration *left_block,
-				Block_Configuration *right_block)
-{
-	int diff = left_block->i - right_block->i;
-	if (diff)
-		return diff;
-	else
-		return left_block->j - right_block->j;
-}
-
-static
-uint64_t hash_block_configuration(Block_Configuration *block)
-{
-	union {
-		uint64_t hash;
-		Block_Configuration block;
-	} hash_block;
-	hash_block.block = *block;
-#define magic_number 0xFEDCBA9876543210
-	return hash_block.hash ^ 
-		__builtin_bswap64(hash_block.hash) ^ 
-		magic_number;
 }
