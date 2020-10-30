@@ -31,6 +31,8 @@ typedef struct _data_file_
 
 Data_File* open_data_file(const char* file_name);
 
+void set_max_loaded_memory(Data_File* data_file,size_t max_loaded_memory);
+
 weight_t identify_weight(const char *weight);
 
 void set_weight(Data_File* file,

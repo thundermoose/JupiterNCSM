@@ -103,7 +103,11 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 	return data_file;
 }
 
-
+void set_hdf5_max_loaded_memory(HDF5_Data *data_file,size_t max_loaded_memory)
+{
+	data_file->max_loaded_memory = max_loaded_memory;
+}
+			  
 
 int get_config_number(HDF5_Data* data_file,
 		      JJJ_State a,

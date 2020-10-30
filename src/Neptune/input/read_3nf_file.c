@@ -44,6 +44,14 @@ Data_File* open_data_file(const char* file_name)
     return NULL;
 }
 
+void set_max_loaded_memory(Data_File* data_file,size_t max_loaded_memory)
+{
+	if (data_file->signature != HDF5)
+		return;
+	set_hdf5_max_loaded_memory((HDF5_Data*)(data_file->data_pointer),
+				   max_loaded_memory);
+}
+
 weight_t identify_weight(const char *weight)
 {
 #define match(W)				\

@@ -21,6 +21,7 @@ struct _arguments_
 	size_t block_id;
 	size_t num_protons;
 	size_t num_neutrons;
+	size_t max_loaded_memory;
 	int single_particle_energy;
 	int two_particle_energy;
 };
@@ -58,6 +59,7 @@ arguments_t parse_argument_list(int num_arguments,
 		arguments->single_particle_energy = 0;
 		arguments->two_particle_energy = 0;
 		arguments->to_few_arguments = 1;
+		arguments->max_loaded_memory = (size_t)(1)<<32;
 		for (size_t i = 4; i<num_arguments; i++)
 		{
 			log_entry("argument_list[%lu] = %s",i,
@@ -69,6 +71,8 @@ arguments_t parse_argument_list(int num_arguments,
 			INTEGER_ARGUMENT("--two-particle-energy",
 					 two_particle_energy);
 			INTEGER_ARGUMENT("--block-id",block_id);
+			INTEGER_ARGUMENT("--max-loaded-memory",
+					 max_loaded_memory);
 			MODE_ARGUMENT("--single-block",single_block);
 			if (arguments->interaction_path_2nf == NULL)
 			{
@@ -110,7 +114,9 @@ void show_usage(const arguments_t arguments)
 	       "<index list base directory> <output path> "
 	       "[--num-protons <integer>] [--num-neutrons <integer>] "
 	       "[--single-particle-energy <integer>] "
-	       "[--two-particle-energy <integer>] [--single-block] "
+	       "[--two-particle-energy <integer>] "
+	       "[--max-loaded-memory <integer>] "
+	       "[--single-block] "
 	       "[--block-id <integer>] <interaction path 2nf> "
 	       "[interaction path 3nf]\n",
 	       arguments->program_name);
@@ -174,6 +180,11 @@ int get_single_particle_energy_argument(const arguments_t arguments)
 int get_two_particle_energy_argument(const arguments_t arguments)
 {
 	return arguments->two_particle_energy;
+}
+
+size_t get_max_loaded_memory_argument(const arguments_t arguments)
+{
+	return arguments->max_loaded_memory;
 }
 
 void free_arguments(arguments_t arguments)

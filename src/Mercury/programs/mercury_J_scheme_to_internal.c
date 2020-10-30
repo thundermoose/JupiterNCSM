@@ -247,6 +247,8 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 	printf("3NF blocks only:\n");
 	Data_File *coupled_3nf_data =
 		open_data_file(get_interaction_path_3nf_argument(arguments));
+	set_max_loaded_memory(coupled_3nf_data,
+			      get_max_loaded_memory_argument(arguments));
 	transform_3nf_block_manager_t manager =
 		new_transform_3nf_block_manager
 		(coupled_3nf_data,
