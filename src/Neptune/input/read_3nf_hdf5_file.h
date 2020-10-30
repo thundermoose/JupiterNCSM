@@ -6,6 +6,7 @@
 #include <bases/shells.h>
 #include <matrix_transform/matrix_transform.h>
 #include <input/read_3nf_file.h>
+#include <hash_map/hash_map.h>
 
 typedef struct _block_configuration_
 {
@@ -18,6 +19,7 @@ typedef struct _block_
 	int channel_number;
 	Block_Configuration* configurations;
 	double* matrix_elements;
+	hash_map_t configuration_to_element;
 	size_t num_matrix_elements;
 	int score; // Number of threads that uses this block
 	int in_use;
