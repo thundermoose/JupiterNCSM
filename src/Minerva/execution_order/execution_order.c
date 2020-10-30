@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <omp.h>
 #include <unistd.h>
+#include <errno.h>
+#include <error/error.h>
 
 const execution_instruction_t empty_instruction = {
 	.type = unknown,
@@ -48,6 +50,9 @@ execution_order_t read_execution_order(const char *filename,
 				  &execution_order->num_instruction,
 				  sizeof(execution_instruction_t));
 	FILE *file = fopen(filename,"r");
+	if (file == NULL)
+		error("Could not open execution order file %s. %s\n",
+		      filename,strerror(errno));
 	char *row = NULL;
 	size_t row_length = 0;
 	while (!feof(file))
@@ -127,30 +132,30 @@ get_execution_order_iterator(execution_order_t execution_order)
 
 void reset_execution_order(execution_order_iterator_t iterator)
 {
-	execution_order->current_instruction_index = 0;
+	iterator->current_instruction_index = 0;
 }
 
 execution_instruction_t 
 next_instruction(execution_order_iterator_t iterator)
 {
 	execution_instruction_t instruction;
-	assert(execution_order->current_instruction_index <
-	       execution_order->num_instruction);
-	size_t index = execution_order->current_instruction_index++;
-	instruction =  execution_order->instructions[index];
+	assert(iterator->current_instruction_index <
+	       iterator->num_instruction);
+	size_t index = iterator->current_instruction_index++;
+	instruction =  iterator->instructions[index];
 	// unsetting the fetch_lock set by has_next_instruction
-	omp_unset_lock(&execution_order->fetch_lock);
+	omp_unset_lock(&iterator->fetch_lock);
 	return instruction;
 }
 
 int has_next_instruction(execution_order_iterator_t iterator)
 {
-	omp_set_lock(&execution_order->fetch_lock);
+	omp_set_lock(&iterator->fetch_lock);
 	int next_instruction_is_avilable = 
-		execution_order->current_instruction_index < 
-		execution_order->num_instruction;	
+		iterator->current_instruction_index < 
+		iterator->num_instruction;	
 	if (!next_instruction_is_avilable)
-		omp_unset_lock(&execution_order->fetch_lock);
+		omp_unset_lock(&iterator->fetch_lock);
 	return next_instruction_is_avilable;
 
 }
@@ -224,6 +229,8 @@ void parse_row(const char *row,
 			current_instruction.neutron_index = no_index;
 		}
 	}
+	current_instruction.instruction_index =
+	       	num_array_elements(instructions_builder);
 	append_array_element(instructions_builder,
 			     &current_instruction);
 	if (words != NULL)

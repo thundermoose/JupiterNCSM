@@ -81,13 +81,13 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				      const char *input_vector_base_directory,
 				      scheduler_t scheduler)
 {
-	reset_execution_order(scheduler->execution_order);
 	memory_manager_t memory_manager = 
 		new_memory_manager(input_vector_base_directory,
 				   output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
-				   scheduler->combination_table);
+				   scheduler->combination_table,
+				   scheduler->execution_order);
 	execution_order_iterator_t instruction_iterator =
 		get_execution_order_iterator(scheduler->execution_order);
 	double fastest_block_time = INFINITY;
@@ -100,7 +100,7 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 		{
 			execution_instruction_t instruction =
 				next_instruction(instruction_iterator);
-
+			begin_instruction(memory_manager,instruction);
 			struct timespec t_start,t_end;
 			clock_gettime(CLOCK_REALTIME,&t_start);
 			execute_instruction(instruction,
@@ -412,7 +412,7 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 }
 
 	static
-void unrequest_arrays(memory_manager_t memory_manager,
+void unload_arrays(memory_manager_t memory_manager,
 		   execution_instruction_t instruction)
 {
 	log_entry("Unloading arrays");

@@ -27,6 +27,7 @@ typedef struct
 	size_t matrix_element_file;
 	size_t neutron_index;
 	size_t proton_index;
+	size_t instruction_index;
 } execution_instruction_t;
 
 execution_order_t read_execution_order(const char *filename,
