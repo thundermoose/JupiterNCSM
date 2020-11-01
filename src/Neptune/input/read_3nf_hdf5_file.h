@@ -7,6 +7,7 @@
 #include <matrix_transform/matrix_transform.h>
 #include <input/read_3nf_file.h>
 #include <utils/index_hash.h>
+#include <hash_map/hash_map.h>
 #include <omp.h>
 
 typedef struct _block_configuration_
@@ -19,6 +20,7 @@ typedef struct _block_
 {
 	int channel_number;
 	index_hash_t configuration_to_index;
+	hash_map_t state_to_index;
 	double *matrix_elements;
 	size_t num_matrix_elements;
 	size_t min_conf_number;
