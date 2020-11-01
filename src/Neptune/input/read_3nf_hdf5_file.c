@@ -154,6 +154,8 @@ int is_channel_loaded(HDF5_Data* data_file,
 Block* load_channel(HDF5_Data* data_file,
 		    int channel_number)
 {
+	struct timespec t_start,t_end;
+	clock_gettime(CLOCK_REALTIME,&t_start);
 	char channel_name[64];
 	sprintf(channel_name, "Dataset_split_%.5d",channel_number+1);
 	Block* block = (Block*)malloc(sizeof(Block));
@@ -237,6 +239,11 @@ Block* load_channel(HDF5_Data* data_file,
 	free(configurations);
 	omp_init_lock(&block->in_use_lock);
 	data_file->open_blocks[channel_number] = block;
+	clock_gettime(CLOCK_REALTIME,&t_end);
+	double elapsed_time = (t_end.tv_sec-t_start.tv_sec)+
+		(t_end.tv_nsec-t_start.tv_nsec)*1e-9;
+	printf("Block %d needed %0.15lg s\n",
+	       channel_number,elapsed_time);
 	return block;
 }
 
@@ -491,7 +498,7 @@ size_t get_size_of_block(HDF5_Data *data_file, int channel_number)
 	H5Dclose(elements);
 	H5Gclose(group);
 	}
-	return size_of_block;
+	return size_of_block/10;
 }
 
 static
