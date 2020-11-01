@@ -74,6 +74,8 @@ typedef struct _hdf5_data_
 
 HDF5_Data* open_hdf5_data(const char* file_name);
 
+void set_hdf5_max_loaded_memory(HDF5_Data* data,size_t max_loaded_memory);
+
 Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			     JJJ_Basis* m_basis,
 			     JJJ_Basis* n_basis);
