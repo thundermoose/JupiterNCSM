@@ -24,6 +24,13 @@ int compare_hdf5_blocks(Block **block_a, Block **block_b);
 static
 int is_block_in_use(Block *block);
 
+static
+int compare_configurations(Configuration *a,
+			   Configuration *b);
+
+static
+uint64_t hash_configuration(Configuration *a);
+
 
 int comp_confs(Configuration conf_a,
 	       Configuration conf_b)
@@ -111,22 +118,13 @@ void set_hdf5_max_loaded_memory(HDF5_Data *data_file,size_t max_loaded_memory)
 
 int get_config_number(HDF5_Data* data_file,
 		      JJJ_State a,
-		      size_t min_cn,
-		      size_t max_cn)
+		      hash_map_t state_to_index)
 {
 	Configuration ac = {a.a+1,a.b+1,a.c+1,a.j_ab};
-	int i;
-	for (i = min_cn-1;
-	     i<max_cn;
-	     i++)
-	{
-		if (comp_confs(data_file->configurations[i],ac))
-		{
-			return i+1;
-		}
-	}
-
-	return -1;
+	size_t index = 0;
+	if (!hash_map_get(state_to_index, &ac,&index))
+		return -1;
+	return index;
 }
 
 int get_channel_number(HDF5_Data* data_file,
@@ -185,9 +183,6 @@ Block* load_channel(HDF5_Data* data_file,
 		H5P_DEFAULT,
 		configurations);
 	H5Dclose(conf);
-	block->min_conf_number = configurations[0].i;
-	block->max_conf_number = 
-		configurations[block->num_matrix_elements-1].i;
 
 	hid_t elem = H5Dopen2(group,"Elements",H5P_DEFAULT);
 	size_t out_array_size = H5Dget_storage_size(elem)/sizeof(double);
@@ -199,6 +194,25 @@ Block* load_channel(HDF5_Data* data_file,
 		H5P_DEFAULT,
 		out_array);
 	H5Dclose(elem);
+	}
+	block->min_conf_number = configurations[0].i;
+	block->max_conf_number = 
+		configurations[block->num_matrix_elements-1].i;
+	block->state_to_index = 
+		new_hash_map(block->max_conf_number-block->min_conf_number+1,
+			     3,
+			     sizeof(size_t),
+			     sizeof(Configuration),
+			     (__compar_fn_t)compare_configurations,
+			     (__hash_fn_t)hash_configuration);
+	for (size_t i = block->min_conf_number-1; 
+	     i < block->max_conf_number; 
+	     i++)
+	{
+		size_t index = i+1;
+		hash_map_insert(block->state_to_index,
+				&data_file->configurations[i],
+				&index);
 	}
 	block->matrix_elements =
 	       	(double*)malloc(sizeof(double)*block->num_matrix_elements);
@@ -257,6 +271,7 @@ void discard_channel(HDF5_Data* data_file,
 	data_file->open_blocks[channel->channel_number] = NULL;
 	omp_destroy_lock(&channel->in_use_lock);
 	free_index_hash(channel->configuration_to_index);
+	free_hash_map(channel->state_to_index);
 	free(channel->matrix_elements);
 	free(channel);
 }
@@ -296,7 +311,8 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			log_entry("needed_chan = %d",needed_chan);
 			if (current_block)
 			{
-				log_entry("current_block->channel_number = %d", current_block->channel_number);
+				log_entry("current_block->channel_number = %d", 
+					  current_block->channel_number);
 			}
 			else
 			{
@@ -308,13 +324,11 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 		}
 		if (current_block == NULL)
 			continue;
-		size_t min_conf_number = current_block->min_conf_number;
-		size_t max_conf_number = current_block->max_conf_number;
 
-		int i_conf_num = get_config_number(data_file,
-						   m_basis->states[i],
-						   min_conf_number,
-						   max_conf_number);
+		int i_conf_num = 
+			get_config_number(data_file,
+					  m_basis->states[i],
+					  current_block->state_to_index);
 		if (i_conf_num<0)
 			continue;
 		int ic = i_conf_num;
@@ -325,10 +339,10 @@ Dens_Matrix* get_matrix_hdf5(HDF5_Data* data_file,
 			    n_basis->states[j].parity != m_basis->states[i].parity)
 				continue;
 
-			int j_conf_num = get_config_number(data_file,
-							   n_basis->states[j],
-							   min_conf_number,
-							   max_conf_number);
+			int j_conf_num = 
+				get_config_number(data_file,
+						  n_basis->states[j],
+						  current_block->state_to_index);
 
 
 			if (j_conf_num<0)
@@ -549,4 +563,20 @@ int is_block_in_use(Block *block)
 	is_in_use = block->in_use > 0;
 	omp_unset_lock(&block->in_use_lock);
 	return is_in_use;
+}
+
+static
+int compare_configurations(Configuration *a,
+			   Configuration *b)
+{
+	return !comp_confs(*a,*b);
+}
+
+static
+uint64_t hash_configuration(Configuration *a)
+{
+	uint64_t h1 = (uint64_t)(a->a) ^ ((uint64_t)(a->b)<<13);
+	uint64_t h2 = (uint64_t)(a->b) ^ ((uint64_t)(a->c)<<17);
+	uint64_t h3 = (uint64_t)(a->c) ^ ((uint64_t)(a->J_ab)<<31);
+	return h1 ^ __builtin_bswap64(h2) ^ h3;	
 }
