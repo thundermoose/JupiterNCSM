@@ -35,6 +35,24 @@ struct _arguments_
 	continue;\
 }
 
+#define INTEGER64_ARGUMENT(name,field) \
+	if (strcmp(argument_list[i],name) == 0) \
+{\
+	if (!is_integer(argument_list[++i]))\
+	error(name " takes integer values only\n");\
+	arguments->field = atoll(argument_list[i]);\
+	continue;\
+}
+
+#define MEMORY_ARGUMENT(name,field) \
+	if (strcmp(argument_list[i],name) == 0) \
+{\
+	if (!is_memory_string(argument_list[++i]))\
+	error(name " takes memory values only\n");\
+	arguments->field = parse_memory_string(argument_list[i]);\
+	continue;\
+}
+
 #define MODE_ARGUMENT(name,field) \
 	if (strcmp(argument_list[i],name) == 0) \
 { \
@@ -64,14 +82,14 @@ arguments_t parse_argument_list(int num_arguments,
 		{
 			log_entry("argument_list[%lu] = %s",i,
 				  argument_list[i]);
-			INTEGER_ARGUMENT("--num-protons",num_protons);
-			INTEGER_ARGUMENT("--num-neutrons",num_neutrons);
+			INTEGER64_ARGUMENT("--num-protons",num_protons);
+			INTEGER64_ARGUMENT("--num-neutrons",num_neutrons);
 			INTEGER_ARGUMENT("--single-particle-energy",
 					 single_particle_energy);
 			INTEGER_ARGUMENT("--two-particle-energy",
 					 two_particle_energy);
 			INTEGER_ARGUMENT("--block-id",block_id);
-			INTEGER_ARGUMENT("--max-loaded-memory",
+			MEMORY_ARGUMENT("--max-loaded-memory",
 					 max_loaded_memory);
 			MODE_ARGUMENT("--single-block",single_block);
 			if (arguments->interaction_path_2nf == NULL)
