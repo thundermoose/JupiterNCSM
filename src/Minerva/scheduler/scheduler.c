@@ -95,33 +95,45 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 	double total_block_time = 0;
 #pragma omp parallel shared(memory_manager,scheduler,instruction_iterator)
 	{
-		launch_memory_manager_thread(memory_manager);
-		while (has_next_instruction(instruction_iterator))
+#pragma omp single
 		{
-			execution_instruction_t instruction =
-				next_instruction(instruction_iterator);
-			begin_instruction(memory_manager,instruction);
-			struct timespec t_start,t_end;
-			clock_gettime(CLOCK_REALTIME,&t_start);
-			execute_instruction(instruction,
-					    memory_manager,
-					    scheduler);
-			clock_gettime(CLOCK_REALTIME,&t_end);
-			double block_time = 
-				(t_end.tv_sec - t_start.tv_sec)*1e6+
-				(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
-			if (instruction.type != unload)
-			{
-#pragma omp critical
-				fastest_block_time = 
-					min(fastest_block_time,block_time);
-#pragma omp critical
-				slowes_block_time= 
-					max(slowes_block_time,block_time);
-#pragma omp critical
-				total_block_time += block_time;
-			}
+			printf("There are %d threads\n",
+			       omp_get_num_threads());
 		}
+		size_t thread_id = omp_get_thread_num();
+		if (thread_id == 0)
+			launch_memory_manager_thread(memory_manager);
+		else
+			while (has_next_instruction(instruction_iterator))
+			{
+				execution_instruction_t instruction =
+					next_instruction(instruction_iterator);
+				printf("executing instruction %lu\n",
+				       instruction.instruction_index);
+				begin_instruction(memory_manager,instruction);
+				struct timespec t_start,t_end;
+				clock_gettime(CLOCK_REALTIME,&t_start);
+				execute_instruction(instruction,
+						    memory_manager,
+						    scheduler);
+				clock_gettime(CLOCK_REALTIME,&t_end);
+				double block_time = 
+					(t_end.tv_sec - t_start.tv_sec)*1e6+
+					(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+				if (instruction.type != unload)
+				{
+#pragma omp critical
+					fastest_block_time = 
+						min(fastest_block_time,
+						    block_time);
+#pragma omp critical
+					slowes_block_time= 
+						max(slowes_block_time,
+						    block_time);
+#pragma omp critical
+					total_block_time += block_time;
+				}
+			}
 	}
 	free_memory_manager(memory_manager);
 	free_execution_order_iterator(instruction_iterator);

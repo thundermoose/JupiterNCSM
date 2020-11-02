@@ -128,7 +128,10 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 					       sizeof(array_t));
 	manager->num_arrays = num_arrays;
 	for (size_t i = 0; i < manager->num_arrays; i++)
+	{
 		omp_init_lock(&manager->all_arrays[i].array_lock);
+		manager->all_arrays[i].array_id = i+1;
+	}
 	manager->input_vector_base_directory =
 		copy_string(input_vector_base_directory);
 	manager->output_vector_base_directory =
@@ -139,6 +142,8 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 		copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
 	manager->execution_order = execution_order;
+	manager->maximum_loaded_memory = (size_t)(1)<<34;
+	manager->size_current_loaded_memory = 0;
 	return manager;
 }
 
@@ -174,8 +179,14 @@ void begin_instruction(memory_manager_t manager,
 vector_block_t request_input_vector_block(memory_manager_t manager,
 				       size_t vector_block_id)
 {
+	printf("Thread %d requests input vector block %lu\n",
+	       omp_get_thread_num(),
+	       vector_block_id);
 	while (!is_array_loaded(manager,vector_block_id))
 		usleep(5);
+	printf("Thread %d recives input vector %lu\n",
+	       omp_get_thread_num(),
+	       vector_block_id);
 	array_t *current_array = fetch_array(manager,vector_block_id);
 	use_primary_array(current_array);
 	return (vector_block_t)current_array->primary_array;
@@ -184,8 +195,14 @@ vector_block_t request_input_vector_block(memory_manager_t manager,
 vector_block_t request_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id)
 {
+	printf("Thread %d requests output vector block %lu\n",
+	       omp_get_thread_num(),
+	       vector_block_id);
 	while (!is_array_loaded(manager,vector_block_id))
 		usleep(5);
+	printf("Thread %d recives output vector %lu\n",
+	       omp_get_thread_num(),
+	       vector_block_id);
 	array_t *current_array = fetch_array(manager,vector_block_id);
 	use_secondary_array(current_array);
 	return (vector_block_t)current_array->secondary_array;
@@ -194,8 +211,14 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 index_list_t request_index_list(memory_manager_t manager,
 			     const size_t index_list_id)
 {
+	printf("Thread %d requests index list %lu\n",
+	       omp_get_thread_num(),
+	       index_list_id);
 	while (!is_array_loaded(manager,index_list_id))
 		usleep(5);
+	printf("Thread %d recives index list %lu\n",
+	       omp_get_thread_num(),
+	       index_list_id);
 	array_t *current_array = fetch_array(manager,index_list_id);
 	use_primary_array(current_array);
 	return (index_list_t)current_array->primary_array;
@@ -204,8 +227,14 @@ index_list_t request_index_list(memory_manager_t manager,
 matrix_block_t request_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id)
 {
+	printf("Thread %d requests matrix block %lu\n",
+	       omp_get_thread_num(),
+	       matrix_block_id);
 	while (!is_array_loaded(manager,matrix_block_id))
 		usleep(5);
+	printf("Thread %d recives matrix block %lu\n",
+	       omp_get_thread_num(),
+	       matrix_block_id);
 	array_t *current_array = fetch_array(manager,matrix_block_id);
 	use_primary_array(current_array);
 	return (matrix_block_t)current_array->primary_array;
@@ -325,6 +354,9 @@ void load_necessary_data(memory_manager_t manager,
 {
 	size_t total_needed_memory_to_load = 
 		compute_needed_memory_to_load(manager,instruction);
+	printf("maximum_loaded_memory = %lu\n",manager->maximum_loaded_memory);
+	printf("needs to load = %lu\n",total_needed_memory_to_load);
+	printf("currently loaded = %lu\n",manager->size_current_loaded_memory);
 	if (manager->size_current_loaded_memory + 
 	    total_needed_memory_to_load >= manager->maximum_loaded_memory)
 	{
@@ -441,6 +473,7 @@ static
 void load_vector_array(memory_manager_t manager,
 		       size_t vector_id)
 {
+	printf("Loading vector %lu\n",vector_id);
 	array_t *current_array = fetch_array(manager,vector_id);
 	omp_set_lock(&current_array->array_lock);
 	assert(current_array->primary_array == NULL);
@@ -463,6 +496,7 @@ static
 void load_matrix_array(memory_manager_t manager,
 		       size_t matrix_id)
 {
+	printf("Loading matrix %lu\n",matrix_id);
 	array_t *current_array = fetch_array(manager,matrix_id);
 	omp_set_lock(&current_array->array_lock);
 	assert(current_array->primary_array == NULL);
@@ -481,6 +515,7 @@ void load_index_array(memory_manager_t manager,
 {
 	if (index_id == no_index)
 		return;
+	printf("Loading index list %lu\n",index_id);
 	array_t *current_array = fetch_array(manager,index_id);
 	omp_set_lock(&current_array->array_lock);
 	assert(current_array->primary_array == NULL);
