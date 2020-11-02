@@ -33,6 +33,7 @@ struct _combination_table_
 	size_t index_to_next_3nf_energy_block;
 	size_t *id_to_index_map;
 	size_t num_ids;
+	calculation_blocks_t calculation_blocks;
 };
 
 static
@@ -120,6 +121,7 @@ combination_table_t new_combination_table(const char *filename,
 	read_matrix_block_settings(table_file,
 				   matrix_block_settings_builder,
 				   id_to_index_map_builder);
+	table->calculation_blocks = parse_calculation_blocks(table_file);
 	fclose(table_file);
 	free_array_builder(matrix_block_settings_builder);
 	sort_matrix_blocks_on_num_particles(table,id_to_index_map_builder);
@@ -320,12 +322,37 @@ size_t get_num_arrays(combination_table_t combination_table)
 	return combination_table->num_ids;
 }
 
+size_t *get_array_sizes(combination_table_t table)
+{
+	size_t *array_sizes =
+	       	(size_t*)malloc(table->num_ids*sizeof(size_t));
+	for (size_t i = 0; i<table->num_basis_blocks; i++)
+		array_sizes[table->basis_blocks[i].block_id - 1] =
+			table->basis_blocks[i].num_proton_states *	
+			table->basis_blocks[i].num_neutron_states;
+	for (size_t i = 0; i<table->num_index_list_settings; i++)
+		array_sizes[table->index_list_settings[i].index_list_id-1] =
+			table->index_list_settings[i].length;
+	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+		array_sizes[table->matrix_block_settings[i].matrix_block_id-1]=
+			10*get_matrix_block_length
+			(table->matrix_block_settings[i]);
+	return array_sizes;
+}
+
+calculation_blocks_t
+get_calculation_blocks(combination_table_t combination_table)
+{
+	return combination_table->calculation_blocks;
+}
+
 void free_combination_table(combination_table_t combination_table)
 {
 	free(combination_table->basis_blocks);
 	free(combination_table->index_list_settings);
 	free(combination_table->matrix_block_settings);
 	free(combination_table->id_to_index_map);
+	free_calculation_blocks(combination_table->calculation_blocks);
 	free(combination_table);
 }
 
@@ -686,3 +713,23 @@ new_test(is_title_row_should_work,
 	);
 
 
+new_test(calculation_blocks_he4_nmax2,
+	 const char *comb_path = 
+	 TEST_DATA"bacchus_run_data/he4/nmax2/comb.txt";
+	 combination_table_t comb = new_combination_table(comb_path,2,2);
+	 calculation_blocks_t calculation_blocks =
+	 	get_calculation_blocks(comb);
+	 while (has_next_calculation_block(calculation_blocks))
+	 {
+		calculation_block_t block =
+	       	next_calculation_block(calculation_blocks);
+		printf("%lu %lu %lu %lu %lu %lu\n",
+		       block.num_particles,
+		       block.vector_block_in,
+		       block.vector_block_out,
+		       block.primary_index_list,
+		       block.secondary_index_list,
+		       block.matrix_element_block);
+	 }
+	 free_combination_table(comb);
+	);
