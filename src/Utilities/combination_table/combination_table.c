@@ -300,6 +300,7 @@ next_3nf_matrix_energy_block(combination_table_t combination_table)
 	matrix_block_setting_t first_matrix_block = 
 		combination_table->matrix_block_settings[index_to_first];
 	size_t length_energy_block = 1;
+	printf("index_to_first = %lu\n",index_to_first);
 	for (size_t i = index_to_first+1; 
 	     i < combination_table->num_matrix_block_settings;
 	     i++, length_energy_block++)
@@ -699,7 +700,8 @@ int is_in_same_energy_block(matrix_block_setting_t block_a,
 		block_b.difference_energy_protons &&
 		block_a.depth_neutrons == block_b.depth_neutrons &&
 		block_a.difference_energy_neutrons == 
-		block_b.difference_energy_neutrons; 
+		block_b.difference_energy_neutrons &&
+	       	block_a.type == block_b.type;	
 }
 
 new_test(interpreting_id_string,

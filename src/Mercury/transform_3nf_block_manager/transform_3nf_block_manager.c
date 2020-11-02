@@ -240,6 +240,7 @@ get_transformed_block(transform_3nf_block_manager_t manager,
 	int ket_energy = get_ket_energy(block);
 	int total_isospin = get_total_isospin(block);
 	size_t num_blocks = get_num_M_blocks(transformed_block);
+	printf("Setting up transformed block\n");
 	for (size_t i = 0; i<num_blocks; i++)
 	{
 		int M = min_M + i*2;
