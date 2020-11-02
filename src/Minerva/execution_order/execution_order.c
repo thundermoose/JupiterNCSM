@@ -2,10 +2,13 @@
 #include <array_builder/array_builder.h>
 #include <string_tools/string_tools.h>
 #include <global_constants/global_constants.h>
+#include <unit_testing/test.h>
 #include <log/log.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <omp.h>
+#include <unistd.h>
 
 const execution_instruction_t empty_instruction = {
 	.type = unknown,
@@ -21,6 +24,7 @@ struct _execution_order_
 	execution_instruction_t *instructions;
 	size_t num_instruction;
 	size_t current_instruction_index;
+	omp_lock_t fetch_lock;
 };
 
 static
@@ -93,7 +97,13 @@ execution_order_t read_execution_order(const char *filename,
 		}
 		execution_order->instructions[i] = instruction;
 	}
+	omp_init_lock(&execution_order->fetch_lock);
 	return execution_order;
+}
+
+size_t get_num_instructions(execution_order_t execution_order)
+{
+	return execution_order->num_instruction;
 }
 
 void reset_execution_order(execution_order_t execution_order)
@@ -103,20 +113,31 @@ void reset_execution_order(execution_order_t execution_order)
 
 execution_instruction_t next_instruction(execution_order_t execution_order)
 {
+	execution_instruction_t instruction;
 	assert(execution_order->current_instruction_index <
 	       execution_order->num_instruction);
 	size_t index = execution_order->current_instruction_index++;
-	return execution_order->instructions[index];
+	instruction =  execution_order->instructions[index];
+	// unsetting the fetch_lock set by has_next_instruction
+	omp_unset_lock(&execution_order->fetch_lock);
+	return instruction;
 }
 
 int has_next_instruction(execution_order_t execution_order)
 {
-	return execution_order->current_instruction_index < 
+	omp_set_lock(&execution_order->fetch_lock);
+	int next_instruction_is_avilable = 
+		execution_order->current_instruction_index < 
 		execution_order->num_instruction;	
+	if (!next_instruction_is_avilable)
+		omp_unset_lock(&execution_order->fetch_lock);
+	return next_instruction_is_avilable;
+
 }
 
 void free_execution_order(execution_order_t execution_order)
 {
+	omp_destroy_lock(&execution_order->fetch_lock);
 	free(execution_order->instructions);
 	free(execution_order);
 }
@@ -188,3 +209,42 @@ void parse_row(const char *row,
 		free(words);
 	}
 }
+
+#ifdef TEST
+void parallel_instruction_fetching_main_code()
+{
+	const char *instruction_filepath=
+		TEST_DATA"bacchus_run_data/he4/nmax2/greedy_3_16.txt";
+	const char *comb_filepath=
+		TEST_DATA"bacchus_run_data/he4/nmax2/comb.txt";
+	combination_table_t combination_table = 
+		new_combination_table(comb_filepath,
+				      2,2);
+	execution_order_t execution_order =
+		read_execution_order(instruction_filepath,
+				     combination_table);
+#pragma omp parallel shared(execution_order)
+	{
+		size_t thread_id = omp_get_thread_num();
+		while(has_next_instruction(execution_order))
+		{
+			execution_instruction_t instruction = 
+				next_instruction(execution_order);
+			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			       thread_id,
+			       instruction.type,
+			       instruction.vector_block_in,
+			       instruction.vector_block_out,
+			       instruction.matrix_element_file,
+			       instruction.neutron_index,
+			       instruction.proton_index);
+			usleep(1000);
+		}
+	}
+	free_execution_order(execution_order);
+}
+#endif
+
+new_test(parallel_instruction_fetching,
+	 parallel_instruction_fetching_main_code();
+	);

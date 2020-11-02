@@ -5,6 +5,12 @@
 #include <global_constants/global_constants.h>
 #include <log/log.h>
 #include <error/error.h>
+#include <math.h>
+#include <time.h>
+#include <omp.h>
+
+#define min(a,b) ((a)<(b) ? (a) : (b))
+#define max(a,b) ((a)>(b) ? (a) : (b))
 
 struct _scheduler_
 {
@@ -82,15 +88,53 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table);
-	while (has_next_instruction(scheduler->execution_order))
+	double fastest_block_time = INFINITY;
+	double slowes_block_time = -INFINITY;
+	double total_block_time = 0;
+#pragma omp parallel shared(memory_manager,scheduler)
 	{
-		execution_instruction_t instruction =
-			next_instruction(scheduler->execution_order);
-		execute_instruction(instruction,
-				    memory_manager,
-				    scheduler);
+		//size_t thread_id = omp_get_thread_num();
+		while (has_next_instruction(scheduler->execution_order))
+		{
+			execution_instruction_t instruction =
+				next_instruction(scheduler->execution_order);
+
+			struct timespec t_start,t_end;
+			clock_gettime(CLOCK_REALTIME,&t_start);
+			//printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
+			//       thread_id,
+			//       instruction.type,
+			//       instruction.vector_block_in,
+			//       instruction.vector_block_out,
+			//       instruction.matrix_element_file,
+			//       instruction.neutron_index,
+			//       instruction.proton_index);
+			execute_instruction(instruction,
+					    memory_manager,
+					    scheduler);
+			clock_gettime(CLOCK_REALTIME,&t_end);
+			double block_time = 
+				(t_end.tv_sec - t_start.tv_sec)*1e6+
+				(t_end.tv_nsec - t_start.tv_nsec)*1e-3;
+			if (instruction.type != unload)
+			{
+#pragma omp critical
+				fastest_block_time = 
+					min(fastest_block_time,block_time);
+#pragma omp critical
+				slowes_block_time= 
+					max(slowes_block_time,block_time);
+#pragma omp critical
+				total_block_time += block_time;
+			}
+		}
 	}
 	free_memory_manager(memory_manager);
+	printf("Fastest block: %lg µs\n",fastest_block_time);
+	printf("Slowest block: %lg µs\n",slowes_block_time);
+	printf("Average block: %lg µs\n",
+	       total_block_time /
+	       get_num_instructions(scheduler->execution_order));
 }
 
 void free_scheduler(scheduler_t scheduler)
@@ -191,6 +235,10 @@ void diagonal_neutron_case(memory_manager_t memory_manager,
 				input_vector_block,
 				matrix_block,
 				list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
 }
 
 	static
@@ -214,6 +262,10 @@ void diagonal_proton_case(memory_manager_t memory_manager,
 			       input_vector_block,
 			       matrix_block,
 			       list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -241,6 +293,11 @@ void diagonal_neutron_proton_case(memory_manager_t memory_manager,
 					matrix_block,
 					neutron_list,
 					proton_list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -272,6 +329,12 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 					 input_vector_block_right,
 					 matrix_block,
 					 list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
 }
 
 	static
@@ -303,6 +366,12 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 					input_vector_block_right,
 					matrix_block,
 					list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -338,6 +407,13 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 					matrix_block,
 					neutron_list,
 					proton_list);
+	release_input_vector(memory_manager,instruction.vector_block_in);
+	release_output_vector(memory_manager,instruction.vector_block_out);
+	release_input_vector(memory_manager,instruction.vector_block_out);
+	release_output_vector(memory_manager,instruction.vector_block_in);
+	release_matrix_block(memory_manager,instruction.matrix_element_file);
+	release_index_list(memory_manager,instruction.neutron_index);
+	release_index_list(memory_manager,instruction.proton_index);
 }
 
 	static
@@ -345,6 +421,7 @@ void unload_arrays(memory_manager_t memory_manager,
 		   execution_instruction_t instruction)
 {
 	log_entry("Unloading arrays");
+	return;
 
 	if (instruction.vector_block_in != no_index)
 		unload_input_vector_block(memory_manager,

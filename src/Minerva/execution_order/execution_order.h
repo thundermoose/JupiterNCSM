@@ -29,6 +29,8 @@ typedef struct
 execution_order_t read_execution_order(const char *filename,
 				       combination_table_t combination_table);
 
+size_t get_num_instructions(execution_order_t execution_order);
+
 void reset_execution_order(execution_order_t execution_order);
 
 execution_instruction_t next_instruction(execution_order_t execution_order);
