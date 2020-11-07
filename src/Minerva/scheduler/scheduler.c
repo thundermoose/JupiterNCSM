@@ -108,8 +108,6 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 			{
 				execution_instruction_t instruction =
 					next_instruction(instruction_iterator);
-				printf("executing instruction %lu\n",
-				       instruction.instruction_index);
 				begin_instruction(memory_manager,instruction);
 				struct timespec t_start,t_end;
 				clock_gettime(CLOCK_REALTIME,&t_start);
