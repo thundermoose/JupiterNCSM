@@ -8,6 +8,7 @@
 #include <matrix_block_setting/matrix_block_setting.h>
 #include <matrix_energy_block/matrix_energy_block.h>
 #include <calculation_blocks/calculation_blocks.h>
+#include <iterator/iterator.h>
 
 struct _combination_table_;
 typedef struct _combination_table_ *combination_table_t;
@@ -22,6 +23,23 @@ particle_type_t get_index_list_type(combination_table_t combination_table,
 
 basis_block_t get_basis_block(combination_table_t combination_table,
 			      size_t basis_block_id);
+iterator_t 
+new_index_list_setting_iterator(combination_table_t combination_table);
+
+iterator_t
+new_basis_block_iterator(combination_table_t combination_table);
+
+iterator_t
+new_matrix_block_settings_iterator(combination_table_t combination_table);
+
+iterator_t
+new_1nf_matrix_block_settings_iterator(combination_table_t combination_table);
+
+iterator_t
+new_2nf_matrix_block_settings_iterator(combination_table_t combination_table);
+
+iterator_t
+new_3nf_matrix_block_settings_iterator(combination_table_t combination_table);
 
 void reset_index_list_interator(combination_table_t combination_table);
 

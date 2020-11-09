@@ -31,6 +31,8 @@ struct _combination_table_
 	size_t length_3nf_blocks;
 	size_t iterator_index_3nf_blocks;
 	size_t index_to_next_3nf_energy_block;
+	matrix_energy_block_t *matrix_energy_blocks;
+	size_t num_matrix_energy_blocks;
 	size_t *id_to_index_map;
 	size_t num_ids;
 	calculation_blocks_t calculation_blocks;
@@ -56,6 +58,10 @@ void read_matrix_block_settings(FILE *table_file,
 static void 
 sort_matrix_blocks_on_num_particles(combination_table_t table,
 				    array_builder_t id_to_index_map_builder);
+
+static
+void setup_matrix_energy_blocks(combination_table_t table);
+
 static
 int is_title_row(const char *row);
 
@@ -125,6 +131,7 @@ combination_table_t new_combination_table(const char *filename,
 	fclose(table_file);
 	free_array_builder(matrix_block_settings_builder);
 	sort_matrix_blocks_on_num_particles(table,id_to_index_map_builder);
+	setup_matrix_energy_blocks(table);
 	free_array_builder(id_to_index_map_builder);
 	return table;
 }
@@ -151,6 +158,57 @@ basis_block_t get_basis_block(combination_table_t combination_table,
 {
 	size_t index = combination_table->id_to_index_map[basis_block_id];
 	return combination_table->basis_blocks[index];
+}
+
+iterator_t 
+new_index_list_setting_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->index_list_settings,
+			    combination_table->num_index_list_settings,
+			    sizeof(index_list_setting_t));
+}
+
+iterator_t
+new_basis_block_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->basis_blocks,
+			    combination_table->num_basis_blocks,
+			    sizeof(basis_block_t));
+}
+
+iterator_t
+new_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->matrix_block_settings,
+			    combination_table->num_matrix_block_settings,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_1nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->matrix_block_settings,
+			    combination_table->length_1nf_blocks,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_2nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)(combination_table->matrix_block_settings +
+				    combination_table->length_1nf_blocks),
+			    combination_table->length_2nf_blocks,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_3nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)(combination_table->matrix_block_settings +
+				    combination_table->length_1nf_blocks +
+				    combination_table->length_2nf_blocks),
+			    combination_table->length_3nf_blocks,
+			    sizeof(matrix_block_setting_t));
 }
 
 void reset_index_list_interator(combination_table_t combination_table)
@@ -613,6 +671,12 @@ sort_matrix_blocks_on_num_particles(combination_table_t table,
 				  &index);
 	}
 
+}
+
+static
+void setup_matrix_energy_blocks(combination_table_t table)
+{
+	
 }
 
 static
