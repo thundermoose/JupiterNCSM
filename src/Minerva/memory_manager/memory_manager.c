@@ -187,7 +187,14 @@ void initialize_arrays(memory_manager_t manager)
 	{
 		basis_block_t basis_block =
 			next_basis_block(manager->combination_table);
-
+		manager->all_arrays[basis_block.block_id-1].type = 
+			VECTOR_BLOCK;
+	}
+	reset_index_list_interator(manager->combination_table);
+	while (has_next_index_list_setting(manager->combination_table))
+	{
+		index_list_setting_t index_list_setting =
+			next_
 	}
 }
 
