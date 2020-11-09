@@ -44,18 +44,6 @@ void release_index_list(memory_manager_t manager, size_t array_id);
 
 void release_matrix_block(memory_manager_t manager, size_t array_id);
 
-void unload_input_vector_block(memory_manager_t manager,
-			       size_t vector_block_id);
-
-void unload_output_vector_block(memory_manager_t manager,
-				size_t vector_block_id);
-
-void unload_index_list(memory_manager_t manager,
-		       size_t index_list_id);
-
-void unload_matrix_block(memory_manager_t manager,
-			 size_t matrix_block_id);
-
 void free_memory_manager(memory_manager_t manager);
 
 #endif
