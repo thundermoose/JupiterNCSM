@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <omp.h>
 #include <unistd.h>
+#include <debug_mode/debug_mode.h>
 
 #define min(a,b) ((a) < (b) ? (a) : (b)) 
 
@@ -108,7 +109,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->matrix_base_directory = copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
 	manager->execution_order = execution_order;
-	manager->maximum_loaded_memory = 1<<30;
+	manager->maximum_loaded_memory = (size_t)(10)<<30;
 	manager->size_current_loaded_memory = 0;
 	omp_init_lock(&manager->calculation_threads_positions_lock);
 	omp_init_lock(&manager->request_lock);
@@ -119,21 +120,21 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 
 void launch_memory_manager_thread(memory_manager_t manager)
 {
-	printf("Memory manager thread starting\n");
+	log_entry("Memory manager thread starting\n");
 	initialize_multi_thread_environment(manager);
-	printf("Multithreaded environment was initialized\n");
+	log_entry("Multithreaded environment was initialized\n");
 	execution_order_iterator_t instructions =
 		get_execution_order_iterator(manager->execution_order);
-	printf("Execution order iterator was created\n");
+	log_entry("Execution order iterator was created\n");
 	while (has_next_instruction(instructions))
 	{
 		execution_instruction_t instruction =
 			next_instruction(instructions);
-		printf("Fetching instruction %lu\n",
+		log_entry("Fetching instruction %lu\n",
 		       instruction.instruction_index);
 		size_t size_to_load = 
 			get_size_of_unloaded_arrays(manager,instruction);
-		printf("Needs to load %lu B\n",
+		log_entry("Needs to load %lu B\n",
 		       size_to_load);
 		if (size_to_load + manager->size_current_loaded_memory >
 		    manager->maximum_loaded_memory)
@@ -142,7 +143,7 @@ void launch_memory_manager_thread(memory_manager_t manager)
 				size_to_load +
 			       	manager->size_current_loaded_memory -
 				manager->maximum_loaded_memory;
-			printf("Min size to unlad: %lu B\n",
+			log_entry("Min size to unload: %lu B\n",
 			       min_size_to_unload);
 			unload_not_needed_arrays(manager,min_size_to_unload);
 		}
@@ -174,6 +175,7 @@ vector_block_t request_input_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->primary_array;
+	usleep(1);
 	omp_unset_lock(&array->array_lock);
 	return output_vector_block;
 }
@@ -191,6 +193,7 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->secondary_array;
+	usleep(1);
 	omp_unset_lock(&array->array_lock);
 	return output_vector_block;
 }
@@ -208,6 +211,7 @@ index_list_t request_index_list(memory_manager_t manager,
 		error("%lu is not an index list\n", index_list_id);
 	index_list_t output_index_list = 
 		(index_list_t)array->primary_array;
+	usleep(1);
 	omp_unset_lock(&array->array_lock);
 	return output_index_list;
 }
@@ -225,6 +229,7 @@ matrix_block_t request_matrix_block(memory_manager_t manager,
 		error("%lu is not a matrix block\n", matrix_block_id);
 	matrix_block_t output_index_list = 
 		(matrix_block_t)array->primary_array;
+	usleep(1);
 	omp_unset_lock(&array->array_lock);
 	return output_index_list;
 }
@@ -281,7 +286,7 @@ void initialize_arrays(memory_manager_t manager)
 	     has_next_element(basis_blocks);
 	     next_element(basis_blocks,&current_basis_block))
 	{
-		printf("Array %lu is a vector block\n",
+		log_entry("Array %lu is a vector block\n",
 		       current_basis_block.block_id);
 		manager->all_arrays[current_basis_block.block_id-1].type = 
 			VECTOR_BLOCK;
@@ -359,14 +364,20 @@ void unload_not_needed_arrays(memory_manager_t manager,
 			if ((candidate->primary_array != NULL || 
 			     candidate->secondary_array != NULL) &&
 			    candidate->needed_by_instruction < last_thread)
+			{
+				log_entry("Can unload %lu of size %lu B\n",
+				       i+1,candidate->size_array);
 				candidate_arrays[num_candidate_arrays++] =
 					candidate->array_id;
+			}
 		}
 		omp_unset_lock(&manager->request_lock);
 		for (size_t i = 0; i < num_candidate_arrays; i++)
 		{
 			size_t size_array =
 			       	get_array_size(manager, candidate_arrays[i]);
+			log_entry("Unloading array %lu\n",
+			       candidate_arrays[i]);
 			unload_array(manager,candidate_arrays[i]);
 			size_unloaded_memory += size_array;
 			if (size_unloaded_memory > min_size_to_unload)
@@ -431,13 +442,13 @@ static
 void load_array(memory_manager_t manager,
 		size_t array_id)
 {
-	printf("Needs to load array %lu\n",array_id);
+	log_entry("Needs to load array %lu\n",array_id);
 	array_t *array = &manager->all_arrays[array_id-1];
 	omp_set_lock(&array->array_lock);
 	switch(array->type)
 	{
 	case VECTOR_BLOCK:
-		printf("It is a vector block\n");
+		log_entry("It is a vector block\n");
 		basis_block_t basis_block =
 		       	get_basis_block(manager->combination_table,
 					array_id);
@@ -452,7 +463,7 @@ void load_array(memory_manager_t manager,
 			 basis_block);
 		break;
 	case INDEX_LIST:
-		printf("It is an index list\n");
+		log_entry("It is an index list\n");
 		array->primary_array =
 			(void*)
 			new_index_list_from_id
@@ -460,7 +471,7 @@ void load_array(memory_manager_t manager,
 			 array_id);
 		break;
 	case MATRIX_BLOCK:
-		printf("It is a matrix block\n");
+		log_entry("It is a matrix block\n");
 		array->primary_array =
 			(void*)
 			new_matrix_block(array_id,
@@ -482,9 +493,13 @@ void unload_array(memory_manager_t manager,
 	switch(array->type)
 	{
 	case VECTOR_BLOCK:
+		log_entry("Unloading vector %p\n",
+			  array->primary_array);
 		free_vector_block((vector_block_t)array->primary_array);
 		save_vector_block_elements((vector_block_t)
 					   array->secondary_array);
+		log_entry("Unloading vector %p\n",
+			  array->secondary_array);
 		free_vector_block((vector_block_t)array->secondary_array);
 		break;
 	case INDEX_LIST:
@@ -496,6 +511,8 @@ void unload_array(memory_manager_t manager,
 	default:
 		error("Can't load unkown array\n");
 	}	
+	array->primary_array = NULL;
+	array->secondary_array = NULL;
 	manager->size_current_loaded_memory-=array->size_array;
 	omp_unset_lock(&array->array_lock);
 }

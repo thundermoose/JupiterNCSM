@@ -5,6 +5,7 @@
 #include <string.h>
 #include <errno.h>
 #include <omp.h>
+#include <debug_mode/debug_mode.h>
 
 struct _vector_block_
 {

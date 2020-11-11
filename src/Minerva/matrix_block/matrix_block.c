@@ -4,6 +4,7 @@
 #include <error/error.h>
 #include <string.h>
 #include <errno.h>
+#include <debug_mode/debug_mode.h>
 
 struct _matrix_block_
 {
