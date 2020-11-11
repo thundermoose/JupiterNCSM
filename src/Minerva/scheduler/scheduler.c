@@ -57,9 +57,6 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 static
 void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 				      execution_instruction_t instruction);
-static
-void unload_arrays(memory_manager_t memory_manager,
-		   execution_instruction_t instruction);
 
 scheduler_t new_scheduler(execution_order_t execution_order,
 			  combination_table_t combination_table,
@@ -181,7 +178,7 @@ void execute_instruction(execution_instruction_t instruction,
 			neutron_proton_case(memory_manager, instruction);
 			break;
 		case unload:
-			unload_arrays(memory_manager, instruction);
+			log_entry("Ignoring unloading\n");
 			break;
 		default:
 			error("instruction type is not known\n");
@@ -419,32 +416,4 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 	release_matrix_block(memory_manager,instruction.matrix_element_file);
 	release_index_list(memory_manager,instruction.neutron_index);
 	release_index_list(memory_manager,instruction.proton_index);
-}
-
-	static
-void unload_arrays(memory_manager_t memory_manager,
-		   execution_instruction_t instruction)
-{
-	log_entry("Unloading arrays");
-	return;
-
-	if (instruction.vector_block_in != no_index)
-		unload_input_vector_block(memory_manager,
-					  instruction.vector_block_in);	  
-	if (instruction.vector_block_out != no_index)
-		unload_output_vector_block(memory_manager,
-					   instruction.vector_block_out);	  
-	if (instruction.matrix_element_file != no_index)
-		unload_matrix_block(memory_manager,
-				    instruction.matrix_element_file);
-	if (instruction.neutron_index != no_index)
-	{
-		unload_index_list(memory_manager,
-				  instruction.neutron_index);
-	}
-	if (instruction.proton_index != no_index)
-	{
-		unload_index_list(memory_manager,
-				  instruction.proton_index);
-	}
 }
