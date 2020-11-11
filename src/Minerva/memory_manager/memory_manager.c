@@ -109,7 +109,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->matrix_base_directory = copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
 	manager->execution_order = execution_order;
-	manager->maximum_loaded_memory = (size_t)(10)<<30;
+	manager->maximum_loaded_memory = (size_t)(100)<<20;
 	manager->size_current_loaded_memory = 0;
 	omp_init_lock(&manager->calculation_threads_positions_lock);
 	omp_init_lock(&manager->request_lock);
@@ -143,6 +143,7 @@ void launch_memory_manager_thread(memory_manager_t manager)
 				size_to_load +
 			       	manager->size_current_loaded_memory -
 				manager->maximum_loaded_memory;
+			printf("Needs to unload %lu B\n",min_size_to_unload);
 			log_entry("Min size to unload: %lu B\n",
 			       min_size_to_unload);
 			unload_not_needed_arrays(manager,min_size_to_unload);
@@ -275,7 +276,7 @@ void initialize_arrays(memory_manager_t manager)
 	{
 		array_t *current_array = &manager->all_arrays[i];
 		current_array->array_id = i+1;
-		current_array->size_array = array_sizes[i];
+		current_array->size_array = array_sizes[i]/10;
 		omp_init_lock(&current_array->array_lock);
 	}	
 	free(array_sizes);
