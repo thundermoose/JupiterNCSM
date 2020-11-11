@@ -425,7 +425,7 @@ static
 void wait_til_array_is_loaded(memory_manager_t manager, size_t array_id)
 {
 	while (!is_array_loaded(manager,array_id))
-		usleep(10);
+		usleep(1);
 }
 static
 int is_array_loaded(memory_manager_t manager,
