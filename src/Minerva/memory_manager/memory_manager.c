@@ -176,8 +176,8 @@ vector_block_t request_input_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->primary_array;
-	usleep(1);
 	omp_unset_lock(&array->array_lock);
+	usleep(1);
 	return output_vector_block;
 }
 
@@ -194,8 +194,8 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->secondary_array;
-	usleep(1);
 	omp_unset_lock(&array->array_lock);
+	usleep(1);
 	return output_vector_block;
 }
 
@@ -212,8 +212,8 @@ index_list_t request_index_list(memory_manager_t manager,
 		error("%lu is not an index list\n", index_list_id);
 	index_list_t output_index_list = 
 		(index_list_t)array->primary_array;
-	usleep(1);
 	omp_unset_lock(&array->array_lock);
+	usleep(1);
 	return output_index_list;
 }
 
@@ -230,8 +230,8 @@ matrix_block_t request_matrix_block(memory_manager_t manager,
 		error("%lu is not a matrix block\n", matrix_block_id);
 	matrix_block_t output_index_list = 
 		(matrix_block_t)array->primary_array;
-	usleep(1);
 	omp_unset_lock(&array->array_lock);
+	usleep(1);
 	return output_index_list;
 }
 
