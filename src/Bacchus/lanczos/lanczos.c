@@ -145,7 +145,7 @@ void lanczos_iteration(lanczos_environment_t environment,
 		(t_end.tv_sec-t_start.tv_sec)*1e6 +
 		(t_end.tv_nsec-t_start.tv_nsec)*1e-3;
 	printf("Lanczos iteration %lu end after %lg µs\n", 
-	       iteration, iteration_time);
+	       iteration+1, iteration_time);
 }
 
 void orthogonalize_krylow_basis(lanczos_environment_t environment,
