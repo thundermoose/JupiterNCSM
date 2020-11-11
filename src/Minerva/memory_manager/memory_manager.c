@@ -7,9 +7,12 @@
 #include <assert.h>
 #include <omp.h>
 #include <unistd.h>
+#include <time.h>
+#include <math.h>
 #include <debug_mode/debug_mode.h>
 
 #define min(a,b) ((a) < (b) ? (a) : (b)) 
+#define max(a,b) ((a) > (b) ? (a) : (b)) 
 
 typedef enum
 {
@@ -46,6 +49,11 @@ struct _memory_manager_
 	size_t *candidate_arrays_workspace;
 	omp_lock_t calculation_threads_positions_lock;
 	omp_lock_t request_lock;
+	omp_lock_t wait_statistics_lock;
+	double total_wating_time;
+	size_t num_waits;
+	double min_waiting_time;
+	double max_waiting_time;
 };
 
 static
@@ -111,8 +119,13 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->execution_order = execution_order;
 	manager->maximum_loaded_memory = (size_t)(100)<<20;
 	manager->size_current_loaded_memory = 0;
+	manager->num_waits = 0;
+	manager->total_wating_time = 0.0;
+	manager->min_waiting_time = INFINITY;
+	manager->max_waiting_time = 0.0;
 	omp_init_lock(&manager->calculation_threads_positions_lock);
 	omp_init_lock(&manager->request_lock);
+	omp_init_lock(&manager->wait_statistics_lock);
 	omp_set_lock(&manager->calculation_threads_positions_lock);
 	initialize_arrays(manager);
 	return manager;
@@ -253,6 +266,12 @@ void release_matrix_block(memory_manager_t manager, size_t array_id)
 
 void free_memory_manager(memory_manager_t manager)
 {
+	printf("Average wait time: %lg µs\n",
+	       manager->total_wating_time/manager->num_waits);
+	printf("Min wait time: %lg µs\n",
+	       manager->min_waiting_time);
+	printf("Max wait time: %lg µs\n",
+	       manager->max_waiting_time);
 	for (size_t i = 0; i < manager->num_arrays; i++)
 	{
 		if (is_array_loaded(manager,i+1))
@@ -424,8 +443,21 @@ void load_needed_arrays(memory_manager_t manager,
 static
 void wait_til_array_is_loaded(memory_manager_t manager, size_t array_id)
 {
+	struct timespec t1,t2;
+	clock_gettime(CLOCK_REALTIME,&t1);
 	while (!is_array_loaded(manager,array_id))
 		usleep(1);
+	clock_gettime(CLOCK_REALTIME,&t2);
+	omp_set_lock(&manager->wait_statistics_lock);
+	double waiting_time = (t2.tv_sec - t1.tv_sec)*1e6 +
+		(t2.tv_nsec-t1.tv_nsec)*1e-3;
+	manager->num_waits++;
+	manager->total_wating_time += waiting_time;
+	manager->min_waiting_time = 
+		min(manager->min_waiting_time,waiting_time);
+	manager->max_waiting_time =
+		max(manager->max_waiting_time,waiting_time);
+	omp_unset_lock(&manager->wait_statistics_lock);
 }
 static
 int is_array_loaded(memory_manager_t manager,
