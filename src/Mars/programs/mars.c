@@ -117,11 +117,6 @@ optimize_calculation_blocks(calculation_blocks_t calculation_blocks,
 		num_calculation_blocks - two_particle_forces;
 	size_t *array_sizes = get_array_sizes(combination_table);
 
-	rsort_r(needed_blocks,
-		num_needed_calculation_blocks,
-		sizeof(calculation_block_t),
-		(__key_function_r_t)num_multiplications,
-		array_sizes);
 			
 	rsort_r(needed_blocks,
 		num_needed_calculation_blocks,
@@ -158,6 +153,12 @@ optimize_calculation_blocks(calculation_blocks_t calculation_blocks,
 		num_needed_calculation_blocks,
 		sizeof(calculation_block_t),
 		(__key_function_r_t)largest_block_array_size,
+		array_sizes);
+
+	rsort_r(needed_blocks,
+		num_needed_calculation_blocks,
+		sizeof(calculation_block_t),
+		(__key_function_r_t)num_multiplications,
 		array_sizes);
 	free(array_sizes);
 
