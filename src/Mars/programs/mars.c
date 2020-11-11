@@ -50,6 +50,10 @@ uint64_t largest_block_array(calculation_block_t *block,
 			     size_t *array_sizes);
 
 static
+uint64_t largest_block_array_size(calculation_block_t *block,
+				  size_t *array_sizes);
+
+static
 void quint_sort(size_t array[5], size_t *keys);
 
 static
@@ -150,6 +154,11 @@ optimize_calculation_blocks(calculation_blocks_t calculation_blocks,
 		(__key_function_r_t)largest_block_array,
 		array_sizes);
 
+	rsort_r(needed_blocks,
+		num_needed_calculation_blocks,
+		sizeof(calculation_block_t),
+		(__key_function_r_t)largest_block_array_size,
+		array_sizes);
 	free(array_sizes);
 
 	calculation_blocks_t optimized_calculation_blocks =
@@ -274,6 +283,22 @@ uint64_t largest_block_array(calculation_block_t *block,
 	};	
 	quint_sort(arrays,array_sizes);
 	return arrays[4];
+}
+
+static
+uint64_t largest_block_array_size(calculation_block_t *block,
+				  size_t *array_sizes)
+{
+	size_t arrays[5] =
+	{
+		block->vector_block_in,
+		block->vector_block_out,
+		block->primary_index_list,
+		block->secondary_index_list,
+		block->matrix_element_block
+	};	
+	quint_sort(arrays,array_sizes);
+	return array_sizes[arrays[4]-1];
 }
 
 static
