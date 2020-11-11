@@ -255,13 +255,15 @@ void parallel_instruction_fetching_main_code()
 	execution_order_t execution_order =
 		read_execution_order(instruction_filepath,
 				     combination_table);
-#pragma omp parallel shared(execution_order)
+	execution_order_iterator_t instruction_iterator =
+		get_execution_order_iterator(execution_order);
+#pragma omp parallel shared(instruction_iterator)
 	{
 		size_t thread_id = omp_get_thread_num();
-		while(has_next_instruction(execution_order))
+		while(has_next_instruction(instruction_iterator))
 		{
 			execution_instruction_t instruction = 
-				next_instruction(execution_order);
+				next_instruction(instruction_iterator);
 			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
 			       thread_id,
 			       instruction.type,
@@ -273,6 +275,7 @@ void parallel_instruction_fetching_main_code()
 			usleep(1000);
 		}
 	}
+	free_execution_order_iterator(instruction_iterator);
 	free_execution_order(execution_order);
 }
 #endif
