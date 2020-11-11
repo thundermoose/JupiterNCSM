@@ -186,6 +186,7 @@ void parse_row(const char *row,
 	current_instruction.type = unknown;
 	if (unload_pointer != NULL)
 		current_instruction.type = unload;
+	row = block_pointer;
 	char **words = NULL;
 	size_t num_words = extract_words(&words,row);
 	current_instruction.vector_block_in = atoll(words[1]);

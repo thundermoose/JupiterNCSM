@@ -37,6 +37,8 @@ int get_single_particle_energy_argument(const arguments_t arguments);
 
 int get_two_particle_energy_argument(const arguments_t arguments);
 
+size_t get_max_loaded_memory_argument(const arguments_t arguments);
+
 void free_arguments(arguments_t arguments);
 
 #endif

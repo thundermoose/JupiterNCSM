@@ -92,6 +92,47 @@ int is_integer(const char *string)
 	return 1;
 }
 
+int is_memory_string(const char *string)
+{
+	if (*string < '0' || *string > '9')
+		return 0;
+	while (*string >= '0' && *string <= '9')
+		string++;
+	return strcmp(string,"GB") == 0 ||
+		strcmp(string,"MB") == 0 ||
+		strcmp(string,"kB") == 0 ||
+		strcmp(string,"GiB") == 0 ||
+		strcmp(string,"MiB") == 0 ||
+		strcmp(string,"kiB") == 0 ||
+		strcmp(string,"B") == 0 ||
+		*string == 0;
+}
+
+size_t parse_memory_string(const char *string)
+{
+	size_t memory = 0;
+	while (*string >= '0' && *string <= '9')
+	{
+		memory*=10;
+		memory+=(size_t)(*string-'0');
+		string++;
+	}
+	if (strcmp(string,"GB") == 0)
+		return memory*1000000000;
+	else if (strcmp(string,"MB") == 0)
+		return memory*1000000;
+	else if (strcmp(string,"kB") == 0)
+		return memory*1000;
+	else if (strcmp(string,"GiB") == 0)
+		return memory<<30;
+	else if (strcmp(string,"MiB") == 0)
+		return memory<<20;
+	else if (strcmp(string,"kiB") == 0)
+		return memory<<10;
+	else
+		return memory;
+}
+
 char *concatinate_strings(const char *string_1,
 			  const char *string_2)
 {

@@ -10,6 +10,7 @@
 #include <matrix_energy_block/matrix_energy_block.h>
 #include <log/log.h>
 #include <time.h>
+#include <omp.h>
 
 	__attribute__((constructor(101)))
 void initialization()
@@ -247,6 +248,8 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 	printf("3NF blocks only:\n");
 	Data_File *coupled_3nf_data =
 		open_data_file(get_interaction_path_3nf_argument(arguments));
+	set_max_loaded_memory(coupled_3nf_data,
+			      get_max_loaded_memory_argument(arguments));
 	transform_3nf_block_manager_t manager =
 		new_transform_3nf_block_manager
 		(coupled_3nf_data,
@@ -283,7 +286,6 @@ void process_matrix_energy_block(matrix_energy_block_t current_block,
 				 transform_3nf_block_manager_t manager,
 				 const char *output_path_base)
 {
-
 	transformed_block_t current_transformed_block = 
 		get_transformed_block(manager,current_block);
 	while (has_next_energy_matrix_block(current_block))
