@@ -26,6 +26,7 @@ typedef struct
 {
 	array_type_t type;
 	omp_lock_t array_lock;
+	omp_lock_t array_load_lock;
 	void *primary_array;
 	void *secondary_array;
 	size_t needed_by_instruction;
@@ -59,8 +60,6 @@ struct _memory_manager_
 static
 void initialize_arrays(memory_manager_t manager);
 
-static
-void initialize_multi_thread_environment(memory_manager_t manager);
 
 static
 size_t get_size_of_unloaded_arrays(memory_manager_t manager,
@@ -145,10 +144,12 @@ void launch_memory_manager_thread(memory_manager_t manager)
 			next_instruction(instructions);
 		log_entry("Fetching instruction %lu\n",
 		       instruction.instruction_index);
-		size_t size_to_load = 
-			get_size_of_unloaded_arrays(manager,instruction);
 		log_entry("Needs to load %lu B\n",
 		       size_to_load);
+#pragma omp critical(unloading_session)
+		{
+		size_t size_to_load = 
+			get_size_of_unloaded_arrays(manager,instruction);
 		if (size_to_load + manager->size_current_loaded_memory >
 		    manager->maximum_loaded_memory)
 		{
@@ -161,6 +162,7 @@ void launch_memory_manager_thread(memory_manager_t manager)
 			       min_size_to_unload);
 			unload_not_needed_arrays(manager,min_size_to_unload);
 		}
+		}
 		load_needed_arrays(manager,instruction);
 	}
 
@@ -169,11 +171,29 @@ void launch_memory_manager_thread(memory_manager_t manager)
 void begin_instruction(memory_manager_t manager,
 		       execution_instruction_t instruction)
 {
-	omp_set_lock(&manager->calculation_threads_positions_lock);
 	size_t thread_id = omp_get_thread_num();
+	omp_set_lock(&manager->calculation_threads_positions_lock);
 	manager->calculation_threads_positions[thread_id] =
-	       	instruction.instruction_index;
+		instruction.instruction_index;
 	omp_unset_lock(&manager->calculation_threads_positions_lock);
+#pragma omp critical(unloading_session)
+	{
+		size_t size_to_load = 
+			get_size_of_unloaded_arrays(manager,instruction);
+		if (size_to_load + manager->size_current_loaded_memory >
+		    manager->maximum_loaded_memory)
+		{
+			size_t min_size_to_unload = 
+				size_to_load +
+				manager->size_current_loaded_memory -
+				manager->maximum_loaded_memory;
+			printf("Needs to unload %lu B\n",min_size_to_unload);
+			log_entry("Min size to unload: %lu B\n",
+				  min_size_to_unload);
+			unload_not_needed_arrays(manager,min_size_to_unload);
+		}
+	}
+	load_needed_arrays(manager,instruction);
 }
 
 vector_block_t request_input_vector_block(memory_manager_t manager,
@@ -190,7 +210,6 @@ vector_block_t request_input_vector_block(memory_manager_t manager,
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->primary_array;
 	omp_unset_lock(&array->array_lock);
-	usleep(1);
 	return output_vector_block;
 }
 
@@ -208,7 +227,6 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->secondary_array;
 	omp_unset_lock(&array->array_lock);
-	usleep(1);
 	return output_vector_block;
 }
 
@@ -226,7 +244,6 @@ index_list_t request_index_list(memory_manager_t manager,
 	index_list_t output_index_list = 
 		(index_list_t)array->primary_array;
 	omp_unset_lock(&array->array_lock);
-	usleep(1);
 	return output_index_list;
 }
 
@@ -244,7 +261,6 @@ matrix_block_t request_matrix_block(memory_manager_t manager,
 	matrix_block_t output_index_list = 
 		(matrix_block_t)array->primary_array;
 	omp_unset_lock(&array->array_lock);
-	usleep(1);
 	return output_index_list;
 }
 
@@ -297,6 +313,7 @@ void initialize_arrays(memory_manager_t manager)
 		current_array->array_id = i+1;
 		current_array->size_array = array_sizes[i]/10;
 		omp_init_lock(&current_array->array_lock);
+		omp_init_lock(&current_array->array_load_lock);
 	}	
 	free(array_sizes);
 	iterator_t basis_blocks =
@@ -332,7 +349,6 @@ void initialize_arrays(memory_manager_t manager)
 	free_iterator(matrix_blocks);
 }
 
-static
 void initialize_multi_thread_environment(memory_manager_t manager)
 {
 	size_t num_threads = omp_get_num_threads();
@@ -411,29 +427,24 @@ static
 void load_needed_arrays(memory_manager_t manager,
 			execution_instruction_t instruction)
 {
-	if (!is_array_loaded(manager,instruction.vector_block_in))
-		load_array(manager,instruction.vector_block_in);
+	load_array(manager,instruction.vector_block_in);
 	set_needed_by(manager,
 		      instruction.vector_block_in,
 		      instruction.instruction_index);
-	if (!is_array_loaded(manager,instruction.vector_block_out))
-		load_array(manager,instruction.vector_block_out);
+	load_array(manager,instruction.vector_block_out);
 	set_needed_by(manager,
 		      instruction.vector_block_out,
 		      instruction.instruction_index);
-	if (!is_array_loaded(manager,instruction.matrix_element_file))
-		load_array(manager,instruction.matrix_element_file);
+	load_array(manager,instruction.matrix_element_file);
 	set_needed_by(manager,
 		      instruction.matrix_element_file,
 		      instruction.instruction_index);
-	if (instruction.neutron_index != no_index && 
-	    !is_array_loaded(manager,instruction.neutron_index))
+	if (instruction.neutron_index != no_index) 
 		load_array(manager,instruction.neutron_index);
 	set_needed_by(manager,
 		      instruction.neutron_index,
 		      instruction.instruction_index);
-	if (instruction.proton_index != no_index && 
-	    !is_array_loaded(manager,instruction.proton_index))
+	if (instruction.proton_index != no_index)
 		load_array(manager,instruction.proton_index);
 	set_needed_by(manager,
 		      instruction.proton_index,
@@ -477,6 +488,9 @@ void load_array(memory_manager_t manager,
 {
 	log_entry("Needs to load array %lu\n",array_id);
 	array_t *array = &manager->all_arrays[array_id-1];
+	if (!omp_test_lock(&array->array_load_lock) ||
+	    is_array_loaded(manager,array_id))
+		return;
 	omp_set_lock(&array->array_lock);
 	switch(array->type)
 	{
@@ -557,7 +571,10 @@ void set_needed_by(memory_manager_t manager,
 {
 	if (array_id == no_index)
 		return;
-	manager->all_arrays[array_id-1].needed_by_instruction = needed_by;
+#pragma omp critical(set_needed_by)
+	manager->all_arrays[array_id-1].needed_by_instruction = 
+		max(manager->all_arrays[array_id-1].needed_by_instruction,
+		    needed_by);
 }
 
 static

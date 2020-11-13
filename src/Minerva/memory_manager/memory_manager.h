@@ -20,6 +20,8 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 
 void launch_memory_manager_thread(memory_manager_t manager);
 
+void initialize_multi_thread_environment(memory_manager_t manager);
+
 void begin_instruction(memory_manager_t manager,
 		       execution_instruction_t instruction);
 
