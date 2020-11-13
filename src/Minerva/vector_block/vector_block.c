@@ -3,6 +3,7 @@
 #include <log/log.h>
 #include <error/error.h>
 #include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include <omp.h>
 #include <debug_mode/debug_mode.h>
@@ -37,6 +38,7 @@ vector_block_t new_vector_block(const char *base_directory,
 		vector_block->neutron_dimension*vector_block->proton_dimension;
 	vector_block->num_instances = 1;
 	vector_block->elements = (double**)malloc(sizeof(double*));
+	usleep(1);
 	*vector_block->elements = (double*)calloc(num_elements,sizeof(double));
 	load_vector_block_elements(vector_block);
 	return vector_block;
@@ -54,6 +56,7 @@ vector_block_t new_output_vector_block(const char *base_directory,
 	const size_t num_elements =
 		vector_block->neutron_dimension*vector_block->proton_dimension;
 	vector_block->num_instances = omp_get_num_threads();
+	usleep(1);
 	vector_block->elements = 
 		(double**)malloc(vector_block->num_instances*sizeof(double*));
 	for (size_t i = 0; i<vector_block->num_instances; i++)

@@ -29,6 +29,7 @@ typedef struct
 	omp_lock_t array_load_lock;
 	void *primary_array;
 	void *secondary_array;
+	size_t in_use;
 	size_t needed_by_instruction;
 	size_t size_array;
 	size_t array_id;
@@ -85,6 +86,9 @@ static
 void unload_array(memory_manager_t manager, size_t array_id);
 
 static
+void set_all_needed_by(memory_manager_t manager,
+		       execution_instruction_t instruction);
+static
 void set_needed_by(memory_manager_t manager,
 		   size_t array_id,
 		   size_t needed_by);
@@ -95,6 +99,9 @@ size_t get_last_thread(memory_manager_t manager);
 static
 size_t get_array_size(memory_manager_t manager,
 		      size_t array_id);
+
+static
+void test_request_lock(memory_manager_t manager);
 
 memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    const char *output_vector_base_directory,
@@ -116,7 +123,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->matrix_base_directory = copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
 	manager->execution_order = execution_order;
-	manager->maximum_loaded_memory = (size_t)(100)<<20;
+	manager->maximum_loaded_memory = (size_t)(15)<<20;
 	manager->size_current_loaded_memory = 0;
 	manager->num_waits = 0;
 	manager->total_wating_time = 0.0;
@@ -171,10 +178,12 @@ void launch_memory_manager_thread(memory_manager_t manager)
 void begin_instruction(memory_manager_t manager,
 		       execution_instruction_t instruction)
 {
+	printf("Begin instruction started\n");
 	size_t thread_id = omp_get_thread_num();
 	omp_set_lock(&manager->calculation_threads_positions_lock);
 	manager->calculation_threads_positions[thread_id] =
 		instruction.instruction_index;
+	set_all_needed_by(manager,instruction);
 	omp_unset_lock(&manager->calculation_threads_positions_lock);
 #pragma omp critical(unloading_session)
 	{
@@ -192,15 +201,19 @@ void begin_instruction(memory_manager_t manager,
 				  min_size_to_unload);
 			unload_not_needed_arrays(manager,min_size_to_unload);
 		}
+		test_request_lock(manager);
 	}
 	load_needed_arrays(manager,instruction);
+	printf("Begin instruction ended\n");
 }
 
 vector_block_t request_input_vector_block(memory_manager_t manager,
 				       size_t vector_block_id)
 {
 	// No new requests are allowed while unloading
-	omp_set_lock(&manager->request_lock);
+	printf("Request input vector block %lu started\n",
+	       vector_block_id);
+	test_request_lock(manager);
 	omp_unset_lock(&manager->request_lock);
 	wait_til_array_is_loaded(manager,vector_block_id);
 	array_t *array = &manager->all_arrays[vector_block_id-1];
@@ -209,7 +222,10 @@ vector_block_t request_input_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->primary_array;
+	array->in_use++;
 	omp_unset_lock(&array->array_lock);
+	printf("Request input vector block %lu ended\n",
+	       vector_block_id);
 	return output_vector_block;
 }
 
@@ -217,6 +233,9 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 					size_t vector_block_id)
 {
 	// No new requests are allowed while unloading
+	printf("Request output vector block %lu started\n",
+	       vector_block_id);
+	test_request_lock(manager);
 	omp_set_lock(&manager->request_lock);
 	omp_unset_lock(&manager->request_lock);
 	wait_til_array_is_loaded(manager,vector_block_id);
@@ -226,7 +245,10 @@ vector_block_t request_output_vector_block(memory_manager_t manager,
 		error("%lu is not a vector block\n", vector_block_id);
 	vector_block_t output_vector_block = 
 		(vector_block_t)array->secondary_array;
+	array->in_use++;
 	omp_unset_lock(&array->array_lock);
+	printf("Request output vector block %lu ended\n",
+	       vector_block_id);
 	return output_vector_block;
 }
 
@@ -234,6 +256,9 @@ index_list_t request_index_list(memory_manager_t manager,
 			     const size_t index_list_id)
 {
 	// No new requests are allowed while unloading
+	printf("Request index list %lu started\n",
+	       index_list_id);
+	test_request_lock(manager);
 	omp_set_lock(&manager->request_lock);
 	omp_unset_lock(&manager->request_lock);
 	wait_til_array_is_loaded(manager,index_list_id);
@@ -243,7 +268,10 @@ index_list_t request_index_list(memory_manager_t manager,
 		error("%lu is not an index list\n", index_list_id);
 	index_list_t output_index_list = 
 		(index_list_t)array->primary_array;
+	array->in_use++;
 	omp_unset_lock(&array->array_lock);
+	printf("Request index list %lu ended\n",
+	       index_list_id);
 	return output_index_list;
 }
 
@@ -251,33 +279,57 @@ matrix_block_t request_matrix_block(memory_manager_t manager,
 				 size_t matrix_block_id)
 {
 	// No new requests are allowed while unloading
+	printf("Request matrix block %lu started\n",
+	       matrix_block_id);
+	test_request_lock(manager);
 	omp_set_lock(&manager->request_lock);
 	omp_unset_lock(&manager->request_lock);
+	printf("request lock was not set\n");
 	wait_til_array_is_loaded(manager,matrix_block_id);
+	printf("Not stuck at waiting\n");
 	array_t *array = &manager->all_arrays[matrix_block_id-1];
 	omp_set_lock(&array->array_lock);
 	if (array->type != MATRIX_BLOCK)
 		error("%lu is not a matrix block\n", matrix_block_id);
 	matrix_block_t output_index_list = 
 		(matrix_block_t)array->primary_array;
+	array->in_use++;
 	omp_unset_lock(&array->array_lock);
+	printf("Request matrix block %lu ended\n",
+	       matrix_block_id);
 	return output_index_list;
 }
 
 void release_input_vector(memory_manager_t manager, size_t array_id)
 {
+	array_t *current_array = &manager->all_arrays[array_id-1];
+	omp_set_lock(&current_array->array_lock);
+	current_array->in_use--;
+	omp_unset_lock(&current_array->array_lock);
 }
 
 void release_output_vector(memory_manager_t manager, size_t array_id)
 {
+	array_t *current_array = &manager->all_arrays[array_id-1];
+	omp_set_lock(&current_array->array_lock);
+	current_array->in_use--;
+	omp_unset_lock(&current_array->array_lock);
 }
 
 void release_index_list(memory_manager_t manager, size_t array_id)
 {
+	array_t *current_array = &manager->all_arrays[array_id-1];
+	omp_set_lock(&current_array->array_lock);
+	current_array->in_use--;
+	omp_unset_lock(&current_array->array_lock);
 }
 
 void release_matrix_block(memory_manager_t manager, size_t array_id)
 {
+	array_t *current_array = &manager->all_arrays[array_id-1];
+	omp_set_lock(&current_array->array_lock);
+	current_array->in_use--;
+	omp_unset_lock(&current_array->array_lock);
 }
 
 void free_memory_manager(memory_manager_t manager)
@@ -312,6 +364,7 @@ void initialize_arrays(memory_manager_t manager)
 		array_t *current_array = &manager->all_arrays[i];
 		current_array->array_id = i+1;
 		current_array->size_array = array_sizes[i]/10;
+		current_array->in_use = 0;
 		omp_init_lock(&current_array->array_lock);
 		omp_init_lock(&current_array->array_load_lock);
 	}	
@@ -394,19 +447,24 @@ void unload_not_needed_arrays(memory_manager_t manager,
 		size_t last_thread = get_last_thread(manager);
 		size_t *candidate_arrays = manager->candidate_arrays_workspace;
 		size_t num_candidate_arrays = 0;
+		size_t can_unload = 0;
 		for (size_t i = 0; i < manager->num_arrays; i++)
 		{
 			array_t *candidate = manager->all_arrays+i;
 			if ((candidate->primary_array != NULL || 
 			     candidate->secondary_array != NULL) &&
-			    candidate->needed_by_instruction < last_thread)
+			    candidate->needed_by_instruction < last_thread &&
+			    candidate->in_use == 0)
 			{
 				log_entry("Can unload %lu of size %lu B\n",
 				       i+1,candidate->size_array);
 				candidate_arrays[num_candidate_arrays++] =
 					candidate->array_id;
+				can_unload += candidate->size_array;
 			}
 		}
+		printf("Can unload: %lu, and needs to unload: %ld\n",
+		       can_unload,min_size_to_unload-size_unloaded_memory);
 		omp_unset_lock(&manager->request_lock);
 		for (size_t i = 0; i < num_candidate_arrays; i++)
 		{
@@ -416,11 +474,15 @@ void unload_not_needed_arrays(memory_manager_t manager,
 			       candidate_arrays[i]);
 			unload_array(manager,candidate_arrays[i]);
 			size_unloaded_memory += size_array;
+			printf("unloaded %lu, %lu B\n",
+			       candidate_arrays[i],size_array);
 			if (size_unloaded_memory > min_size_to_unload)
 				break;
 		}
-		usleep(10);
+		usleep(1);
 	}
+	printf("Unloaded %lu, needed to unload %lu\n",
+	       size_unloaded_memory,min_size_to_unload);
 }
 
 static
@@ -428,27 +490,12 @@ void load_needed_arrays(memory_manager_t manager,
 			execution_instruction_t instruction)
 {
 	load_array(manager,instruction.vector_block_in);
-	set_needed_by(manager,
-		      instruction.vector_block_in,
-		      instruction.instruction_index);
 	load_array(manager,instruction.vector_block_out);
-	set_needed_by(manager,
-		      instruction.vector_block_out,
-		      instruction.instruction_index);
 	load_array(manager,instruction.matrix_element_file);
-	set_needed_by(manager,
-		      instruction.matrix_element_file,
-		      instruction.instruction_index);
 	if (instruction.neutron_index != no_index) 
 		load_array(manager,instruction.neutron_index);
-	set_needed_by(manager,
-		      instruction.neutron_index,
-		      instruction.instruction_index);
 	if (instruction.proton_index != no_index)
 		load_array(manager,instruction.proton_index);
-	set_needed_by(manager,
-		      instruction.proton_index,
-		      instruction.instruction_index);
 }
 
 static
@@ -486,11 +533,20 @@ static
 void load_array(memory_manager_t manager,
 		size_t array_id)
 {
-	log_entry("Needs to load array %lu\n",array_id);
+	size_t thread_id = omp_get_thread_num();
+	printf("Thread %lu needs to load array %lu\n",
+	       thread_id,array_id);
 	array_t *array = &manager->all_arrays[array_id-1];
-	if (!omp_test_lock(&array->array_load_lock) ||
-	    is_array_loaded(manager,array_id))
+	if (!omp_test_lock(&array->array_load_lock))
 		return;
+	if (is_array_loaded(manager,array_id))
+	{
+		omp_unset_lock(&array->array_load_lock);
+		return;
+	}
+	printf("Thread %lu: The array %lu is not loaded\n",
+	       thread_id,
+	       array_id);
 	omp_set_lock(&array->array_lock);
 	switch(array->type)
 	{
@@ -529,6 +585,7 @@ void load_array(memory_manager_t manager,
 	}	
 	manager->size_current_loaded_memory+=array->size_array;
 	omp_unset_lock(&array->array_lock);
+	omp_unset_lock(&array->array_load_lock);
 }
 
 static
@@ -565,6 +622,27 @@ void unload_array(memory_manager_t manager,
 }
 
 static
+void set_all_needed_by(memory_manager_t manager,
+		       execution_instruction_t instruction)
+{
+	set_needed_by(manager,
+		      instruction.vector_block_in,
+		      instruction.instruction_index);
+	set_needed_by(manager,
+		      instruction.vector_block_out,
+		      instruction.instruction_index);
+	set_needed_by(manager,
+		      instruction.matrix_element_file,
+		      instruction.instruction_index);
+	set_needed_by(manager,
+		      instruction.neutron_index,
+		      instruction.instruction_index);
+	set_needed_by(manager,
+		      instruction.proton_index,
+		      instruction.instruction_index);
+}
+
+static
 void set_needed_by(memory_manager_t manager,
 		   size_t array_id,
 		   size_t needed_by)
@@ -597,4 +675,18 @@ size_t get_array_size(memory_manager_t manager,
 		      size_t array_id)
 {
 	return manager->all_arrays[array_id-1].size_array;	
+}
+
+static
+void test_request_lock(memory_manager_t manager)
+{
+	if (omp_test_lock(&manager->request_lock))
+	{
+		printf("Request lock is not set\n");
+		omp_unset_lock(&manager->request_lock);
+	}
+	else
+	{
+		printf("Request lock is set\n");
+	}
 }
