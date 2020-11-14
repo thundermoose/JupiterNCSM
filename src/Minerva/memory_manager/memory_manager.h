@@ -18,8 +18,6 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    combination_table_t combination_table,
 				    execution_order_t execution_order);
 
-void launch_memory_manager_thread(memory_manager_t manager);
-
 void initialize_multi_thread_environment(memory_manager_t manager);
 
 void begin_instruction(memory_manager_t manager,
