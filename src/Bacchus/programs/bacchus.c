@@ -53,7 +53,8 @@ int main(int num_arguments, char **argument_list)
 			(execution_order,
 			 combination_table,
 			 get_index_lists_base_directory_setting(settings),
-			 get_matrix_file_base_directory_setting(settings))
+			 get_matrix_file_base_directory_setting(settings),
+			 get_maximum_loaded_memory_setting(settings))
 	};
 	lanczos_environment_t lanczos_environment =
 		new_lanczos_environment(lanczos_settings);

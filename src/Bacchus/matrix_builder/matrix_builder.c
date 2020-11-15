@@ -32,11 +32,14 @@ matrix_builder_t new_matrix_builder(matrix_builder_settings_t settings)
 	builder->execution_order =
 		read_execution_order(settings.minerva_instruction_path,
 				     builder->combination_table);
+
+	const size_t max_load_memory = (size_t)(16)<<30;
 	builder->scheduler = 
 		new_scheduler(builder->execution_order,
 			      builder->combination_table,
 			      settings.index_list_path,
-			      settings.interaction_path);		
+			      settings.interaction_path,
+			      max_load_memory);		
 	return builder;	
 }
 

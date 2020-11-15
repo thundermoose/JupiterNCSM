@@ -18,6 +18,7 @@ struct _scheduler_
 	char *index_lists_base_directory;
 	char *matrix_file_base_directory;
 	combination_table_t combination_table;
+	size_t maximum_loaded_memory;
 };
 
 static
@@ -61,7 +62,8 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 scheduler_t new_scheduler(execution_order_t execution_order,
 			  combination_table_t combination_table,
 			  const char *index_lists_base_directory,
-			  const char *matrix_file_base_directory)
+			  const char *matrix_file_base_directory,
+			  size_t maximum_loaded_memory)
 {
 	scheduler_t scheduler =
 		(scheduler_t)malloc(sizeof(struct _scheduler_));
@@ -71,6 +73,7 @@ scheduler_t new_scheduler(execution_order_t execution_order,
 		copy_string(index_lists_base_directory);
 	scheduler->matrix_file_base_directory =
 		copy_string(matrix_file_base_directory);
+	scheduler->maximum_loaded_memory = maximum_loaded_memory;
 	return scheduler;
 }
 
@@ -84,7 +87,8 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table,
-				   scheduler->execution_order);
+				   scheduler->execution_order,
+				   scheduler->maximum_loaded_memory);
 	execution_order_iterator_t instruction_iterator =
 		get_execution_order_iterator(scheduler->execution_order);
 	double fastest_block_time = INFINITY;

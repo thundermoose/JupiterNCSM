@@ -29,6 +29,8 @@ size_t get_num_protons_setting(const settings_t settings);
 
 size_t get_max_num_lanczos_iterations_setting(const settings_t settings);
 
+size_t get_maximum_loaded_memory_setting(const settings_t settings);
+
 double get_tollerance_setting(const settings_t settings);
 
 void free_settings(settings_t settings);

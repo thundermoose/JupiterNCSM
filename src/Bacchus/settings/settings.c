@@ -17,6 +17,7 @@ struct _settings_
 	size_t num_neutrons;
 	size_t num_protons;
 	size_t max_num_lanczos_iterations;
+	size_t maximum_loaded_memory;
 	double tollerance;
 };
 
@@ -25,6 +26,7 @@ settings_t parse_settings(size_t num_arguments,
 {
 	char *settings_file_name = "bacchus.conf";
 	int show_help = 0;
+	size_t maximum_loaded_memory = 0;
 	for (size_t i = 1; i<num_arguments; i++)
 	{
 		if (strcmp(argument_list[i],"--settings-file") == 0)
@@ -41,6 +43,16 @@ settings_t parse_settings(size_t num_arguments,
 			 strcmp(argument_list[i],"-h") == 0)
 		{
 			show_help = 1;	
+		}
+		else if (strcmp(argument_list[i],"--max-memory-load") == 0)
+		{
+			char *memory_string = argument_list[++i];
+			if (!is_memory_string(memory_string))
+				error("--max-memory-load followed by unknown "
+				      " string \"%s\".\n",
+				      memory_string);
+			maximum_loaded_memory = 
+				parse_memory_string(memory_string);		
 		}
 		else
 		{
@@ -153,6 +165,19 @@ settings_t parse_settings(size_t num_arguments,
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
+	if (config_setting_lookup_string(lanczos_setting,
+					 "max_memory_load",
+					 (const char **)
+					 &string_buffer) == CONFIG_FALSE)
+		settings->maximum_loaded_memory = (size_t)(16)<<30;
+	else if (is_memory_string(string_buffer))
+		settings->maximum_loaded_memory =
+		       	parse_memory_string(string_buffer);
+	else
+		error("max_memory_load is not set to correct memory string\n");
+	// Command argument has presidence over settings file
+	if (maximum_loaded_memory > 0)
+		settings->maximum_loaded_memory = maximum_loaded_memory;
 	config_destroy(&config);
 	return settings;	
 }
@@ -164,11 +189,15 @@ int should_show_help_text(const settings_t settings)
 
 void show_help_text(const settings_t settings)
 {
-	printf("Usage: %s [--settings-file <file-path>] [-h/--help]\n"
+	printf("Usage: %s [--settings-file <file-path>] [-h/--help] "
+	       "[--max-memory-load <memory size>\n"
 	       "Flags:\n"
 	       "\t--settings-file <file-path>: To provide %s with an "
 	       "alternative settings file than \"bacchus.conf\".\n"
 	       "\t-h/--help: To display this message.\n"
+	       "\t--max-memory-load <memory size>: To provide a different "
+	       "limit on how much memory the matrix vector multiplication "
+	       "uses\n"
 	       "The settings file:\n"
 	       "The settings file is read using the libconfig library."
 	       "Therefore, the user is referred to the libconfig documentation"
@@ -240,6 +269,11 @@ size_t get_num_protons_setting(const settings_t settings)
 size_t get_max_num_lanczos_iterations_setting(const settings_t settings)
 {
 	return settings->max_num_lanczos_iterations;
+}
+
+size_t get_maximum_loaded_memory_setting(const settings_t settings)
+{
+	return settings->maximum_loaded_memory;
 }
 
 double get_tollerance_setting(const settings_t settings)

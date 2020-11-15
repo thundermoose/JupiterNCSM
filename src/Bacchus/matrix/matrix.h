@@ -21,7 +21,8 @@ matrix_t new_matrix_from_numpy(FILE* matrix_file);
 matrix_t new_generative_matrix(execution_order_t execution_order,
 			       combination_table_t combination_table,
 			       const char *index_lists_base_directory,
-			       const char *matrix_file_base_directory);
+			       const char *matrix_file_base_directory,
+			       size_t maximum_loaded_memory);
 
 void matrix_vector_multiplication(vector_t result_vector,
 				  const matrix_t matrix,

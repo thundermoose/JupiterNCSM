@@ -16,7 +16,8 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    const char *index_list_base_directory,
 				    const char *matrix_base_directory,
 				    combination_table_t combination_table,
-				    execution_order_t execution_order);
+				    execution_order_t execution_order,
+				    size_t maximum_loaded_memory);
 
 void initialize_multi_thread_environment(memory_manager_t manager);
 
