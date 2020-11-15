@@ -19,8 +19,6 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    execution_order_t execution_order,
 				    size_t maximum_loaded_memory);
 
-void initialize_multi_thread_environment(memory_manager_t manager);
-
 void begin_instruction(memory_manager_t manager,
 		       execution_instruction_t instruction);
 

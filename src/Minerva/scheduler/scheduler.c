@@ -101,7 +101,6 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 			printf("There are %d threads\n",
 			       omp_get_num_threads());
 		}
-		initialize_multi_thread_environment(memory_manager);
 		size_t thread_id = omp_get_thread_num();
 		printf("thread_id = %lu\n",thread_id);
 		//if (thread_id < 4)

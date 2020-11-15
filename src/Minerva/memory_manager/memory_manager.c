@@ -49,13 +49,11 @@ struct _memory_manager_
 	execution_order_t execution_order;
 	size_t size_current_loaded_memory;
 	size_t maximum_loaded_memory;
-	size_t *calculation_threads_positions;
 	size_t *candidate_arrays_workspace;
 	double total_wating_time;
 	size_t num_waits;
 	double min_waiting_time;
 	double max_waiting_time;
-	omp_lock_t calculation_threads_positions_lock;
 	omp_lock_t size_current_loaded_memory_lock;
 };
 
@@ -142,7 +140,6 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->total_wating_time = 0.0;
 	manager->min_waiting_time = INFINITY;
 	manager->max_waiting_time = 0.0;
-	omp_init_lock(&manager->calculation_threads_positions_lock);
 	omp_init_lock(&manager->size_current_loaded_memory_lock);
 	initialize_arrays(manager);
 	return manager;
@@ -151,11 +148,6 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 void begin_instruction(memory_manager_t manager,
 		       execution_instruction_t instruction)
 {
-	size_t thread_id = omp_get_thread_num();
-	omp_set_lock(&manager->calculation_threads_positions_lock);
-	manager->calculation_threads_positions[thread_id] =
-		instruction.instruction_index;
-	omp_unset_lock(&manager->calculation_threads_positions_lock);
 	set_all_needed_by(manager,instruction);
 #pragma omp critical (unloading)
 	{
@@ -270,7 +262,7 @@ void free_memory_manager(memory_manager_t manager)
 	free(manager->output_vector_base_directory);
 	free(manager->index_list_base_directory);
 	free(manager->matrix_base_directory);
-	omp_destroy_lock(&manager->calculation_threads_positions_lock);
+	free(manager->candidate_arrays_workspace);
 	omp_destroy_lock(&manager->size_current_loaded_memory_lock);
 	free(manager);
 }
@@ -289,6 +281,9 @@ void initialize_arrays(memory_manager_t manager)
 		omp_init_lock(&current_array->in_use_lock);
 	}	
 	free(array_sizes);
+	size_t num_threads = 0;
+#pragma omp parallel
+	num_threads = omp_get_num_threads();
 	iterator_t basis_blocks =
 	       	new_basis_block_iterator(manager->combination_table);
 	basis_block_t current_basis_block;
@@ -298,8 +293,13 @@ void initialize_arrays(memory_manager_t manager)
 	{
 		log_entry("Array %lu is a vector block\n",
 		       current_basis_block.block_id);
-		manager->all_arrays[current_basis_block.block_id-1].type = 
+		array_t *current_array =
+			&manager->all_arrays[current_basis_block.block_id-1];
+		current_array->type = 
 			VECTOR_BLOCK;
+		// Since there is one output vector per thread
+		// and one input vector
+		current_array->size_array *= (num_threads+1);
 	}
 	free_iterator(basis_blocks);
 	iterator_t index_lists = 
@@ -320,16 +320,6 @@ void initialize_arrays(memory_manager_t manager)
 		manager->all_arrays[matrix_block.matrix_block_id-1].type =
 			MATRIX_BLOCK;
 	free_iterator(matrix_blocks);
-}
-
-void initialize_multi_thread_environment(memory_manager_t manager)
-{
-#pragma omp single
-	{
-		size_t num_threads = omp_get_num_threads();
-		manager->calculation_threads_positions =
-			(size_t*)calloc(num_threads,sizeof(size_t));	
-	}
 }
 
 static
