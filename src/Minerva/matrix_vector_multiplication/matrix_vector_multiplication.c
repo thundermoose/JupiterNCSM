@@ -2,6 +2,7 @@
 #include <log/log.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <math.h>
 
 int retrive_phase_info(int value)
 {
@@ -48,6 +49,8 @@ void multiplication_neutrons(vector_block_t out_block,
 		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
 			matrix_elements[remove_phase_info(matrix_index)];
+		if (fabs(matrix_element) < 1e-12)
+			continue;
 		for (size_t proton_state = 0;
 		     proton_state < num_proton_states;
 		     proton_state++)
@@ -101,6 +104,8 @@ void multiplication_protons(vector_block_t out_block,
 		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
 			matrix_elements[remove_phase_info(matrix_index)];
+		if (fabs(matrix_element) < 1e-12)
+			continue;
 		for (size_t neutron_state = 0;
 		     neutron_state < num_neutron_states;
 		     neutron_state++)
@@ -244,6 +249,8 @@ void multiplication_neutrons_off_diag(vector_block_t out_block_left,
 		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
 			matrix_elements[remove_phase_info(matrix_index)];
+		if (fabs(matrix_element) < 1e-12)
+			continue;
 		for (size_t proton_state = 0;
 		     proton_state < num_proton_states;
 		     proton_state++)
@@ -316,6 +323,8 @@ void multiplication_protons_off_diag(vector_block_t out_block_left,
 		const int sign = retrive_phase_info(matrix_index);
 		const double matrix_element =
 			matrix_elements[remove_phase_info(matrix_index)];
+		if (fabs(matrix_element) < 1e-12)
+			continue;
 		for (size_t neutron_state = 0;
 		     neutron_state < num_neutron_states;
 		     neutron_state++)
