@@ -260,25 +260,19 @@ void subtract_line_projection(vector_t target_vector,
 	assert(target_vector->dimension == line_direction->dimension);
 	assert(target_vector->num_vector_blocks ==
 	       line_direction->num_vector_blocks);
-	size_t num_threads = 0;
-#pragma omp parallel
-	num_threads = omp_get_num_threads();
-	double **element_buffer = 
-		(double**)calloc(num_threads,sizeof(double**));
-	size_t *buffer_length = (size_t*)calloc(num_threads,sizeof(size_t));
-#pragma omp parallel for
+	double *element_buffer = NULL;
+	size_t buffer_length = 0;
 	for (size_t i = 0; i<target_vector->num_vector_blocks; i++)
 	{
-		size_t thread_id = omp_get_thread_num();
 		vector_block_t vector_block = target_vector->vector_blocks[i];
 		assert(compare_blocks(vector_block,
 				      line_direction->vector_blocks[i]));
-		expand_element_buffer(&element_buffer[thread_id],
-				      &buffer_length[thread_id],
+		expand_element_buffer(&element_buffer,
+				      &buffer_length,
 				      2*vector_block.block_length);
-		double *target_vector_elements = element_buffer[thread_id];
+		double *target_vector_elements = element_buffer;
 		double *line_direction_elements =
-			element_buffer[thread_id] + vector_block.block_length;
+			element_buffer + vector_block.block_length;
 		load_vector_elements(target_vector_elements,
 				     target_vector,
 				     vector_block);
@@ -293,10 +287,7 @@ void subtract_line_projection(vector_t target_vector,
 				     target_vector,
 				     vector_block);
 	}
-	for (size_t i = 0; i < num_threads; i++)
-		free(element_buffer[i]);
 	free(element_buffer);
-	free(buffer_length);
 }
 
 void subtract_plane_projection(vector_t target_vector,
@@ -315,29 +306,23 @@ void subtract_plane_projection(vector_t target_vector,
 	       first_direction->num_vector_blocks);
 	assert(target_vector->num_vector_blocks ==
 	       second_direction->num_vector_blocks);
-	size_t num_threads = 0;
-#pragma omp parallel
-	num_threads = omp_get_num_threads();
-	double **element_buffer =
-	       	(double**)calloc(num_threads,sizeof(double*));
-	size_t *buffer_length = (size_t*)calloc(num_threads,sizeof(size_t));
-#pragma omp parallel for
+	double *element_buffer = NULL;
+	size_t buffer_length = 0;
 	for (size_t i = 0; i<target_vector->num_vector_blocks; i++)
 	{
-		size_t thread_id = omp_get_thread_num();
 		vector_block_t vector_block = target_vector->vector_blocks[i];
 		assert(compare_blocks(vector_block,
 				      first_direction->vector_blocks[i]));
 		assert(compare_blocks(vector_block,
 				      second_direction->vector_blocks[i]));
-		expand_element_buffer(&element_buffer[thread_id],
-				      &buffer_length[thread_id],
+		expand_element_buffer(&element_buffer,
+				      &buffer_length,
 				      3*vector_block.block_length);
-		double *target_vector_elements = element_buffer[thread_id];
+		double *target_vector_elements = element_buffer;
 		double *first_direction_elements =
-			element_buffer[thread_id] + vector_block.block_length;
+			element_buffer + vector_block.block_length;
 		double *second_direction_elements =
-			element_buffer[thread_id] + 
+			element_buffer + 
 			2*vector_block.block_length;
 		load_vector_elements(target_vector_elements,
 				     target_vector,
@@ -360,10 +345,7 @@ void subtract_plane_projection(vector_t target_vector,
 				     target_vector,
 				     vector_block);
 	}
-	for (size_t i = 0; i<num_threads; i++)
-		free(element_buffer[i]);
 	free(element_buffer);
-	free(buffer_length);
 }
 
 double norm(const vector_t vector)
