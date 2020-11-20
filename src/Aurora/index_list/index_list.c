@@ -74,7 +74,8 @@ index_list_t parse_binary_index_lists(const char *file_name)
 	size_t num_bytes = ftell(file);
 	fseek(file,0,SEEK_SET);
 	if (num_bytes % sizeof(index_triple_t) != 0)
-		error("The file %s does not include index triples\n");
+		error("The file %s does not include index triples\n",
+		      file_name);
 	index_list->num_indices = num_bytes/sizeof(index_triple_t);
 	index_list->indices = (index_triple_t*)malloc(num_bytes);
 	if (fread(index_list->indices,
