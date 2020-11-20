@@ -61,6 +61,32 @@ index_list_t parse_human_readable_index_list(const char *file_name)
 	return index_list;	
 }
 
+index_list_t parse_binary_index_lists(const char *file_name)
+{
+	index_list_t index_list =
+	       	(index_list_t)calloc(1,sizeof(struct _index_list_));
+	FILE *file = fopen(file_name,"r");
+	if (file == NULL)
+		error("Could not open file %s. %s\n",
+		      file_name,
+		      strerror(errno));
+	fseek(file,0,SEEK_END);
+	size_t num_bytes = ftell(file);
+	fseek(file,0,SEEK_SET);
+	if (num_bytes % sizeof(index_triple_t) != 0)
+		error("The file %s does not include index triples\n");
+	index_list->num_indices = num_bytes/sizeof(index_triple_t);
+	index_list->indices = (index_triple_t*)malloc(num_bytes);
+	if (fread(index_list->indices,
+		  sizeof(index_triple_t),
+		  index_list->num_indices,
+		  file) < index_list->num_indices)
+		error("Could not read %lu bytes from file %s\n",
+		      num_bytes,file_name);
+	fclose(file);
+	return index_list;
+}
+
 void save_index_list(index_list_t index_list,
 		     const char *file_name)
 {
