@@ -23,7 +23,8 @@ int main(int num_arguments,
 {
 	if (num_arguments < 6)
 	{
-		printf("Usage %s <comb.txt> <index_list_path> <output_path> <Z> <N>\n",
+		printf("Usage %s <comb.txt> <index_list_path> <output_path> "
+		       "<Z> <N> [--human-readable] [--no-3NF]\n",
 		       *argument_list);
 		return EXIT_FAILURE;
 	}
@@ -33,10 +34,14 @@ int main(int num_arguments,
 	size_t num_protons = atoi(argument_list[4]);
 	size_t num_neutrons = atoi(argument_list[5]);
 	int human_readable_mode = 0;
+	int no_three_nf = 0;
 	for (size_t i = 6; i<num_arguments; i++)
 	{
 		if (strcmp(argument_list[i],"--human-readable")==0)
 			human_readable_mode = 1;
+		if (strcmp(argument_list[i],"--no-3NF") == 0)
+			no_three_nf = 1;
+
 	}
 	combination_table_t table = new_combination_table(comb_file_path,
 							  num_protons,
@@ -44,6 +49,9 @@ int main(int num_arguments,
 	while (has_next_index_list_setting(table))
 	{
 		index_list_setting_t setting = next_index_list_setting(table);
+		if (no_three_nf &&
+		    count_particles(setting.block_type) == 3)
+			continue;
 		transform_file(index_list_path,
 			       output_path,
 			       setting,
