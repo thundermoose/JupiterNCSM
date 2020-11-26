@@ -372,6 +372,37 @@ double norm(const vector_t vector)
 	return sqrt(accumulator);
 }
 
+void vector_add_scaled(vector_t result,
+		       double scaleing_factor,
+		       const vector_t term)
+{
+	double *element_buffer = NULL;
+	size_t element_buffer_size = 0;
+	for (size_t i = 0; i<vector->num_vector_blocks; i++)
+	{
+		vector_block_t vector_block = result->vector_blocks[i];
+		expand_element_buffer(&element_buffer,
+				      &element_buffer_size,
+				      vector_block.block_length*2);
+		double *result_block = element_buffer;
+		double *term_block = element_buffer+vector_block.block_length;
+		load_vector_elements(result_block,
+				     result,
+				     vector_block);
+		load_vector_elements(term_block,
+				     term,
+				     vector_block);
+		array_add_scaled(result_block,
+				 scaleing_factor,
+				 term_block,
+				 vector_block.block_length);
+		save_vector_elements(result_block,
+				     result,
+				     vector_block);
+	}
+	free(element_buffer);
+}
+
 void scale(vector_t vector,double scaling)
 {
 	log_entry("Scaling vector %s",

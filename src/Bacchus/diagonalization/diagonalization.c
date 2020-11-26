@@ -54,6 +54,8 @@ eigen_system_t diagonalize_tridiagonal_matrix(
 	assert(info == 0);
 	set_eigen_values(eigen_system,
 			eigen_values);
+	set_raw_eigen_vectors(eigen_system,
+			  eigen_vectors);
 	free(eigen_values);
 	free(work_array);
 	free(eigen_vectors);	

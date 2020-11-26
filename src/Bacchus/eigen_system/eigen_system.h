@@ -18,6 +18,9 @@ double* get_eigen_values(eigen_system_t eigen_system);
 void set_eigen_values(eigen_system_t eigen_system,
 	double *eigen_values);
 
+void set_raw_eigen_vectors(eigen_system_t eigen_system,
+			   double *eigen_vectors);
+
 void print_eigen_system(const eigen_system_t eigen_system);
 
 void free_eigen_system(eigen_system_t eigen_system);

@@ -49,6 +49,10 @@ void subtract_plane_projection(vector_t target_vector,
 
 double norm(const vector_t vector);
 
+void vector_add_scaled(vector_t result,
+		       double scaleing_factor,
+		       const vector_t term);
+
 void scale(vector_t vector,double scaling);
 
 void reorthogonalize_vector(vector_t vector_to_orthogonalize,

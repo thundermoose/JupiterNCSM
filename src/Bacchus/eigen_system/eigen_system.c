@@ -19,6 +19,9 @@ eigen_system_t new_empty_eigensystem(const size_t num_eigen_values)
 	eigen_system->num_eigen_values = num_eigen_values;
 	eigen_system->eigen_values = 
 		(double*)calloc(num_eigen_values,sizeof(double));
+	eigen_system->eigen_vector_amplitudes =
+		(double*)calloc(num_eigen_values*num_eigen_values,
+				sizeof(double));
 	return eigen_system;	
 }
 
@@ -56,6 +59,15 @@ void set_eigen_values(eigen_system_t eigen_system,
 	memcpy(eigen_system->eigen_values,
 		eigen_values,
 		eigen_system->num_eigen_values*sizeof(double));
+}
+
+void set_raw_eigen_vectors(eigen_system_t eigen_system,
+			   double *eigen_vectors)
+{
+	memcpy(eigen_system->eigen_vector_amplitudes,
+       		eigen_vectors,
+ 		eigen_system->num_eigen_values*eigen_system->num_eigen_values*
+		sizeof(double));		
 }
 
 void print_eigen_system(const eigen_system_t eigen_system)

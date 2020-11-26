@@ -15,9 +15,10 @@ basis_t new_basis_from_vectors(
 		vector_t *vectors,
 		size_t num_vectors);
 
-vector_t construct_vector(basis_t basis,
-		double *amplitudes,
-		size_t num_amplitudes);
+void construct_vector(vector_t result,
+		      basis_t basis,
+		      double *amplitudes,
+		      size_t num_amplitudes);
 
 void free_basis(basis_t basis);
 
