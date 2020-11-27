@@ -1,4 +1,7 @@
 #include <arguments/arguments.h>
+#include <array_builder/array_builder.h>
+#include <stdio.h>
+#include <string.h>
 
 struct _arguments_
 {
@@ -13,7 +16,7 @@ struct _arguments_
 	char *output_path;	
 };
 
-const double one = 1.0;
+double one = 1.0;
 
 arguments_t parse_arguments(size_t num_arguments,
 			    char **argument_list)
@@ -34,12 +37,12 @@ arguments_t parse_arguments(size_t num_arguments,
 		arguments->num_protons = atoll(argument_list[3]);
 		arguments->num_neutrons = atoll(argument_list[4]);
 		array_builder_t operator_paths_builder = 
-			new_array_builder(&arguments->operator_paths,
+			new_array_builder((void**)&arguments->operator_paths,
 					  &arguments->num_operators,
 					  sizeof(char*));
 		size_t num_coefficients = 0;
 		array_builder_t coefficient_builder =
-			new_array_builder(&arguments->coefficients,
+			new_array_builder((void**)&arguments->coefficients,
 					  &num_coefficients,
 					  sizeof(double));
 		for (size_t i = 5; i<num_arguments; i++)
@@ -75,7 +78,7 @@ void show_usage(arguments_t arguments)
 {
 	printf("Usage: %s <output_path> <comb.txt> "
 	       "<num protons> <num neutrons> "
-	       "[operator_path [-c/--coefficient <value>]]...",
+	       "[operator_path [-c/--coefficient <value>]]...\n",
 	       arguments->program);
 }
 
@@ -96,7 +99,7 @@ size_t get_num_neutron_argument(arguments_t arguments)
 
 size_t num_operator_arguments(arguments_t arguments)
 {
-	size_t arguments->num_operators;
+	return arguments->num_operators;
 }
 
 const double *get_coefficient_arguments(arguments_t arguments)
@@ -106,7 +109,7 @@ const double *get_coefficient_arguments(arguments_t arguments)
 
 const char **get_operator_path_arguments(arguments_t arguments)
 {
-	return arguments->operator_paths;
+	return (const char**)arguments->operator_paths;
 }
 
 const char *get_output_path_argument(arguments_t arguments)

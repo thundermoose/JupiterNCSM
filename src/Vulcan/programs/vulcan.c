@@ -3,28 +3,45 @@
 #include <omp.h>
 #include <string.h>
 #include <matrix_block_setting/matrix_block_setting.h>
+#include <combination_table/combination_table.h>
 #include <arguments/arguments.h>
 #include <error/error.h>
+#include <log/log.h>
+
+#define max(a,b) ((a) > (b) ? (a) : (b))
 
 static
 void add_operator_blocks(matrix_block_setting_t block,
-			 char **operator_paths,
-			 double *coefficients,
+			 const char **operator_paths,
+			 const double *coefficients,
 			 size_t num_operators,
-			 char *output_path,
+			 const char *output_path,
 			 double *workspace);
 
 static
 void load_operator(double *buffer,
-		   char *operator_path,
+		   const char *operator_path,
 		   size_t matrix_block_id,
 		   size_t block_size);
 
 static
-void save_operator(double *buffer,
-		   char *operator_path,
+void save_operator(const double *buffer,
+		   const char *operator_path,
 		   size_t matrix_block_id,
 		   matrix_block_setting_t block);
+
+	__attribute__((constructor(101)))
+void initialization()
+{
+	initiate_logging("VULCAN_LOGFILE",
+			 "vulcan.log");	 
+}
+
+	__attribute__((destructor(900)))
+void finalize()
+{
+	finalize_logging();
+}
 
 int main(int num_arguments,
 	 char **argument_list)
@@ -48,15 +65,14 @@ int main(int num_arguments,
 		size_t needed_block_size =
 		       	current_block.num_proton_combinations*
 			current_block.num_neutron_combinations;	
-		max_needed_block_size = max(max_needed_block_size,		
-					    needed_block_size);
+		max_block_size = max(max_block_size,		
+				     needed_block_size);
 	}
-	double *coefficients = get_coefficient_arguments(arguments);
-	char **operator_paths = get_operator_path_arguments(arguments);
+	const double *coefficients = get_coefficient_arguments(arguments);
+	const char **operator_paths = get_operator_path_arguments(arguments);
 	size_t num_operators = num_operator_arguments(arguments);
-	char *output_path = get_output_path_argument(arguments);
-	size_t workspace_size_per_thread =
-	       	max_needed_block_size*2;
+	const char *output_path = get_output_path_argument(arguments);
+	size_t workspace_size_per_thread = max_block_size*2;
 	double *total_workspace = NULL;
 	size_t total_workspace_size;
 	reset_matrix_block_iterator(combination_table);
@@ -73,7 +89,7 @@ int main(int num_arguments,
 		}
 		size_t thread_id = omp_get_thread_num();
 		double *workspace = 
-			total_workspace_size + 
+			total_workspace+ 
 			thread_id*workspace_size_per_thread;
 		while (has_next_matrix_block(combination_table))
 		{
@@ -94,10 +110,10 @@ int main(int num_arguments,
 
 static
 void add_operator_blocks(matrix_block_setting_t block,
-			 char **operator_paths,
-			 double *coefficients,
+			 const char **operator_paths,
+			 const double *coefficients,
 			 size_t num_operators,
-			 char *output_path,
+			 const char *output_path,
 			 double *workspace)
 {
 	size_t block_size = block.num_proton_combinations*
@@ -123,7 +139,7 @@ void add_operator_blocks(matrix_block_setting_t block,
 
 static
 void load_operator(double *buffer,
-		   char *operator_path,
+		   const char *operator_path,
 		   size_t matrix_block_id,
 		   size_t block_size)
 {
@@ -133,7 +149,7 @@ void load_operator(double *buffer,
 		operator_path,
 		matrix_block_id);
 	FILE *matrix_file = fopen(filename_buffer,"r");
-	fseek(filename_buffer,2*sizeof(size_t),SEEK_SET);
+	fseek(matrix_file,2*sizeof(size_t),SEEK_SET);
 	if (fread(buffer,sizeof(double),block_size,matrix_file) != block_size)
 		error("Could not read block %lu from operator %s\n",
 		      matrix_block_id,operator_path);
@@ -142,7 +158,7 @@ void load_operator(double *buffer,
 
 static
 void save_operator(const double *buffer,
-		   char *operator_path,
+		   const char *operator_path,
 		   size_t matrix_block_id,
 		   matrix_block_setting_t block)
 {

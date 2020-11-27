@@ -1,6 +1,8 @@
 #ifndef __ARGUMENTS__
 #define __ARGUMENTS__
 
+#include <stdlib.h>
+
 struct _arguments_;
 typedef struct _arguments_ *arguments_t;
 
