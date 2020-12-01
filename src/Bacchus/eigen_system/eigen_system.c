@@ -25,6 +25,31 @@ eigen_system_t new_empty_eigensystem(const size_t num_eigen_values)
 	return eigen_system;	
 }
 
+void set_basis(eigen_system_t eigen_system,
+	       basis_t basis)
+{
+	eigen_system->vector_space_basis = basis;
+}
+
+void set_eigen_values(eigen_system_t eigen_system,
+	double *eigen_values)
+{
+	assert(eigen_system);
+	assert(eigen_system->eigen_values);
+	memcpy(eigen_system->eigen_values,
+		eigen_values,
+		eigen_system->num_eigen_values*sizeof(double));
+}
+
+void set_raw_eigen_vectors(eigen_system_t eigen_system,
+			   double *eigen_vectors)
+{
+	memcpy(eigen_system->eigen_vector_amplitudes,
+       		eigen_vectors,
+ 		eigen_system->num_eigen_values*eigen_system->num_eigen_values*
+		sizeof(double));		
+}
+
 size_t get_num_eigen_values(eigen_system_t eigen_system)
 {
 	assert(eigen_system != NULL);
@@ -51,23 +76,17 @@ double* get_eigen_values(eigen_system_t eigen_system)
 	return eigen_values;
 }
 
-void set_eigen_values(eigen_system_t eigen_system,
-	double *eigen_values)
+void get_eigen_vector(vector_t result,
+		      eigen_system_t eigen_system,
+		      size_t eigen_vector_index)
 {
-	assert(eigen_system);
-	assert(eigen_system->eigen_values);
-	memcpy(eigen_system->eigen_values,
-		eigen_values,
-		eigen_system->num_eigen_values*sizeof(double));
-}
-
-void set_raw_eigen_vectors(eigen_system_t eigen_system,
-			   double *eigen_vectors)
-{
-	memcpy(eigen_system->eigen_vector_amplitudes,
-       		eigen_vectors,
- 		eigen_system->num_eigen_values*eigen_system->num_eigen_values*
-		sizeof(double));		
+	double *amplitudes = 
+		eigen_system->eigen_vector_amplitudes +
+		eigen_vector_index*eigen_system->num_eigen_values;
+	basis_construct_vector(result,
+			       eigen_system->vector_space_basis,
+			       amplitudes,
+			       eigen_system->num_eigen_values);
 }
 
 void print_eigen_system(const eigen_system_t eigen_system)

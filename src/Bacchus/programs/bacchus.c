@@ -9,6 +9,7 @@
 #include <lanczos/lanczos.h>
 #include <eigen_system/eigen_system.h>
 #include <string_tools/string_tools.h>
+#include <string.h>
 #include <time.h>
 
 
@@ -61,6 +62,26 @@ int main(int num_arguments, char **argument_list)
 	diagonalize(lanczos_environment);
 	eigen_system_t eigen_system = get_eigensystem(lanczos_environment);
 	print_eigen_system(eigen_system);
+	const char *eigenvector_directory =
+	       	get_eigenvector_directory_setting(settings);
+	for (size_t i = 0; i<get_target_eigenvector_setting(settings); i++)
+	{
+		vector_settings_t vector_setting =
+		       	lanczos_settings.vector_settings;
+		vector_setting.directory_name =
+		       	(char*)calloc(strlen(eigenvector_directory)+256,
+				      sizeof(char));
+		sprintf(vector_setting.directory_name,
+			"%s/eigenvector_%lu",
+			eigenvector_directory,
+			i+1);
+		vector_t eigenvector = new_zero_vector(vector_setting);
+		get_eigen_vector(eigenvector,
+				 eigen_system,i);
+		save_vector(eigenvector);
+		free_vector(eigenvector);
+		free(vector_setting.directory_name);
+	}
 	free_eigen_system(eigen_system);
 	free_lanczos_environment(lanczos_environment);
 	free_matrix(lanczos_settings.matrix);

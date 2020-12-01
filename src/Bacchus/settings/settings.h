@@ -23,6 +23,8 @@ const char *get_index_lists_base_directory_setting(const settings_t settings);
 
 const char *get_matrix_file_base_directory_setting(const settings_t settings);
 
+const char *get_eigenvector_directory_setting(const settings_t settings);
+
 size_t get_num_neutrons_setting(const settings_t settings);
 
 size_t get_num_protons_setting(const settings_t settings);
@@ -31,7 +33,10 @@ size_t get_max_num_lanczos_iterations_setting(const settings_t settings);
 
 size_t get_maximum_loaded_memory_setting(const settings_t settings);
 
+size_t get_target_eigenvector_setting(const settings_t settings);
+
 double get_tollerance_setting(const settings_t settings);
+
 
 void free_settings(settings_t settings);
 

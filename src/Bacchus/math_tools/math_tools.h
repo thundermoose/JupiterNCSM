@@ -20,4 +20,9 @@ double array_square_norm(const double *array,
 void scale_array(double *array,
 		 double scaling,
 		 size_t num_elements);
+
+void array_add_scaled(double *target_array,
+		      double scaling_factor,
+		      const double *term,
+		      size_t num_elements);
 #endif

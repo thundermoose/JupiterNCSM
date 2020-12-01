@@ -14,9 +14,11 @@ struct _settings_
 	char *index_lists_base_directory;
 	char *matrix_file_base_directory;
 	char *krylow_vector_directory;
+	char *eigenvector_directory;
 	size_t num_neutrons;
 	size_t num_protons;
 	size_t max_num_lanczos_iterations;
+	size_t target_eigenvector;
 	size_t maximum_loaded_memory;
 	double tollerance;
 };
@@ -160,11 +162,29 @@ settings_t parse_settings(size_t num_arguments,
 	if (config_setting_lookup_float(lanczos_setting,
 				"convergence_tollerance",
 				&settings->tollerance)
-    		== CONFIG_FALSE)
+	    == CONFIG_FALSE)
     		error("No lanczos.convergence_tollerance found in \"%s\"."
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
+	if (config_setting_lookup_int64(lanczos_setting,
+					"target_eigenvector",
+					(long long*)
+					&settings->target_eigenvector)
+	    == CONFIG_FALSE)
+		error("No lanczos.target_eigenvector found in \"%s\"."
+		      " %s\n",
+		      settings_file_name,
+		      config_error_text(&config));
+	if (config_setting_lookup_string(lanczos_setting,
+					 "eigenvector_directory",
+					 (const char **)
+					 &string_buffer)
+	   == CONFIG_FALSE)
+		error("No lanczos.eigenvector_directory found in \"%s\".%s\n",
+		      settings_file_name,
+		      config_error_text(&config));
+	settings->eigenvector_directory = copy_string(string_buffer);
 	if (config_setting_lookup_string(lanczos_setting,
 					 "max_memory_load",
 					 (const char **)
@@ -226,7 +246,11 @@ void show_help_text(const settings_t settings)
 	       " number of iterations that the Lanczos algorithm should do\n"
 	       "\tconvergence_tollerance: If the lowest eigenvalue differ with" 
 	       " less than this number from the previous lowest eigenvalue,"
-	       " the Lanczos algorithm is assumed to be converged\n",
+	       " the Lanczos algorithm is assumed to be converged\n"
+	       "\teigenvector_directory: The path to the directory where the"
+	       " desired eigenvectors should be saved\n"
+	       "\ttarget_eigenvector: Should be the highest excited "
+	       "eigenvector desired by the user\n",
 		settings->program_name,
 		settings->program_name);
 }
@@ -256,6 +280,11 @@ const char *get_matrix_file_base_directory_setting(const settings_t settings)
 	return settings->matrix_file_base_directory;
 }
 
+const char *get_eigenvector_directory_setting(const settings_t settings)
+{
+	return settings->eigenvector_directory;
+}
+
 size_t get_num_neutrons_setting(const settings_t settings)
 {
 	return settings->num_neutrons;
@@ -274,6 +303,11 @@ size_t get_max_num_lanczos_iterations_setting(const settings_t settings)
 size_t get_maximum_loaded_memory_setting(const settings_t settings)
 {
 	return settings->maximum_loaded_memory;
+}
+
+size_t get_target_eigenvector_setting(const settings_t settings)
+{
+	return settings->target_eigenvector;
 }
 
 double get_tollerance_setting(const settings_t settings)

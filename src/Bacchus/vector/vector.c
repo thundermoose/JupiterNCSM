@@ -184,6 +184,8 @@ void save_vector(vector_t vector)
 {
 	log_entry("Saving vector %s",
 		  vector->directory_name);
+	if (vector->loaded_block.block_id == (size_t)(-1))
+		return;
 	save_vector_elements(vector->element_buffer,
 			     vector,
 			     vector->loaded_block);
@@ -373,12 +375,12 @@ double norm(const vector_t vector)
 }
 
 void vector_add_scaled(vector_t result,
-		       double scaleing_factor,
+		       double scaling_factor,
 		       const vector_t term)
 {
 	double *element_buffer = NULL;
 	size_t element_buffer_size = 0;
-	for (size_t i = 0; i<vector->num_vector_blocks; i++)
+	for (size_t i = 0; i<result->num_vector_blocks; i++)
 	{
 		vector_block_t vector_block = result->vector_blocks[i];
 		expand_element_buffer(&element_buffer,
@@ -393,7 +395,7 @@ void vector_add_scaled(vector_t result,
 				     term,
 				     vector_block);
 		array_add_scaled(result_block,
-				 scaleing_factor,
+				 scaling_factor,
 				 term_block,
 				 vector_block.block_length);
 		save_vector_elements(result_block,

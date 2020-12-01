@@ -1,4 +1,5 @@
 #include <lanczos/lanczos.h>
+#include <basis/basis.h>
 #include <vector/vector.h>
 #include <diagonalization/diagonalization.h>
 #include <string_tools/string_tools.h>
@@ -17,20 +18,12 @@ const size_t first = 0;
 struct _lanczos_environment_
 {
 	lanczos_settings_t settings;
-	vector_t *krylow_vectors;
+	basis_t krylow_basis;
 	double *diagonal_elements;
 	double *off_diagonal_elements;
 	size_t dimension_krylow_space;
 };
 
-
-static
-void new_krylow_vector(lanczos_environment_t environment,
-			   size_t index);
-
-static
-vector_settings_t get_krylow_vector_settings(lanczos_environment_t environment,
-					     size_t index);
 
 static
 size_t min(size_t a, size_t b);
@@ -41,9 +34,10 @@ lanczos_environment_t new_lanczos_environment(lanczos_settings_t settings)
 		(lanczos_environment_t)
 		malloc(sizeof(struct _lanczos_environment_));
 	environment->settings = settings;
-	environment->krylow_vectors = 
-		(vector_t*)calloc(settings.max_num_iterations+1,
-				  sizeof(vector_t));
+	environment->krylow_basis = 
+		new_basis_empty(settings.vector_settings,
+				settings.krylow_vectors_directory_name,
+				settings.max_num_iterations+1);
 	environment->diagonal_elements = 
 		(double*)malloc(settings.max_num_iterations*sizeof(double));
 	environment->off_diagonal_elements = 
@@ -64,10 +58,11 @@ void initialize_first_krylow_vector(lanczos_environment_t environment)
 	 * Krylow vector to 1 and the rest to 0.
 	 * However, better choices exists and for the future this might change
 	 */
-	new_krylow_vector(environment,0);
-	set_element(environment->krylow_vectors[0],first,1);
-	save_vector(environment->krylow_vectors[0]);
-	environment->dimension_krylow_space = 1;
+	basis_append_vector(environment->krylow_basis);
+	vector_t first_krylow_vector =
+	       	basis_get_vector(environment->krylow_basis,0);
+	set_element(first_krylow_vector,0,1.0);
+	save_vector(first_krylow_vector);
 }
 
 void lanczos_iteration(lanczos_environment_t environment,
@@ -79,31 +74,33 @@ void lanczos_iteration(lanczos_environment_t environment,
 	/* Before the Lanczos iteration can begin, it is necessary
 	 * initialize the new Krylow-vector.
 	 */
-	new_krylow_vector(environment,iteration+1);
+	basis_append_vector(environment->krylow_basis);
 	/* First step of a Lanczos iteration is to compute
 	 * w_k = M u_k, where M is the matrix we want to diagonalize and
 	 * u_k is the k:th Krylow vector. In this implementation the next
 	 * Krylow vector, u_k+1, is used as temporary storage of the helper 
 	 * vectors, in order to minimize unnecessary memory usage.
 	 */
-
+	vector_t current_krylow_vector =
+	       	basis_get_vector(environment->krylow_basis,
+				 iteration);
+	vector_t next_krylow_vector =
+		basis_get_vector(environment->krylow_basis,
+				 iteration+1);
 	log_entry("norm of current krylow vector is %lg\n",
-		  norm(environment->krylow_vectors[iteration]));
-	matrix_vector_multiplication(environment->krylow_vectors[iteration+1],
+		  norm(current_krylow_vector));
+	matrix_vector_multiplication(next_krylow_vector,
 				     environment->settings.matrix,
-				     environment->krylow_vectors[iteration]);
+				     current_krylow_vector);
 	log_entry("norm of w is %lg\n",
-		  norm(environment->krylow_vectors[iteration+1]));
+		  norm(next_krylow_vector));
 	log_entry("Has created a new krylow vector at index %lu",
 		  iteration+1);
-	environment->dimension_krylow_space++;		
 	/* The diagonal coefficients are the projections of the w_k on the k:th
 	 * Krylow vector.
 	 */
-	double alpha = 
-		scalar_multiplication
-		(environment->krylow_vectors[iteration],
-		 environment->krylow_vectors[iteration+1]);
+	double alpha = scalar_multiplication(current_krylow_vector,
+					     next_krylow_vector);
 	log_entry("alpha[%lu] = %lg\n",iteration,alpha);
 	environment->diagonal_elements[iteration] = alpha;
 
@@ -113,33 +110,34 @@ void lanczos_iteration(lanczos_environment_t environment,
 	 */ 
 	if (iteration == first)
 		subtract_line_projection
-			(environment->krylow_vectors[iteration+1],
+			(next_krylow_vector,
 			 alpha,
-			 environment->krylow_vectors[iteration]);
+			 current_krylow_vector);
 	else
 	{
 		double beta_previous = 
 			environment->off_diagonal_elements[iteration-1];
+		vector_t previous_krylow_vector =
+			basis_get_vector(environment->krylow_basis,
+					 iteration-1);
 		subtract_plane_projection
-			(environment->krylow_vectors[iteration+1],
+			(next_krylow_vector,
 			 alpha,
-			 environment->krylow_vectors[iteration],
+			 current_krylow_vector,
 			 beta_previous,
-			 environment->krylow_vectors[iteration-1]);
+			 previous_krylow_vector);
 	}
 
-	double beta_new = 
-		norm(environment->krylow_vectors[iteration+1]);
+	double beta_new = norm(next_krylow_vector);
 	environment->off_diagonal_elements[iteration] = beta_new;
 	/* Normalizeing the new Krylow vector.
 	*/
-	scale(environment->krylow_vectors[iteration+1],
-	      1.0 / beta_new);
+	scale(next_krylow_vector, 1.0 / beta_new);
 	log_entry("norm of new krylow vector is %lg",
-		  norm(environment->krylow_vectors[iteration+1]));
+		  norm(next_krylow_vector));
 	log_entry("scale %lg",
-		  scalar_multiplication(environment->krylow_vectors[iteration+1],
-					environment->krylow_vectors[iteration]));
+		  scalar_multiplication(next_krylow_vector,
+					current_krylow_vector));
 	clock_gettime(CLOCK_REALTIME,&t_end);
 	double iteration_time = 
 		(t_end.tv_sec-t_start.tv_sec)*1e6 +
@@ -152,9 +150,16 @@ void orthogonalize_krylow_basis(lanczos_environment_t environment,
 				size_t iteration)
 {
 	if (iteration > 2)
-		reorthogonalize_vector(environment->krylow_vectors[iteration+1],
-				       environment->krylow_vectors,
+	{
+		vector_t current_vector =
+		       	basis_get_vector(environment->krylow_basis,
+					 iteration + 1);
+		vector_t *all_krylow_vectors =
+		       	basis_get_all_vectors(environment->krylow_basis);
+		reorthogonalize_vector(current_vector, 
+				       all_krylow_vectors,
 				       iteration-2);
+	}
 }
 
 void diagonalize(lanczos_environment_t environment)
@@ -176,7 +181,7 @@ void diagonalize(lanczos_environment_t environment)
 		lanczos_iteration(environment, iteration);
 		orthogonalize_krylow_basis(environment, iteration);
 	}
-	environment->dimension_krylow_space--;
+	basis_remove_last(environment->krylow_basis);
 	clock_gettime(CLOCK_REALTIME,&t_end);
 	double diagonalzation_time =
 		(t_end.tv_sec-t_start.tv_sec)*1e6 +
@@ -187,52 +192,22 @@ void diagonalize(lanczos_environment_t environment)
 
 eigen_system_t get_eigensystem(lanczos_environment_t environment)
 {
-	return diagonalize_tridiagonal_matrix
+	eigen_system_t diagonalized_system =
+		diagonalize_tridiagonal_matrix
 		(environment->diagonal_elements,
 		 environment->off_diagonal_elements,
-		 environment->dimension_krylow_space);
+		 basis_get_dimension(environment->krylow_basis));
+	set_basis(diagonalized_system,
+		  environment->krylow_basis);
+	return diagonalized_system;
 }
 
 void free_lanczos_environment(lanczos_environment_t environment)
 {
-	size_t i;
-	for (i = 0; i<environment->settings.max_num_iterations+1; i++)
-	{
-		if (environment->krylow_vectors[i] != NULL)
-		{
-			free_vector(environment->krylow_vectors[i]);
-			log_entry("freed a krylow_vector at index %lu",i);
-		}
-	}
-	free(environment->krylow_vectors);
+	free_basis(environment->krylow_basis);
 	free(environment->diagonal_elements);
 	free(environment->off_diagonal_elements);
 	free(environment);
-}
-
-static
-void new_krylow_vector(lanczos_environment_t environment,
-			   size_t index)
-{
-	vector_settings_t settings = get_krylow_vector_settings(environment,
-								index);
-	environment->krylow_vectors[index] =
-		new_zero_vector(settings);
-	free(settings.directory_name);
-}
-
-static
-vector_settings_t get_krylow_vector_settings(lanczos_environment_t environment,
-					     size_t index)
-{
-	vector_settings_t settings = environment->settings.vector_settings;
-	char directory_name[2048] = {0};
-	sprintf(directory_name,
-		"%s/krylow_vector_%lu",
-		environment->settings.krylow_vectors_directory_name,
-		index);
-	settings.directory_name = copy_string(directory_name);
-	return settings;
 }
 
 static
