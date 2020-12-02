@@ -36,7 +36,7 @@ size_t get_maximum_loaded_memory_setting(const settings_t settings);
 
 size_t get_target_eigenvector_setting(const settings_t settings);
 
-double get_tollerance_setting(const settings_t settings);
+double get_tolerance_setting(const settings_t settings);
 
 convergence_critera_t 
 get_convergece_criteria_setting(const settings_t settings);

@@ -11,7 +11,7 @@
 
 #define BUFFER_SIZE 2048
 
-const double acceptance_tollerance = 1e-10;
+const double acceptance_tolerance = 1e-10;
 
 const char *generate_file_name(const Uniform_Out_File *out_file,
 			       const char *name,...)
@@ -262,7 +262,7 @@ size_t setup_diagonal_block(double **elements_ptr,
 				phases[current_config.ket_index];
 			double current_element =
 				block_matrix.elements[i*matrix_side+j];
-			if (fabs(current_element)<acceptance_tollerance)
+			if (fabs(current_element)<acceptance_tolerance)
 				continue;
 			elements[next_element_index] = current_element*phase;
 			configurations[next_element_index] = 
@@ -317,7 +317,7 @@ size_t setup_off_diagonal_block(double **elements_ptr,
 			phases[current_config.ket_index];
 		double current_element =
 			block_matrix.elements[i];
-		if (fabs(current_element)<acceptance_tollerance)
+		if (fabs(current_element)<acceptance_tolerance)
 			continue;
 		elements[next_element_index] = current_element*phase;
 		configurations[next_element_index] = 

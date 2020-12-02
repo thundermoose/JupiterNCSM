@@ -21,7 +21,7 @@ struct _settings_
 	size_t target_eigenvector;
 	size_t maximum_loaded_memory;
 	convergence_critera_t convergence_critera;
-	double tollerance;
+	double tolerance;
 };
 
 settings_t parse_settings(size_t num_arguments,
@@ -161,10 +161,10 @@ settings_t parse_settings(size_t num_arguments,
 		      settings_file_name,
 		      config_error_text(&config));
 	if (config_setting_lookup_float(lanczos_setting,
-				"convergence_tollerance",
-				&settings->tollerance)
+				"convergence_tolerance",
+				&settings->tolerance)
 	    == CONFIG_FALSE)
-    		error("No lanczos.convergence_tollerance found in \"%s\"."
+    		error("No lanczos.convergence_tolerance found in \"%s\"."
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
@@ -255,7 +255,7 @@ void show_help_text(const settings_t settings)
 	       " disk."
 	       "\tmax_num_lanczos_iterations: An integer limiting the maximum"
 	       " number of iterations that the Lanczos algorithm should do\n"
-	       "\tconvergence_tollerance: If the lowest eigenvalue differ with" 
+	       "\tconvergence_tolerance: If the lowest eigenvalue differ with" 
 	       " less than this number from the previous lowest eigenvalue,"
 	       " the Lanczos algorithm is assumed to be converged\n"
 	       "\teigenvector_directory: The path to the directory where the"
@@ -321,9 +321,9 @@ size_t get_target_eigenvector_setting(const settings_t settings)
 	return settings->target_eigenvector;
 }
 
-double get_tollerance_setting(const settings_t settings)
+double get_tolerance_setting(const settings_t settings)
 {
-	return settings->tollerance;
+	return settings->tolerance;
 }
 
 convergence_critera_t

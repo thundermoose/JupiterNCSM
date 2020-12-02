@@ -216,7 +216,7 @@ void diagonalize(lanczos_environment_t environment)
 				break;
 		}
 		free_eigensystem(diagonalized_system);
-		if (difference < environment->settings.eigenvalue_tollerance)
+		if (difference < environment->settings.eigenvalue_tolerance)
 			break;
 		else
 		{
@@ -307,7 +307,7 @@ new_test(diagonalize_3x3_matrix,
 	 .krylow_vectors_directory_name = copy_string(get_test_file_path("krylow_vectors")),
 	 .max_num_iterations = 3,
 	 .target_eigenvalue = 0,
-	 .eigenvalue_tollerance = 1e-5,
+	 .eigenvalue_tolerance = 1e-5,
 	 .matrix = simple_3x3_matrix
 	 };
 	 lanczos_environment_t environment = 
@@ -351,7 +351,7 @@ new_test(diagonalize_50x50_random_matrix_and_compare_to_lapack,
 	 .krylow_vectors_directory_name = copy_string(get_test_file_path("krylow_vectors")),
 	 .max_num_iterations = dimension,
 	 .target_eigenvalue = 0,
-	 .eigenvalue_tollerance = 1e-5,
+	 .eigenvalue_tolerance = 1e-5,
 	 .matrix = matrix_50x50
 	 };
 	 lanczos_environment_t environment = 
@@ -401,7 +401,7 @@ new_test_silent(diagonalize_500x500_random_matrix_and_compare_to_lapack,
 	 .krylow_vectors_directory_name = copy_string(get_test_file_path("krylow_vectors")),
 	 .max_num_iterations = dimension,
 	 .target_eigenvalue = 0,
-	 .eigenvalue_tollerance = 1e-5,
+	 .eigenvalue_tolerance = 1e-5,
 	 .matrix = matrix_500x500
 	 };
 	 lanczos_environment_t environment = 

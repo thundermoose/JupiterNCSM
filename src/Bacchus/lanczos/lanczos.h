@@ -21,7 +21,7 @@ typedef struct
 	char *krylow_vectors_directory_name;
 	size_t max_num_iterations;
 	size_t target_eigenvalue;
-	double eigenvalue_tollerance; 
+	double eigenvalue_tolerance; 
 	convergence_critera_t convergence_critera;
 	matrix_t matrix;
 } lanczos_settings_t;

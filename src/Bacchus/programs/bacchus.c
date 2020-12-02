@@ -49,7 +49,7 @@ int main(int num_arguments, char **argument_list)
 			(get_krylow_vector_directory_setting(settings)),
 		.max_num_iterations = 
 			get_max_num_lanczos_iterations_setting(settings),
-		.eigenvalue_tollerance = get_tollerance_setting(settings),
+		.eigenvalue_tolerance = get_tolerance_setting(settings),
 		.convergence_critera = 
 			get_convergece_criteria_setting(settings),
 		.target_eigenvalue = 0,
