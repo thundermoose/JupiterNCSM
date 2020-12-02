@@ -226,6 +226,7 @@ new_test(single_matrix_vector_multiplication,
 	const size_t num_neutrons = 2;
 	const size_t state_in_index = 73;
 	const size_t state_out_index = 108;
+	const size_t maximum_loaded_memory = (size_t)(16)<<30;
 	combination_table_t combination_table =
 		new_combination_table(combination_table_path,
 				      num_protons,
@@ -236,7 +237,8 @@ new_test(single_matrix_vector_multiplication,
 	scheduler_t scheduler = new_scheduler(execution_order,
 				      combination_table,
 				      index_list_path,
-				      interaction_path);
+				      interaction_path,
+				      maximum_loaded_memory);
 	vector_settings_t input_settings =
        		setup_vector_settings(combination_table);
 	input_settings.directory_name = copy_string(input_vector_path);
