@@ -2,11 +2,17 @@
 #define __LANCZOS__
 
 #include <stdlib.h>
-#include <eigen_system/eigen_system.h>
+#include <eigensystem/eigensystem.h>
 #include <matrix/matrix.h>
 
 struct _lanczos_environment_;
 typedef struct _lanczos_environment_ *lanczos_environment_t;
+
+typedef enum
+{
+	converge_eigenvalues,
+	converge_eigenvectors
+} convergence_critera_t;
 
 typedef struct
 {
@@ -16,6 +22,7 @@ typedef struct
 	size_t max_num_iterations;
 	size_t target_eigenvalue;
 	double eigenvalue_tollerance; 
+	convergence_critera_t convergence_critera;
 	matrix_t matrix;
 } lanczos_settings_t;
 
@@ -23,7 +30,7 @@ lanczos_environment_t new_lanczos_environment(lanczos_settings_t settings);
 
 void diagonalize(lanczos_environment_t environment);
 
-eigen_system_t get_eigensystem(lanczos_environment_t environment);
+eigensystem_t get_eigensystem(lanczos_environment_t environment);
 
 void free_lanczos_environment(lanczos_environment_t environemnt);
 

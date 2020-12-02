@@ -20,6 +20,7 @@ struct _settings_
 	size_t max_num_lanczos_iterations;
 	size_t target_eigenvector;
 	size_t maximum_loaded_memory;
+	convergence_critera_t convergence_critera;
 	double tollerance;
 };
 
@@ -176,6 +177,16 @@ settings_t parse_settings(size_t num_arguments,
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
+	int converge_eigenvector_status = 0;
+	if (config_setting_lookup_bool(lanczos_setting,
+				       "converge_eigenvectors",
+				       (int*)&converge_eigenvector_status) 
+	    == CONFIG_FALSE)
+		converge_eigenvector_status = 0;
+	if (converge_eigenvector_status)
+		settings->convergence_critera = converge_eigenvectors;
+	else
+		settings->convergence_critera = converge_eigenvalues;
 	if (config_setting_lookup_string(lanczos_setting,
 					 "eigenvector_directory",
 					 (const char **)
@@ -313,6 +324,12 @@ size_t get_target_eigenvector_setting(const settings_t settings)
 double get_tollerance_setting(const settings_t settings)
 {
 	return settings->tollerance;
+}
+
+convergence_critera_t
+get_convergece_criteria_setting(const settings_t settings)
+{
+	return settings->convergence_critera;
 }
 
 void free_settings(settings_t settings)

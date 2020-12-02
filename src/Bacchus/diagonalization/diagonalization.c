@@ -8,12 +8,12 @@ extern void dsteqr_(char *compz,
 		    int *matrix_side,
 		    double *diagonal,
 		    double *off_diagonal,
-		    double *eigen_vectors,
+		    double *eigenvectors,
 		    int *leading_dimension,
 		    double *work_array,
 		    int *info);
 
-eigen_system_t diagonalize_tridiagonal_matrix(
+eigensystem_t diagonalize_tridiagonal_matrix(
 	const double *diagonal_elements,
 	const double *off_diagonal_elements,
 	const size_t dimension)
@@ -21,10 +21,10 @@ eigen_system_t diagonalize_tridiagonal_matrix(
 	char compz = 'V';
 	int matrix_side = (int)dimension; 
 
-	eigen_system_t eigen_system = new_empty_eigensystem(dimension);
+	eigensystem_t eigensystem = new_empty_eigensystem(dimension);
 
-	double *eigen_values = get_eigen_values(eigen_system);
-	memcpy(eigen_values,
+	double *eigenvalues = get_eigenvalues(eigensystem);
+	memcpy(eigenvalues,
 		diagonal_elements,
 		sizeof(double)*dimension);
 	// dsteqr destroys the off diagonal elements, I don't want that
@@ -33,34 +33,34 @@ eigen_system_t diagonalize_tridiagonal_matrix(
 		off_diagonal_elements,
 		sizeof(double)*(dimension-1));		
 	
-	double *eigen_vectors = 
+	double *eigenvectors = 
 		(double*)calloc(dimension*dimension,
 				sizeof(double));		
 	for (size_t i = 0; i<dimension; i++)
-		eigen_vectors[i*dimension+i] = 1;
+		eigenvectors[i*dimension+i] = 1;
 	double *work_array =
 		(double*)calloc(2*dimension-2,
 				sizeof(double));
 	int info = 0;
 	dsteqr_(&compz,
 		&matrix_side,
-		eigen_values,
+		eigenvalues,
 		off_diagonal,
-		eigen_vectors,
+		eigenvectors,
 		&matrix_side,
 		work_array,
 		&info);
 	log_entry("info = %d",info);
 	assert(info == 0);
-	set_eigen_values(eigen_system,
-			eigen_values);
-	set_raw_eigen_vectors(eigen_system,
-			  eigen_vectors);
-	free(eigen_values);
+	set_eigenvalues(eigensystem,
+			eigenvalues);
+	set_raw_eigenvectors(eigensystem,
+			  eigenvectors);
+	free(eigenvalues);
 	free(work_array);
-	free(eigen_vectors);	
+	free(eigenvectors);	
 	free(off_diagonal);
-	return eigen_system;
+	return eigensystem;
 }
 
 extern void dsyev_(char *jobz,
@@ -68,20 +68,20 @@ extern void dsyev_(char *jobz,
 		int *side,
 		double *matrix,
 		int *lda,
-		double *eigen_values,
+		double *eigenvalues,
 		double *work,
 		int *lwork,
 		int *info);	
 
-eigen_system_t diagonalize_symmetric_matrix(
+eigensystem_t diagonalize_symmetric_matrix(
 	matrix_t matrix)
 {
 	assert(get_num_rows(matrix) == get_num_columns(matrix));
 	int side = (int)get_num_rows(matrix);
 	double *matrix_elements = get_matrix_elements(matrix);
 	
-	eigen_system_t eigen_system = new_empty_eigensystem(side);
-	double *eigen_values = get_eigen_values(eigen_system);
+	eigensystem_t eigensystem = new_empty_eigensystem(side);
+	double *eigenvalues = get_eigenvalues(eigensystem);
 	int lwork = 3*side-1;
 	double *work = (double*)calloc(lwork,
 			sizeof(double));
@@ -90,15 +90,15 @@ eigen_system_t diagonalize_symmetric_matrix(
 		&side,
 		matrix_elements,
 		&side,
-		eigen_values,
+		eigenvalues,
 		work,
 		&lwork,
 		&info);
 	log_entry("info = %d",info);
 	assert(info == 0);
-	set_eigen_values(eigen_system,eigen_values);
-	free(eigen_values);
+	set_eigenvalues(eigensystem,eigenvalues);
+	free(eigenvalues);
 	free(matrix_elements);
 	free(work);
-	return eigen_system;	
+	return eigensystem;	
 }

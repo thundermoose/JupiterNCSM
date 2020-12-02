@@ -7,7 +7,7 @@
 #include <combination_table/combination_table.h>
 #include <execution_order/execution_order.h>
 #include <lanczos/lanczos.h>
-#include <eigen_system/eigen_system.h>
+#include <eigensystem/eigensystem.h>
 #include <string_tools/string_tools.h>
 #include <string.h>
 #include <time.h>
@@ -50,6 +50,9 @@ int main(int num_arguments, char **argument_list)
 		.max_num_iterations = 
 			get_max_num_lanczos_iterations_setting(settings),
 		.eigenvalue_tollerance = get_tollerance_setting(settings),
+		.convergence_critera = 
+			get_convergece_criteria_setting(settings),
+		.target_eigenvalue = 0,
 		.matrix = new_generative_matrix
 			(execution_order,
 			 combination_table,
@@ -60,8 +63,8 @@ int main(int num_arguments, char **argument_list)
 	lanczos_environment_t lanczos_environment =
 		new_lanczos_environment(lanczos_settings);
 	diagonalize(lanczos_environment);
-	eigen_system_t eigen_system = get_eigensystem(lanczos_environment);
-	print_eigen_system(eigen_system);
+	eigensystem_t eigensystem = get_eigensystem(lanczos_environment);
+	print_eigensystem(eigensystem);
 	const char *eigenvector_directory =
 	       	get_eigenvector_directory_setting(settings);
 	for (size_t i = 0; i<get_target_eigenvector_setting(settings); i++)
@@ -76,13 +79,13 @@ int main(int num_arguments, char **argument_list)
 			eigenvector_directory,
 			i+1);
 		vector_t eigenvector = new_zero_vector(vector_setting);
-		get_eigen_vector(eigenvector,
-				 eigen_system,i);
+		get_eigenvector(eigenvector,
+				 eigensystem,i);
 		save_vector(eigenvector);
 		free_vector(eigenvector);
 		free(vector_setting.directory_name);
 	}
-	free_eigen_system(eigen_system);
+	free_eigensystem(eigensystem);
 	free_lanczos_environment(lanczos_environment);
 	free_matrix(lanczos_settings.matrix);
 	free_execution_order(execution_order);

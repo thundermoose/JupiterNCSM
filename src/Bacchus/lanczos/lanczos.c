@@ -5,6 +5,7 @@
 #include <string_tools/string_tools.h>
 #include <string.h>
 #include <directory_tools/directory_tools.h>
+#include <math_tools/math_tools.h>
 #include <error/error.h>
 #include <unit_testing/test.h>
 #include <log/log.h>
@@ -23,6 +24,11 @@ struct _lanczos_environment_
 	double *off_diagonal_elements;
 	size_t dimension_krylow_space;
 };
+
+static
+double difference_eigenvectors(const double *current_amplitudes,
+			       const double *previous_amplitudes,
+			       size_t num_current_amplitudes);
 
 
 static
@@ -173,14 +179,55 @@ void diagonalize(lanczos_environment_t environment)
 	size_t max_num_iterations =
 	       	min(environment->settings.dimension,
 		    environment->settings.max_num_iterations);
-	size_t iteration;
-	for (iteration = 0;
+	double previous_eigenvalue = 0;
+	double *previous_eigenvector_amplitudes = 
+		(double*)calloc(max_num_iterations+1,sizeof(double));
+	size_t target_eigenvalue = environment->settings.target_eigenvalue;
+	for (size_t iteration = 0;
 	     iteration < max_num_iterations;
 	     iteration++)
 	{
 		lanczos_iteration(environment, iteration);
 		orthogonalize_krylow_basis(environment, iteration);
+		eigensystem_t diagonalized_system = 
+			diagonalize_tridiagonal_matrix
+			(environment->diagonal_elements,
+			 environment->off_diagonal_elements,
+			 iteration+1);
+		double *current_eigenvector_amplitudes =
+			get_eigenvector_amplitudes(diagonalized_system,
+						    target_eigenvalue);
+		double current_eigenvalue = 
+			get_eigenvalue(diagonalized_system,
+					target_eigenvalue);
+		double difference = 0.0;
+		switch (environment->settings.convergence_critera)
+		{
+			case converge_eigenvalues:
+				difference = fabs(current_eigenvalue -
+						  previous_eigenvalue);
+				break;
+			case converge_eigenvectors:
+				difference =
+					difference_eigenvectors
+					(current_eigenvector_amplitudes,
+					 previous_eigenvector_amplitudes,
+					 iteration+1);
+				break;
+		}
+		free_eigensystem(diagonalized_system);
+		if (difference < environment->settings.eigenvalue_tollerance)
+			break;
+		else
+		{
+			memcpy(previous_eigenvector_amplitudes,
+			       current_eigenvector_amplitudes,
+			       sizeof(double)*(iteration+1));
+			previous_eigenvalue = current_eigenvalue;
+		}
+
 	}
+	free(previous_eigenvector_amplitudes);
 	basis_remove_last(environment->krylow_basis);
 	clock_gettime(CLOCK_REALTIME,&t_end);
 	double diagonalzation_time =
@@ -190,9 +237,9 @@ void diagonalize(lanczos_environment_t environment)
 	       diagonalzation_time);
 }
 
-eigen_system_t get_eigensystem(lanczos_environment_t environment)
+eigensystem_t get_eigensystem(lanczos_environment_t environment)
 {
-	eigen_system_t diagonalized_system =
+	eigensystem_t diagonalized_system =
 		diagonalize_tridiagonal_matrix
 		(environment->diagonal_elements,
 		 environment->off_diagonal_elements,
@@ -211,6 +258,20 @@ void free_lanczos_environment(lanczos_environment_t environment)
 }
 
 static
+double difference_eigenvectors(const double *current_amplitudes,
+			       const double *previous_amplitudes,
+			       size_t num_current_amplitudes)
+{
+	double norm_differnce_square = 0.0;
+	for (size_t i = 0; i<num_current_amplitudes-1; i++)
+		norm_differnce_square+=
+			square(current_amplitudes[i] - previous_amplitudes[i]);
+	norm_differnce_square+=
+		square(current_amplitudes[num_current_amplitudes-1]);
+	return sqrt(norm_differnce_square);
+}
+
+static
 size_t min(size_t a, size_t b)
 {
 	return a<b ? a : b;
@@ -224,7 +285,7 @@ new_test(diagonalize_3x3_matrix,
 	 2,1,2,
 	 3,2,1
 	 };
-	 double expected_eigen_values[3] = 
+	 double expected_eigenvalues[3] = 
 	 {
 	 -2,
 	 5.0/2-sqrt(41)/2,
@@ -252,25 +313,25 @@ new_test(diagonalize_3x3_matrix,
 	 lanczos_environment_t environment = 
 		 new_lanczos_environment(settings);
 	 diagonalize(environment);
-	 eigen_system_t eigen_system = get_eigensystem(environment);
-	 printf("get_num_eigen_values(eigen_system) = %lu\n",
-		get_num_eigen_values(eigen_system));
-	 assert_that(get_num_eigen_values(eigen_system) == 3);
+	 eigensystem_t eigensystem = get_eigensystem(environment);
+	 printf("get_num_eigenvalues(eigensystem) = %lu\n",
+		get_num_eigenvalues(eigensystem));
+	 assert_that(get_num_eigenvalues(eigensystem) == 3);
 	 for (size_t i = 0; i<3; i++)
 	 {
-		 double computed_eigen_value = 
-			 get_eigen_value(eigen_system,i);
-		 double expected_eigen_value = 
-			 expected_eigen_values[i];
+		 double computed_eigenvalue = 
+			 get_eigenvalue(eigensystem,i);
+		 double expected_eigenvalue = 
+			 expected_eigenvalues[i];
 		 printf("%lu: is %lg but expected is %lg\n",
-			i,computed_eigen_value,
-			expected_eigen_value);
-		 assert_that(fabs(computed_eigen_value
-				  -expected_eigen_value)<1e-5);
+			i,computed_eigenvalue,
+			expected_eigenvalue);
+		 assert_that(fabs(computed_eigenvalue
+				  -expected_eigenvalue)<1e-5);
 	 }		 
 	 free_lanczos_environment(environment);
 	 free_matrix(simple_3x3_matrix);
-	 free_eigen_system(eigen_system);
+	 free_eigensystem(eigensystem);
 	 free(settings.krylow_vectors_directory_name);
 	 });
 
@@ -296,30 +357,30 @@ new_test(diagonalize_50x50_random_matrix_and_compare_to_lapack,
 	 lanczos_environment_t environment = 
 	 new_lanczos_environment(settings);
 	 diagonalize(environment);
-	 eigen_system_t lanczos_eigen_system = 
+	 eigensystem_t lanczos_eigensystem = 
 	 get_eigensystem(environment);
 
-	 eigen_system_t lapack_eigen_system =
+	 eigensystem_t lapack_eigensystem =
 	 diagonalize_symmetric_matrix(matrix_50x50);
 
-	 assert_that(get_num_eigen_values(lanczos_eigen_system) == 
-		     get_num_eigen_values(lapack_eigen_system));
+	 assert_that(get_num_eigenvalues(lanczos_eigensystem) == 
+		     get_num_eigenvalues(lapack_eigensystem));
 	 int test_passed = 1;
-	 for (size_t i = 0; i<get_num_eigen_values(lanczos_eigen_system); i++)
+	 for (size_t i = 0; i<get_num_eigenvalues(lanczos_eigensystem); i++)
 	 {
-		 double lanczos_eigen_value = 
-			 get_eigen_value(lanczos_eigen_system,i);
-		 double lapack_eigen_value = 
-			 get_eigen_value(lapack_eigen_system,i);
+		 double lanczos_eigenvalue = 
+			 get_eigenvalue(lanczos_eigensystem,i);
+		 double lapack_eigenvalue = 
+			 get_eigenvalue(lapack_eigensystem,i);
 		 printf("(%lu) lanczos: %lg, lapack: %lg\n",
-			i,lanczos_eigen_value,lapack_eigen_value);
-		 if (fabs(lanczos_eigen_value-lapack_eigen_value) > 1e-10)
+			i,lanczos_eigenvalue,lapack_eigenvalue);
+		 if (fabs(lanczos_eigenvalue-lapack_eigenvalue) > 1e-10)
 			 test_passed = 0;
 	 }
 	 assert_that(test_passed);
 	 free_lanczos_environment(environment);
-	 free_eigen_system(lanczos_eigen_system);
-	 free_eigen_system(lapack_eigen_system);
+	 free_eigensystem(lanczos_eigensystem);
+	 free_eigensystem(lapack_eigensystem);
 	 free_matrix(matrix_50x50);
 	 free(settings.krylow_vectors_directory_name);
 	 });
@@ -346,29 +407,29 @@ new_test_silent(diagonalize_500x500_random_matrix_and_compare_to_lapack,
 	 lanczos_environment_t environment = 
 	 new_lanczos_environment(settings);
 	 diagonalize(environment);
-	 eigen_system_t lanczos_eigen_system = 
+	 eigensystem_t lanczos_eigensystem = 
 	 get_eigensystem(environment);
 	 free_lanczos_environment(environment);
 
-	 eigen_system_t lapack_eigen_system =
+	 eigensystem_t lapack_eigensystem =
 	 diagonalize_symmetric_matrix(matrix_500x500);
 
-	 assert_that(get_num_eigen_values(lanczos_eigen_system) == 
-		     get_num_eigen_values(lapack_eigen_system));
+	 assert_that(get_num_eigenvalues(lanczos_eigensystem) == 
+		     get_num_eigenvalues(lapack_eigensystem));
 	 int test_passed = 1;
-	 for (size_t i = 0; i<get_num_eigen_values(lanczos_eigen_system); i++)
+	 for (size_t i = 0; i<get_num_eigenvalues(lanczos_eigensystem); i++)
 	 {
-		 double lanczos_eigen_value = 
-			 get_eigen_value(lanczos_eigen_system,i);
-		 double lapack_eigen_value = 
-			 get_eigen_value(lapack_eigen_system,i);
+		 double lanczos_eigenvalue = 
+			 get_eigenvalue(lanczos_eigensystem,i);
+		 double lapack_eigenvalue = 
+			 get_eigenvalue(lapack_eigensystem,i);
 		 printf("(%lu) lanczos: %lg, lapack: %lg\n",
-			i,lanczos_eigen_value,lapack_eigen_value);
-		 if (fabs(lanczos_eigen_value-lapack_eigen_value) > 1e-10)
+			i,lanczos_eigenvalue,lapack_eigenvalue);
+		 if (fabs(lanczos_eigenvalue-lapack_eigenvalue) > 1e-10)
 			 test_passed = 0;
 	 }
 	 assert_that(test_passed);
-	 free_eigen_system(lanczos_eigen_system);
-	 free_eigen_system(lapack_eigen_system);
+	 free_eigensystem(lanczos_eigensystem);
+	 free_eigensystem(lapack_eigensystem);
 	 free_matrix(matrix_500x500);
 	 );

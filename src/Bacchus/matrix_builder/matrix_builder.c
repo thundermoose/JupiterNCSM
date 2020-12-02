@@ -122,12 +122,12 @@ new_test(explicit_matrix_nmax0,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 		 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %0.16lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);
@@ -160,12 +160,12 @@ new_test(explicit_matrix_nmax2,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 	 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);
@@ -198,12 +198,12 @@ new_test(explicit_matrix_nmax4,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 	 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);

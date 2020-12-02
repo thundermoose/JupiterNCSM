@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 
+#define square(a) (a)*(a)
+
 size_t sum_sizes(const size_t *sizes,size_t num_sizes);
 
 double array_scalar_product(const double *first_array,
