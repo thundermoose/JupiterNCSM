@@ -58,7 +58,7 @@ arguments_t parse_arguments(size_t num_arguments,
 			else
 			{
 				append_array_element(operator_paths_builder,
-						     argument_list[i]);
+						     &argument_list[i]);
 				append_array_element(coefficient_builder,
 						     &one);
 			}
