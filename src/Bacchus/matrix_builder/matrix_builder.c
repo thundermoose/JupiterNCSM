@@ -171,7 +171,7 @@ new_test(explicit_matrix_nmax2,
 	 free(settings.output_vector_path);
 	 );
 
-new_test(explicit_matrix_nmax4,
+new_test_silent(explicit_matrix_nmax4,
 	 const char *matrix_out_path =
 	 	get_test_file_path("hamiltonian.npy");
 	 const char *input_vector_path =

@@ -444,6 +444,8 @@ static
 int is_array_loaded(memory_manager_t manager,
 		    size_t array_id)
 {
+	if (array_id == no_index)
+		return 0;
 	array_t *array = &manager->all_arrays[array_id - 1];
 	omp_set_nest_lock(&array->loading_array_lock);
 	int value = array->primary_array != NULL ||

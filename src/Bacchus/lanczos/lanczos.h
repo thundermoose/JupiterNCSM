@@ -11,7 +11,8 @@ typedef struct _lanczos_environment_ *lanczos_environment_t;
 typedef enum
 {
 	converge_eigenvalues,
-	converge_eigenvectors
+	converge_eigenvectors,
+	no_convergence
 } convergence_critera_t;
 
 typedef struct
