@@ -18,6 +18,7 @@ struct _arguments_
 	char *combination_file_path;
 	char *index_list_path;
 	char *output_path;
+	char *finished_energy_blocks;
 	size_t block_id;
 	size_t num_protons;
 	size_t num_neutrons;
@@ -60,6 +61,14 @@ struct _arguments_
 	continue;\
 }
 
+#define STRING_ARGUMENT(name,field) \
+	if (strcmp(argument_list[i],name) == 0) \
+{\
+	arguments->field = argument_list[++i];\
+	continue;\
+}
+
+char default_finished_block_file[] = "finished_blocks";
 arguments_t parse_argument_list(int num_arguments,
 				char **argument_list)
 {
@@ -78,6 +87,7 @@ arguments_t parse_argument_list(int num_arguments,
 		arguments->two_particle_energy = 0;
 		arguments->to_few_arguments = 1;
 		arguments->max_loaded_memory = (size_t)(1)<<32;
+		arguments->finished_energy_blocks = default_finished_block_file;
 		for (size_t i = 4; i<num_arguments; i++)
 		{
 			log_entry("argument_list[%lu] = %s",i,
@@ -92,6 +102,8 @@ arguments_t parse_argument_list(int num_arguments,
 			MEMORY_ARGUMENT("--max-loaded-memory",
 					 max_loaded_memory);
 			MODE_ARGUMENT("--single-block",single_block);
+			STRING_ARGUMENT("--finished-blocks-file",
+					finished_energy_blocks);
 			if (arguments->interaction_path_2nf == NULL)
 			{
 				arguments->interaction_path_2nf = 
@@ -135,7 +147,9 @@ void show_usage(const arguments_t arguments)
 	       "[--two-particle-energy <integer>] "
 	       "[--max-loaded-memory <integer>] "
 	       "[--single-block] "
-	       "[--block-id <integer>] <interaction path 2nf> "
+	       "[--block-id <integer>] "
+	       "[--finished-blocks-file <filepath>] "
+	       "<interaction path 2nf> "
 	       "[interaction path 3nf]\n",
 	       arguments->program_name);
 }
@@ -168,6 +182,11 @@ const char *get_index_list_path_argument(const arguments_t arguments)
 const char *get_output_path_argument(const arguments_t arguments)
 {
 	return arguments->output_path;
+}
+
+const char *get_finished_energy_blocks_argument(const arguments_t arguments)
+{
+	return arguments->finished_energy_blocks;
 }
 
 size_t get_block_id(const arguments_t arguments)

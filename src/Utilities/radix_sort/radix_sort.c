@@ -23,6 +23,46 @@ void setup_next_order(key_index_t *next_order,
 static inline
 void swap(void **a,void **b);
 
+void rsort(void *array,
+	   size_t array_length,
+	   size_t element_size,
+	   __key_function_t keyfunction)
+{
+	key_index_t *current_order =
+	       	(key_index_t*)malloc(array_length*sizeof(key_index_t));
+	key_index_t *next_order =
+		(key_index_t*)malloc(array_length*sizeof(key_index_t));
+	char *byte_array = (char*)array;
+	uint64_t max_key = 0;
+	for (size_t i = 0; i < array_length; i++)
+	{
+		current_order[i].index = i;
+		current_order[i].key =
+		       	keyfunction((void*)(byte_array+element_size*i));
+		if (current_order[i].key > max_key)
+			max_key = current_order[i].key;
+	}
+	while (max_key > 0)
+	{
+		size_t buckets[16];
+		setup_buckets(buckets,current_order,array_length);
+		setup_next_order(next_order,current_order,buckets,array_length);
+		swap((void**)&next_order,(void**)&current_order);
+		max_key >>=4;
+	}
+	char *sorted_array = (char*)malloc(array_length*element_size);	
+	for (size_t i = 0; i < array_length; i++)
+		memcpy(sorted_array+i*element_size,
+		       byte_array+current_order[i].index*element_size,
+		       element_size);
+	memcpy(array,
+	       sorted_array,
+	       array_length*element_size);		
+	free(sorted_array);
+	free(current_order);
+	free(next_order);
+}
+
 void rsort_r(void *array,
 	     size_t array_length,
 	     size_t element_size,
