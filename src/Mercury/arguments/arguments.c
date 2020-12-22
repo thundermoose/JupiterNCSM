@@ -12,6 +12,7 @@ struct _arguments_
 {
 	int to_few_arguments;
 	int single_block;
+	int no_2nf;
 	char *program_name;
 	char *interaction_path_2nf;
 	char *interaction_path_3nf;
@@ -69,6 +70,7 @@ arguments_t parse_argument_list(int num_arguments,
 	if (num_arguments >= 4)
 	{
 		arguments->single_block = 0;
+		arguments->no_2nf = 0;
 		arguments->combination_file_path = argument_list[1];	
 		arguments->index_list_path = argument_list[2];
 		arguments->output_path = argument_list[3];
@@ -92,6 +94,7 @@ arguments_t parse_argument_list(int num_arguments,
 			MEMORY_ARGUMENT("--max-loaded-memory",
 					 max_loaded_memory);
 			MODE_ARGUMENT("--single-block",single_block);
+			MODE_ARGUMENT("--no-2nf",no_2nf);
 			if (arguments->interaction_path_2nf == NULL)
 			{
 				arguments->interaction_path_2nf = 
@@ -109,6 +112,9 @@ arguments_t parse_argument_list(int num_arguments,
 			}
 				
 		}
+		if (arguments->no_2nf)
+			arguments->interaction_path_3nf = 
+				arguments->interaction_path_2nf;
 		log_entry("arguments->num_protons = %lu",
 			  arguments->num_protons);
 		log_entry("arguments->num_neutrons = %lu",
@@ -143,6 +149,11 @@ void show_usage(const arguments_t arguments)
 int single_block_mode(const arguments_t arguments)
 {
 	return arguments->single_block;	
+}
+
+int no_2nf_argument(const arguments_t arguments)
+{
+	return arguments->no_2nf;
 }
 
 const char *get_interaction_path_2nf_argument(const arguments_t arguments)

@@ -15,6 +15,8 @@ void show_usage(const arguments_t arguments);
 
 int single_block_mode(const arguments_t arguments);
 
+int no_2nf_argument(const arguments_t arguments);
+
 const char *get_interaction_path_2nf_argument(const arguments_t arguments);
 
 const char *get_interaction_path_3nf_argument(const arguments_t arguments);
