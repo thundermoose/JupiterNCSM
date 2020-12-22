@@ -176,6 +176,12 @@ void show_usage(const arguments_t arguments)
 	       "[--single-block] "
 	       "[--block-id <integer>] "
 	       "[--finished-blocks-file <filepath>] "
+	       "[--no-2nf] "
+	       "[--LEC-CE <float>] "
+	       "[--LEC-CD <float>] "
+	       "[--LEC-C1 <float>] "
+	       "[--LEC-C3 <float>] "
+	       "[--LEC-C4 <float>] "
 	       "<interaction path 2nf> "
 	       "[interaction path 3nf]\n",
 	       arguments->program_name);
