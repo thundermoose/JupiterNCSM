@@ -106,6 +106,11 @@ arguments_t parse_argument_list(int num_arguments,
 		arguments->to_few_arguments = 1;
 		arguments->max_loaded_memory = (size_t)(1)<<32;
 		arguments->finished_energy_blocks = default_finished_block_file;
+		arguments->lec_C1 = 0.0;
+		arguments->lec_C3 = 0.0;
+		arguments->lec_C4 = 0.0;
+		arguments->lec_CE = 0.0;
+		arguments->lec_CD = 0.0;
 		for (size_t i = 4; i<num_arguments; i++)
 		{
 			log_entry("argument_list[%lu] = %s",i,
