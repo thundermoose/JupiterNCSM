@@ -27,6 +27,8 @@ const char *get_index_list_path_argument(const arguments_t arguments);
 
 const char *get_output_path_argument(const arguments_t arguments);
 
+const char *get_finished_energy_blocks_argument(const arguments_t arguments);
+
 size_t get_block_id(const arguments_t arguments);
 
 size_t get_num_protons_argument(const arguments_t arguments);

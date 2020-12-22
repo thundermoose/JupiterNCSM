@@ -9,6 +9,8 @@
 #include <combination_table/combination_table.h>
 #include <iterator/iterator.h>
 #include <matrix_energy_block/matrix_energy_block.h>
+#include <radix_sort/radix_sort.h>
+#include <error/error.h>
 #include <log/log.h>
 #include <time.h>
 #include <omp.h>
@@ -43,7 +45,20 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 static
 void process_matrix_energy_block(matrix_energy_block_t current_block,
 				 transform_3nf_block_manager_t manager,
-				 const char *output_path_base);
+				 const char *output_path_base,
+				 size_t block_index,
+				 FILE *finished_block_file);
+
+static
+void mark_block_as_finished(FILE* finished_block_file,size_t block_index);
+
+static
+void load_finished_blocks(size_t **finished_blocks,
+			  size_t *num_finished_blocks,
+			  const char *finished_energy_blocks_path);
+
+static
+uint64_t size_t_key(const size_t *element);
 
 int main(int num_arguments,
 	 char **argument_list)
@@ -297,6 +312,15 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 		 get_index_list_path_argument(arguments),
 		 get_single_particle_energy_argument(arguments));
 	const char *output_path_base = get_output_path_argument(arguments);					
+	size_t current_block_index = 0;
+	size_t *finished_blocks = NULL;
+	size_t num_finished_blocks = 0;
+	load_finished_blocks(&finished_blocks,
+			     &num_finished_blocks,
+			     get_finished_energy_blocks_argument(arguments));
+	size_t current_finished_block = 0;
+	FILE *finished_block_file =
+	       	fopen(get_finished_energy_blocks_argument(arguments),"a");
 #pragma omp parallel
 	{
 #pragma omp single
@@ -305,13 +329,26 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 			{
 				matrix_energy_block_t current_energy_block =
 					next_3nf_matrix_energy_block(combination_table);
+				if (current_finished_block < num_finished_blocks && 
+				    current_block_index == finished_blocks[current_finished_block])
+				{
+					current_finished_block++;	
+				}
+				else
+				{
 #pragma omp task
-				process_matrix_energy_block(current_energy_block,
-							    manager,
-							    output_path_base);
+					process_matrix_energy_block
+						(current_energy_block,
+						 manager,
+						 output_path_base,
+						 current_block_index,
+						 finished_block_file);
+				}
+				current_block_index++;
 			}
 		}
 	}
+	fclose(finished_block_file);
 	free_transform_3nf_block_manager(manager);
 	free_data_file(coupled_3nf_data);
 	clock_gettime(CLOCK_REALTIME,&t_end);
@@ -325,8 +362,11 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 static
 void process_matrix_energy_block(matrix_energy_block_t current_block,
 				 transform_3nf_block_manager_t manager,
-				 const char *output_path_base)
+				 const char *output_path_base,
+				 size_t block_index,
+				 FILE *finished_block_file)
 {
+	printf("Launching block %lu\n",block_index);
 	transformed_block_t current_transformed_block = 
 		get_transformed_block(manager,current_block);
 	while (has_next_energy_matrix_block(current_block))
@@ -341,4 +381,49 @@ void process_matrix_energy_block(matrix_energy_block_t current_block,
 	}	
 	free_transformed_block(current_transformed_block);
 	free_matrix_energy_block(current_block);
+	mark_block_as_finished(finished_block_file,block_index);	
+	printf("Finished block %lu\n",block_index);
+}
+
+static
+void mark_block_as_finished(FILE* finished_block_file,size_t block_index)
+{
+#pragma omp critical (mark_block_as_finished)
+	{
+		fwrite(&block_index,sizeof(size_t),1,finished_block_file);
+		fflush(finished_block_file);
+	}
+}
+
+static
+void load_finished_blocks(size_t **finished_blocks,
+			  size_t *num_finished_blocks,
+			  const char *finished_energy_blocks_path)
+{
+	FILE *file = fopen(finished_energy_blocks_path,"r");
+	if (file == NULL)
+		return; // File don't exists so all blocks should be done
+	fseek(file,0,SEEK_END);
+	size_t num_bytes = ftell(file);
+	fseek(file,0,SEEK_SET);
+	*num_finished_blocks = num_bytes/sizeof(size_t);
+	size_t *loaded_blocks = (size_t*)malloc(num_bytes);	
+	if (fread(loaded_blocks,sizeof(size_t),*num_finished_blocks,file) <
+	    *num_finished_blocks)
+		error("Could not read %lu bytes from %s.\n",
+      			num_bytes,
+			finished_energy_blocks_path);
+	fclose(file);	
+	// Sorting since the blocks may not be in order
+	rsort(loaded_blocks,
+	      *num_finished_blocks,
+	      sizeof(size_t),
+	      (__key_function_t)size_t_key);
+	*finished_blocks = loaded_blocks;
+}
+
+static
+uint64_t size_t_key(const size_t *element)
+{
+	return *element;
 }
