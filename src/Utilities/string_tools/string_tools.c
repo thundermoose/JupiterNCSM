@@ -2,7 +2,9 @@
 #include <unit_testing/test.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
 #include <debug_mode/debug_mode.h>
+#include <error/error.h>
 
 static
 size_t count_words(const char *string);
@@ -90,6 +92,24 @@ int is_integer(const char *string)
 	}
 	while (*string != '\0');
 	return 1;
+}
+
+int is_double(const char *string)
+{
+	static const char double_regex[] =
+	       	"^[+-]?[[:digit:]]+(\\.[[:digit:]]+)?([Ee][+-]?[[:digit:]]+)?";
+	regex_t match_doubles;
+	int error_code = 0;
+	if ((error_code = regcomp(&match_doubles,double_regex,REG_EXTENDED)))
+	{
+		char buffer[256];
+		regerror(error_code,&match_doubles,buffer,256);
+		error("%s\n",buffer);
+	}
+	regmatch_t match[1];
+	int reg_status = regexec(&match_doubles,string,1,match,0);
+	regfree(&match_doubles);
+	return reg_status != REG_NOMATCH;
 }
 
 int is_memory_string(const char *string)
@@ -258,4 +278,25 @@ new_test(extracting_words_special_case,
 	for (size_t i = 0; i<num_words; i++)
 		free(words[i]);
 	free(words);
+	);
+
+new_test(integer_is_double,
+	 assert_that(is_double("123"));
+	);
+
+new_test(word_is_no_double,
+	 assert_that(!is_double("Hej"));
+	);
+
+new_test(integer_with_exponent_is_double,
+	 assert_that(is_double("123e45"));
+	);
+new_test(integer_dot_integer_is_double,
+	 assert_that(is_double("123.45"));
+	);
+new_test(negative_integer_is_double,
+	 assert_that(is_double("-123"));
+	);
+new_test(integer_with_negative_exponent_is_double,
+	 assert_that(is_double("123e-3"));
 	);

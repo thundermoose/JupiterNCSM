@@ -24,6 +24,8 @@ int ends_with(const char* str,
 
 int is_integer(const char *string);
 
+int is_double(const char *string);
+
 int is_memory_string(const char *string);
 
 size_t parse_memory_string(const char *string);

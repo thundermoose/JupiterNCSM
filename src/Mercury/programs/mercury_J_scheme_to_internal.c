@@ -306,6 +306,14 @@ void generate_3nf_matrix_blocks_parallel(combination_table_t combination_table,
 		open_data_file(get_interaction_path_3nf_argument(arguments));
 	set_max_loaded_memory(coupled_3nf_data,
 			      get_max_loaded_memory_argument(arguments));
+	if (lec_arguments_set(arguments))
+	{
+		set_weight(coupled_3nf_data,CE,get_CE_lec_argument(arguments));
+		set_weight(coupled_3nf_data,CD,get_CD_lec_argument(arguments));
+		set_weight(coupled_3nf_data,C1,get_C1_lec_argument(arguments));
+		set_weight(coupled_3nf_data,C3,get_C3_lec_argument(arguments));
+		set_weight(coupled_3nf_data,C4,get_C4_lec_argument(arguments));
+	}
 	transform_3nf_block_manager_t manager =
 		new_transform_3nf_block_manager
 		(coupled_3nf_data,

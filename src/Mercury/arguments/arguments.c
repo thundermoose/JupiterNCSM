@@ -13,6 +13,7 @@ struct _arguments_
 	int to_few_arguments;
 	int single_block;
 	int no_2nf;
+	int lec_set;
 	char *program_name;
 	char *interaction_path_2nf;
 	char *interaction_path_3nf;
@@ -26,6 +27,11 @@ struct _arguments_
 	size_t max_loaded_memory;
 	int single_particle_energy;
 	int two_particle_energy;
+	double lec_CE;
+	double lec_CD;
+	double lec_C1;
+	double lec_C3;
+	double lec_C4;
 };
 
 #define INTEGER_ARGUMENT(name,field) \
@@ -69,6 +75,16 @@ struct _arguments_
 	continue;\
 }
 
+#define LEC_ARGUMENT(name,field) \
+	if (strcmp(argument_list[i],name) == 0) \
+{\
+	if (!is_double(argument_list[++i]))\
+	error(name " takes floating point argument\n");\
+	arguments->field = atof(argument_list[i]);\
+	arguments->lec_set = 1;\
+	continue;\
+}
+
 char default_finished_block_file[] = "finished_blocks";
 arguments_t parse_argument_list(int num_arguments,
 				char **argument_list)
@@ -107,6 +123,11 @@ arguments_t parse_argument_list(int num_arguments,
 			MODE_ARGUMENT("--no-2nf",no_2nf);
 			STRING_ARGUMENT("--finished-blocks-file",
 					finished_energy_blocks);
+			LEC_ARGUMENT("--LEC-CE",lec_CE);
+			LEC_ARGUMENT("--LEC-CD",lec_CD);
+			LEC_ARGUMENT("--LEC-C1",lec_C1);
+			LEC_ARGUMENT("--LEC-C3",lec_C3);
+			LEC_ARGUMENT("--LEC-C4",lec_C4);
 			if (arguments->interaction_path_2nf == NULL)
 			{
 				arguments->interaction_path_2nf = 
@@ -168,6 +189,11 @@ int single_block_mode(const arguments_t arguments)
 int no_2nf_argument(const arguments_t arguments)
 {
 	return arguments->no_2nf;
+}
+
+int lec_arguments_set(const arguments_t arguments)
+{
+	return arguments->lec_set;
 }
 
 const char *get_interaction_path_2nf_argument(const arguments_t arguments)
@@ -233,6 +259,31 @@ int get_two_particle_energy_argument(const arguments_t arguments)
 size_t get_max_loaded_memory_argument(const arguments_t arguments)
 {
 	return arguments->max_loaded_memory;
+}
+
+double get_CE_lec_argument(const arguments_t arguments)
+{
+	return arguments->lec_CE;
+}
+
+double get_CD_lec_argument(const arguments_t arguments)
+{
+	return arguments->lec_CD;
+}
+
+double get_C1_lec_argument(const arguments_t arguments)
+{
+	return arguments->lec_C1;
+}
+
+double get_C3_lec_argument(const arguments_t arguments)
+{
+	return arguments->lec_C3;
+}
+
+double get_C4_lec_argument(const arguments_t arguments)
+{
+	return arguments->lec_C4;
 }
 
 void free_arguments(arguments_t arguments)
