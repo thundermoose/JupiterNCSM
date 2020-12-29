@@ -116,8 +116,8 @@ void add_operator_blocks(matrix_block_setting_t block,
 			 const char *output_path,
 			 double *workspace)
 {
-	size_t block_size = block.num_proton_combinations*
-		block.num_neutron_combinations;
+	size_t block_size = get_matrix_block_length(block);
+	printf("Adding block %lu\n",block.matrix_block_id);
 	double *output_block = workspace;
 	double *input_block = workspace+block_size;
 	memset(output_block,0,block_size*sizeof(double));
@@ -128,10 +128,11 @@ void add_operator_blocks(matrix_block_setting_t block,
 			      block.matrix_block_id,
 			      block_size);
 		double coefficient = coefficients[i];
+		printf("coefficient[%lu] = %lg\n",i,coefficient);
 		for (size_t j = 0; j < block_size; j++)
-			input_block[j]+=coefficient*output_block[j];
+			output_block[j]+=coefficient*input_block[j];
 	}
-	save_operator(input_block,
+	save_operator(output_block,
 		      output_path,
 		      block.matrix_block_id,
 		      block);
@@ -149,11 +150,18 @@ void load_operator(double *buffer,
 		operator_path,
 		matrix_block_id);
 	FILE *matrix_file = fopen(filename_buffer,"r");
-	fseek(matrix_file,2*sizeof(size_t),SEEK_SET);
-	if (fread(buffer,sizeof(double),block_size,matrix_file) != block_size)
-		error("Could not read block %lu from operator %s\n",
-		      matrix_block_id,operator_path);
-	fclose(matrix_file);
+	if (matrix_file == 0)
+	{
+		memset(buffer,0,sizeof(double)*block_size);
+	}
+	else
+	{
+		fseek(matrix_file,2*sizeof(size_t),SEEK_SET);
+		if (fread(buffer,sizeof(double),block_size,matrix_file) != block_size)
+			error("Could not read block %lu from operator %s\n",
+			      matrix_block_id,operator_path);
+		fclose(matrix_file);
+	}
 }
 
 static
@@ -184,8 +192,7 @@ void save_operator(const double *buffer,
 		      "in operator %s\n",
 		      matrix_block_id,
 		      operator_path);
-	size_t block_size =
-	       	block.num_proton_combinations*block.num_neutron_combinations;
+	size_t block_size = get_matrix_block_length(block);
 	if (fwrite(buffer,
 		   sizeof(double),
 		   block_size,
