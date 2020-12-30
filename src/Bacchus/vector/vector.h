@@ -19,6 +19,8 @@ vector_t new_zero_vector(vector_settings_t vector_settings);
 
 vector_t new_random_vector(vector_settings_t vector_settings);
 
+vector_t new_existing_vector(vector_settings_t vector_settings);
+
 void set_element(vector_t vector,
 		 size_t index,
 		 double value);
