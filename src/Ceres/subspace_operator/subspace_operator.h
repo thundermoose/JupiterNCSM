@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include <vector/vector.h>
+#include <evaluation_order/evaluation_order.h>
+
 void create_subspace_operator(const char *subspace_operator_path,
 			      const char *operator_path,
 			      const char *workspace_path,
