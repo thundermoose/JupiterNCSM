@@ -9,14 +9,14 @@
 #include <string.h>
 #include <unit_testing/test.h>
 #include <combination_table/combination_table.h>
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <scheduler/scheduler.h>
 
 struct _matrix_builder_
 {
 	matrix_builder_settings_t settings;
 	combination_table_t combination_table;	
-	execution_order_t execution_order;
+	evaluation_order_t evaluation_order;
 	scheduler_t scheduler;
 };
 
@@ -29,13 +29,13 @@ matrix_builder_t new_matrix_builder(matrix_builder_settings_t settings)
 		new_combination_table(settings.combination_file_path,
 				      settings.num_protons,
 				      settings.num_neutrons);
-	builder->execution_order =
-		read_execution_order(settings.minerva_instruction_path,
+	builder->evaluation_order =
+		read_evaluation_order(settings.minerva_instruction_path,
 				     builder->combination_table);
 
 	const size_t max_load_memory = (size_t)(16)<<30;
 	builder->scheduler = 
-		new_scheduler(builder->execution_order,
+		new_scheduler(builder->evaluation_order,
 			      builder->combination_table,
 			      settings.index_list_path,
 			      settings.interaction_path,
@@ -88,7 +88,7 @@ matrix_t generate_matrix(matrix_builder_t builder)
 void free_matrix_builder(matrix_builder_t builder)
 {
 	free_combination_table(builder->combination_table);
-	free_execution_order(builder->execution_order);
+	free_evaluation_order(builder->evaluation_order);
 	free_scheduler(builder->scheduler);
 	free(builder);
 }
@@ -214,7 +214,7 @@ new_test(single_matrix_vector_multiplication,
 	 	get_test_file_path("input");
 	 const char *output_vector_path =
 	 	get_test_file_path("output");
-	 const char *execution_order_path =
+	 const char *evaluation_order_path =
 		TEST_DATA BACCHUS_RUN "nmax4/greedy_2_16.txt";
 	 const char *index_list_path =
                 TEST_DATA BACCHUS_RUN "nmax4/index_lists";
@@ -231,10 +231,10 @@ new_test(single_matrix_vector_multiplication,
 		new_combination_table(combination_table_path,
 				      num_protons,
 				      num_neutrons);
-	execution_order_t execution_order =
-		read_execution_order(execution_order_path,
+	evaluation_order_t evaluation_order =
+		read_evaluation_order(evaluation_order_path,
 				     combination_table);
-	scheduler_t scheduler = new_scheduler(execution_order,
+	scheduler_t scheduler = new_scheduler(evaluation_order,
 				      combination_table,
 				      index_list_path,
 				      interaction_path,
@@ -258,7 +258,7 @@ new_test(single_matrix_vector_multiplication,
 	free_vector(output_vector);
 	free_vector(input_vector);
 	free_scheduler(scheduler);
-	free_execution_order(execution_order);
+	free_evaluation_order(evaluation_order);
 	free_combination_table(combination_table);
 	free(input_settings.directory_name);
 	free(output_settings.directory_name);

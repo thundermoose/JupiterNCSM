@@ -21,7 +21,7 @@ optimize_calculation_blocks(calculation_blocks_t calculation_blocks,
 			    settings_t settings);
 
 static
-void save_execution_order_file(calculation_blocks_t calculation_blocks,
+void save_evaluation_order_file(calculation_blocks_t calculation_blocks,
 			       const char *output_path);
 
 static
@@ -80,7 +80,7 @@ int main(int num_arguments,
 		optimize_calculation_blocks(calculation_blocks,
 					    combination_table,
 					    settings);
-	save_execution_order_file(optimized_calculation_blocks,
+	save_evaluation_order_file(optimized_calculation_blocks,
 				  get_output_path(settings));
 	// frees both combination_table and calculation_blocks
 	free_combination_table(combination_table);
@@ -170,24 +170,24 @@ optimize_calculation_blocks(calculation_blocks_t calculation_blocks,
 }
 
 static
-void save_execution_order_file(calculation_blocks_t calculation_blocks,
+void save_evaluation_order_file(calculation_blocks_t calculation_blocks,
 			       const char *output_path)
 {
-	FILE *execution_order_file = fopen(output_path,"w");
+	FILE *evaluation_order_file = fopen(output_path,"w");
 	reset_calculation_block_iterator(calculation_blocks);
 	while (has_next_calculation_block(calculation_blocks))
 	{
 		calculation_block_t block = 
 			next_calculation_block(calculation_blocks);
 		if (block.secondary_index_list == no_index)
-			fprintf(execution_order_file,
+			fprintf(evaluation_order_file,
 				"BLOCK: %lu %lu %lu %lu\n",
 				block.vector_block_in,
 				block.vector_block_out,
 				block.primary_index_list,
 				block.matrix_element_block);
 		else
-			fprintf(execution_order_file,
+			fprintf(evaluation_order_file,
 				"BLOCK: %lu %lu %lu %lu %lu\n",
 				block.vector_block_in,
 				block.vector_block_out,
@@ -195,7 +195,7 @@ void save_execution_order_file(calculation_blocks_t calculation_blocks,
 				block.secondary_index_list,
 				block.matrix_element_block);
 	}
-	fclose(execution_order_file);
+	fclose(evaluation_order_file);
 }
 
 static

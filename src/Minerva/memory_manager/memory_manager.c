@@ -46,7 +46,7 @@ struct _memory_manager_
 	char *index_list_base_directory;
 	char *matrix_base_directory;
 	combination_table_t combination_table;
-	execution_order_t execution_order;
+	evaluation_order_t evaluation_order;
 	size_t size_current_loaded_memory;
 	size_t maximum_loaded_memory;
 	size_t *candidate_arrays_workspace;
@@ -63,15 +63,15 @@ void initialize_arrays(memory_manager_t manager);
 
 static
 size_t get_size_of_unloaded_arrays(memory_manager_t manager,
-				   execution_instruction_t instruction);
+				   evaluation_instruction_t instruction);
 
 static
 void make_space_for(memory_manager_t manager,
-		    execution_instruction_t instruction);
+		    evaluation_instruction_t instruction);
 
 static
 void load_needed_arrays(memory_manager_t manager,
-			execution_instruction_t instruction);
+			evaluation_instruction_t instruction);
 static
 void wait_til_array_is_loaded(memory_manager_t manager, size_t array_id);
 
@@ -86,11 +86,11 @@ void unload_array(memory_manager_t manager, size_t array_id);
 
 static
 void set_all_needed_by(memory_manager_t manager,
-		       execution_instruction_t instruction);
+		       evaluation_instruction_t instruction);
 
 static
 void set_all_in_use(memory_manager_t manager,
-		    execution_instruction_t instruction);
+		    evaluation_instruction_t instruction);
 
 static
 void set_needed_by(memory_manager_t manager,
@@ -117,7 +117,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 				    const char *index_list_base_directory,
 				    const char *matrix_base_directory,
 				    combination_table_t combination_table,
-				    execution_order_t execution_order,
+				    evaluation_order_t evaluation_order,
 				    size_t maximum_loaded_memory)
 {
 	memory_manager_t manager =
@@ -132,7 +132,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->index_list_base_directory = copy_string(index_list_base_directory);
 	manager->matrix_base_directory = copy_string(matrix_base_directory);
 	manager->combination_table = combination_table;
-	manager->execution_order = execution_order;
+	manager->evaluation_order = evaluation_order;
 	manager->maximum_loaded_memory = maximum_loaded_memory;
 	printf("max load memory = %lu\n",maximum_loaded_memory);
 	manager->size_current_loaded_memory = 0;
@@ -146,7 +146,7 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 }
 
 void begin_instruction(memory_manager_t manager,
-		       execution_instruction_t instruction)
+		       evaluation_instruction_t instruction)
 {
 	set_all_needed_by(manager,instruction);
 #pragma omp critical (unloading)
@@ -324,7 +324,7 @@ void initialize_arrays(memory_manager_t manager)
 
 static
 size_t get_size_of_unloaded_arrays(memory_manager_t manager,
-				   execution_instruction_t instruction)
+				   evaluation_instruction_t instruction)
 {
 	size_t size_of_unloaded_arrays = 0;
 	if (!is_array_loaded(manager,instruction.vector_block_in))
@@ -351,7 +351,7 @@ size_t get_size_of_unloaded_arrays(memory_manager_t manager,
 
 static
 void make_space_for(memory_manager_t manager,
-		    execution_instruction_t instruction)
+		    evaluation_instruction_t instruction)
 {
 	size_t needed_memory = 
 		get_size_of_unloaded_arrays(manager,instruction);
@@ -408,7 +408,7 @@ void make_space_for(memory_manager_t manager,
 
 static
 void load_needed_arrays(memory_manager_t manager,
-			execution_instruction_t instruction)
+			evaluation_instruction_t instruction)
 {
 	load_array(manager,instruction.vector_block_in);
 	load_array(manager,instruction.vector_block_out);
@@ -542,7 +542,7 @@ void unload_array(memory_manager_t manager,
 
 static
 void set_all_needed_by(memory_manager_t manager,
-		       execution_instruction_t instruction)
+		       evaluation_instruction_t instruction)
 {
 	set_needed_by(manager,
 		      instruction.vector_block_in,
@@ -563,7 +563,7 @@ void set_all_needed_by(memory_manager_t manager,
 
 static
 void set_all_in_use(memory_manager_t manager,
-		    execution_instruction_t instruction)
+		    evaluation_instruction_t instruction)
 {
 	set_in_use(manager,instruction.vector_block_in);
 	set_in_use(manager,instruction.vector_block_out);

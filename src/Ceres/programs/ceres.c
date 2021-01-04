@@ -46,6 +46,7 @@ int main(int num_arguments, char **argument_list)
 		create_subspace_operator(subspace_operator_path,
 					 operator_path,
 					 workspace_path,
+					 vector_settings,
 					 training_vectors,
 					 num_training_vectors);		
 	}

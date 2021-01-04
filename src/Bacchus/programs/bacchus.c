@@ -5,7 +5,7 @@
 #include <settings/settings.h>
 #include <matrix/matrix.h>
 #include <combination_table/combination_table.h>
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <lanczos/lanczos.h>
 #include <eigensystem/eigensystem.h>
 #include <string_tools/string_tools.h>
@@ -37,8 +37,8 @@ int main(int num_arguments, char **argument_list)
 		(get_combination_table_path_setting(settings),
 		 get_num_protons_setting(settings),
 		 get_num_neutrons_setting(settings));	      
-	execution_order_t execution_order =
-		read_execution_order(get_execution_order_path_setting(settings),
+	evaluation_order_t evaluation_order =
+		read_evaluation_order(get_evaluation_order_path_setting(settings),
 				    combination_table);
 	lanczos_settings_t lanczos_settings =
 	{
@@ -54,7 +54,7 @@ int main(int num_arguments, char **argument_list)
 			get_convergece_criteria_setting(settings),
 		.target_eigenvalue = 0,
 		.matrix = new_generative_matrix
-			(execution_order,
+			(evaluation_order,
 			 combination_table,
 			 get_index_lists_base_directory_setting(settings),
 			 get_matrix_file_base_directory_setting(settings),
@@ -88,7 +88,7 @@ int main(int num_arguments, char **argument_list)
 	free_eigensystem(eigensystem);
 	free_lanczos_environment(lanczos_environment);
 	free_matrix(lanczos_settings.matrix);
-	free_execution_order(execution_order);
+	free_evaluation_order(evaluation_order);
 	free_combination_table(combination_table);
 	free_settings(settings);
 	free(lanczos_settings.krylow_vectors_directory_name);

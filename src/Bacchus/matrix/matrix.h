@@ -3,7 +3,7 @@
 
 #include <vector/vector.h>
 #include <equality_status/equality_status.h>
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <combination_table/combination_table.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +18,7 @@ matrix_t new_random_symmetric_matrix(size_t side_length);
 
 matrix_t new_matrix_from_numpy(FILE* matrix_file);
 
-matrix_t new_generative_matrix(execution_order_t execution_order,
+matrix_t new_generative_matrix(evaluation_order_t evaluation_order,
 			       combination_table_t combination_table,
 			       const char *index_lists_base_directory,
 			       const char *matrix_file_base_directory,

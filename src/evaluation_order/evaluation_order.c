@@ -1,4 +1,4 @@
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <array_builder/array_builder.h>
 #include <string_tools/string_tools.h>
 #include <global_constants/global_constants.h>
@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <error/error.h>
 
-const execution_instruction_t empty_instruction = {
+const evaluation_instruction_t empty_instruction = {
 	.type = unknown,
 	.vector_block_in = no_index,
 	.vector_block_out = no_index,
@@ -21,15 +21,15 @@ const execution_instruction_t empty_instruction = {
 	.proton_index = no_index
 };
 
-struct _execution_order_
+struct _evaluation_order_
 {
-	execution_instruction_t *instructions;
+	evaluation_instruction_t *instructions;
 	size_t num_instruction;
 };
 
-struct _execution_order_iterator_
+struct _evaluation_order_iterator_
 {
-	execution_instruction_t *instructions;
+	evaluation_instruction_t *instructions;
 	size_t num_instruction;
 	size_t current_instruction_index;
 	omp_lock_t fetch_lock;
@@ -40,18 +40,18 @@ void parse_row(const char *row,
 	       array_builder_t instructions_builder,
 	       combination_table_t combination_table);
 
-execution_order_t read_execution_order(const char *filename,
+evaluation_order_t read_evaluation_order(const char *filename,
 				       combination_table_t combination_table)
 {
-	execution_order_t execution_order =
-		(execution_order_t)calloc(1,sizeof(struct _execution_order_));
+	evaluation_order_t evaluation_order =
+		(evaluation_order_t)calloc(1,sizeof(struct _evaluation_order_));
 	array_builder_t instructions_builder =
-		new_array_builder((void**)&execution_order->instructions,
-				  &execution_order->num_instruction,
-				  sizeof(execution_instruction_t));
+		new_array_builder((void**)&evaluation_order->instructions,
+				  &evaluation_order->num_instruction,
+				  sizeof(evaluation_instruction_t));
 	FILE *file = fopen(filename,"r");
 	if (file == NULL)
-		error("Could not open execution order file %s. %s\n",
+		error("Could not open evaluation order file %s. %s\n",
 		      filename,strerror(errno));
 	char *row = NULL;
 	size_t row_length = 0;
@@ -67,15 +67,15 @@ execution_order_t read_execution_order(const char *filename,
 	if (row)
 		free(row);
 	free_array_builder(instructions_builder);
-	for (size_t i = 0; i<execution_order->num_instruction-1; i++)
+	for (size_t i = 0; i<evaluation_order->num_instruction-1; i++)
 	{
-		execution_instruction_t instruction =
-		       	execution_order->instructions[i];
-		execution_instruction_t next =
-			execution_order->instructions[i+1];
-		execution_instruction_t next_next = 
-			i < execution_order->num_instruction-3 ?
-			execution_order->instructions[i+3] :
+		evaluation_instruction_t instruction =
+		       	evaluation_order->instructions[i];
+		evaluation_instruction_t next =
+			evaluation_order->instructions[i+1];
+		evaluation_instruction_t next_next = 
+			i < evaluation_order->num_instruction-3 ?
+			evaluation_order->instructions[i+3] :
 			empty_instruction;
 		if (instruction.type != unload)
 			continue;
@@ -106,39 +106,39 @@ execution_order_t read_execution_order(const char *filename,
 		{
 			instruction.proton_index = no_index;
 		}
-		execution_order->instructions[i] = instruction;
+		evaluation_order->instructions[i] = instruction;
 	}
-	return execution_order;
+	return evaluation_order;
 }
 
-size_t get_num_instructions(execution_order_t execution_order)
+size_t get_num_instructions(evaluation_order_t evaluation_order)
 {
-	return execution_order->num_instruction;
+	return evaluation_order->num_instruction;
 }
 
 
-execution_order_iterator_t 
-get_execution_order_iterator(execution_order_t execution_order)
+evaluation_order_iterator_t 
+get_evaluation_order_iterator(evaluation_order_t evaluation_order)
 {
-	execution_order_iterator_t iterator =
-	       	(execution_order_iterator_t)
-		malloc(sizeof(struct _execution_order_iterator_));
-	iterator->instructions = execution_order->instructions;
-	iterator->num_instruction = execution_order->num_instruction;
+	evaluation_order_iterator_t iterator =
+	       	(evaluation_order_iterator_t)
+		malloc(sizeof(struct _evaluation_order_iterator_));
+	iterator->instructions = evaluation_order->instructions;
+	iterator->num_instruction = evaluation_order->num_instruction;
 	iterator->current_instruction_index = 0;
 	omp_init_lock(&iterator->fetch_lock);
 	return iterator;	
 }
 
-void reset_execution_order(execution_order_iterator_t iterator)
+void reset_evaluation_order(evaluation_order_iterator_t iterator)
 {
 	iterator->current_instruction_index = 0;
 }
 
-execution_instruction_t 
-next_instruction(execution_order_iterator_t iterator)
+evaluation_instruction_t 
+next_instruction(evaluation_order_iterator_t iterator)
 {
-	execution_instruction_t instruction;
+	evaluation_instruction_t instruction;
 	assert(iterator->current_instruction_index <
 	       iterator->num_instruction);
 	size_t index = iterator->current_instruction_index++;
@@ -148,7 +148,7 @@ next_instruction(execution_order_iterator_t iterator)
 	return instruction;
 }
 
-int has_next_instruction(execution_order_iterator_t iterator)
+int has_next_instruction(evaluation_order_iterator_t iterator)
 {
 	omp_set_lock(&iterator->fetch_lock);
 	int next_instruction_is_avilable = 
@@ -160,16 +160,16 @@ int has_next_instruction(execution_order_iterator_t iterator)
 
 }
 
-void free_execution_order_iterator(execution_order_iterator_t iterator)
+void free_evaluation_order_iterator(evaluation_order_iterator_t iterator)
 {
 	omp_destroy_lock(&iterator->fetch_lock);
 	free(iterator);
 }
 
-void free_execution_order(execution_order_t execution_order)
+void free_evaluation_order(evaluation_order_t evaluation_order)
 {
-	free(execution_order->instructions);
-	free(execution_order);
+	free(evaluation_order->instructions);
+	free(evaluation_order);
 }
 
 	static
@@ -182,7 +182,7 @@ void parse_row(const char *row,
 	if (block_pointer == NULL)
 		return;
 	char *unload_pointer = strstr(row,"UNLOAD_");	
-	execution_instruction_t current_instruction;
+	evaluation_instruction_t current_instruction;
 	current_instruction.type = unknown;
 	if (unload_pointer != NULL)
 		return;
@@ -252,17 +252,17 @@ void parallel_instruction_fetching_main_code()
 	combination_table_t combination_table = 
 		new_combination_table(comb_filepath,
 				      2,2);
-	execution_order_t execution_order =
-		read_execution_order(instruction_filepath,
+	evaluation_order_t evaluation_order =
+		read_evaluation_order(instruction_filepath,
 				     combination_table);
-	execution_order_iterator_t instruction_iterator =
-		get_execution_order_iterator(execution_order);
+	evaluation_order_iterator_t instruction_iterator =
+		get_evaluation_order_iterator(evaluation_order);
 #pragma omp parallel shared(instruction_iterator)
 	{
 		size_t thread_id = omp_get_thread_num();
 		while(has_next_instruction(instruction_iterator))
 		{
-			execution_instruction_t instruction = 
+			evaluation_instruction_t instruction = 
 				next_instruction(instruction_iterator);
 			printf("thread %lu fetched: %d %lu %lu %lu %lu %lu\n",
 			       thread_id,
@@ -275,8 +275,8 @@ void parallel_instruction_fetching_main_code()
 			usleep(1000);
 		}
 	}
-	free_execution_order_iterator(instruction_iterator);
-	free_execution_order(execution_order);
+	free_evaluation_order_iterator(instruction_iterator);
+	free_evaluation_order(evaluation_order);
 }
 #endif
 

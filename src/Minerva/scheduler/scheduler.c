@@ -14,7 +14,7 @@
 
 struct _scheduler_
 {
-	execution_order_t execution_order;
+	evaluation_order_t evaluation_order;
 	char *index_lists_base_directory;
 	char *matrix_file_base_directory;
 	combination_table_t combination_table;
@@ -22,44 +22,44 @@ struct _scheduler_
 };
 
 static
-void execute_instruction(execution_instruction_t instruction,
+void execute_instruction(evaluation_instruction_t instruction,
 			 memory_manager_t memory_manager,
 			 scheduler_t scheduler);
 
 static
 void neutron_case(memory_manager_t memory_manager,
-		  execution_instruction_t instruction);
+		  evaluation_instruction_t instruction);
 
 static
 void proton_case(memory_manager_t memory_manager,
-		 execution_instruction_t instruction);
+		 evaluation_instruction_t instruction);
 static
 void neutron_proton_case(memory_manager_t memory_manager,
-			 execution_instruction_t instruction);
+			 evaluation_instruction_t instruction);
 
 static
 void diagonal_neutron_case(memory_manager_t memory_manager,
-			   execution_instruction_t instruction);
+			   evaluation_instruction_t instruction);
 
 static
 void diagonal_proton_case(memory_manager_t memory_manager,
-			  execution_instruction_t instruction);
+			  evaluation_instruction_t instruction);
 static
 void diagonal_neutron_proton_case(memory_manager_t memory_manager,
-				  execution_instruction_t instruction);
+				  evaluation_instruction_t instruction);
 
 static
 void off_diagonal_neutron_case(memory_manager_t memory_manager,
-			       execution_instruction_t instruction);
+			       evaluation_instruction_t instruction);
 
 static
 void off_diagonal_proton_case(memory_manager_t memory_manager,
-			      execution_instruction_t instruction);
+			      evaluation_instruction_t instruction);
 static
 void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
-				      execution_instruction_t instruction);
+				      evaluation_instruction_t instruction);
 
-scheduler_t new_scheduler(execution_order_t execution_order,
+scheduler_t new_scheduler(evaluation_order_t evaluation_order,
 			  combination_table_t combination_table,
 			  const char *index_lists_base_directory,
 			  const char *matrix_file_base_directory,
@@ -67,7 +67,7 @@ scheduler_t new_scheduler(execution_order_t execution_order,
 {
 	scheduler_t scheduler =
 		(scheduler_t)malloc(sizeof(struct _scheduler_));
-	scheduler->execution_order = execution_order;
+	scheduler->evaluation_order = evaluation_order;
 	scheduler->combination_table = combination_table;
 	scheduler->index_lists_base_directory =
 		copy_string(index_lists_base_directory);
@@ -87,10 +87,10 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 				   scheduler->index_lists_base_directory,
 				   scheduler->matrix_file_base_directory,
 				   scheduler->combination_table,
-				   scheduler->execution_order,
+				   scheduler->evaluation_order,
 				   scheduler->maximum_loaded_memory);
-	execution_order_iterator_t instruction_iterator =
-		get_execution_order_iterator(scheduler->execution_order);
+	evaluation_order_iterator_t instruction_iterator =
+		get_evaluation_order_iterator(scheduler->evaluation_order);
 	double fastest_block_time = INFINITY;
 	double slowes_block_time = -INFINITY;
 	double total_block_time = 0;
@@ -108,7 +108,7 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 		//else
 		while (has_next_instruction(instruction_iterator))
 		{
-			execution_instruction_t instruction =
+			evaluation_instruction_t instruction =
 				next_instruction(instruction_iterator);
 			begin_instruction(memory_manager,instruction);
 			struct timespec t_start,t_end;
@@ -136,12 +136,12 @@ void run_matrix_vector_multiplication(const char *output_vector_base_directory,
 		}
 	}
 	free_memory_manager(memory_manager);
-	free_execution_order_iterator(instruction_iterator);
+	free_evaluation_order_iterator(instruction_iterator);
 	printf("Fastest block: %lg µs\n",fastest_block_time);
 	printf("Slowest block: %lg µs\n",slowes_block_time);
 	printf("Average block: %lg µs\n",
 	       total_block_time /
-	       get_num_instructions(scheduler->execution_order));
+	       get_num_instructions(scheduler->evaluation_order));
 }
 
 void free_scheduler(scheduler_t scheduler)
@@ -152,7 +152,7 @@ void free_scheduler(scheduler_t scheduler)
 }
 
 	static
-void execute_instruction(execution_instruction_t instruction,
+void execute_instruction(evaluation_instruction_t instruction,
 			 memory_manager_t memory_manager,
 			 scheduler_t scheduler)
 {
@@ -193,7 +193,7 @@ void execute_instruction(execution_instruction_t instruction,
 
 static
 void neutron_case(memory_manager_t memory_manager,
-		  execution_instruction_t instruction)
+		  evaluation_instruction_t instruction)
 {
 	if (instruction.vector_block_in == instruction.vector_block_out)
 		diagonal_neutron_case(memory_manager,instruction);
@@ -203,7 +203,7 @@ void neutron_case(memory_manager_t memory_manager,
 
 static
 void proton_case(memory_manager_t memory_manager,
-		 execution_instruction_t instruction)
+		 evaluation_instruction_t instruction)
 {
 	if (instruction.vector_block_in == instruction.vector_block_out)
 		diagonal_proton_case(memory_manager,instruction);
@@ -213,7 +213,7 @@ void proton_case(memory_manager_t memory_manager,
 
 static
 void neutron_proton_case(memory_manager_t memory_manager,
-			 execution_instruction_t instruction)
+			 evaluation_instruction_t instruction)
 {
 	if (instruction.vector_block_in == instruction.vector_block_out)
 		diagonal_neutron_proton_case(memory_manager,instruction);
@@ -223,7 +223,7 @@ void neutron_proton_case(memory_manager_t memory_manager,
 
 	static
 void diagonal_neutron_case(memory_manager_t memory_manager,
-			   execution_instruction_t instruction)
+			   evaluation_instruction_t instruction)
 {
 	log_entry("Running the neutron only case");
 	vector_block_t input_vector_block =
@@ -250,7 +250,7 @@ void diagonal_neutron_case(memory_manager_t memory_manager,
 
 	static
 void diagonal_proton_case(memory_manager_t memory_manager,
-			  execution_instruction_t instruction)
+			  evaluation_instruction_t instruction)
 {
 	log_entry("Running the proton only case");
 	vector_block_t input_vector_block =
@@ -277,7 +277,7 @@ void diagonal_proton_case(memory_manager_t memory_manager,
 
 	static
 void diagonal_neutron_proton_case(memory_manager_t memory_manager,
-				  execution_instruction_t instruction)
+				  evaluation_instruction_t instruction)
 {
 	log_entry("Running the neutron and proton case");
 	vector_block_t input_vector_block =
@@ -309,7 +309,7 @@ void diagonal_neutron_proton_case(memory_manager_t memory_manager,
 
 	static
 void off_diagonal_neutron_case(memory_manager_t memory_manager,
-			   execution_instruction_t instruction)
+			   evaluation_instruction_t instruction)
 {
 	log_entry("Running the neutron only case");
 	vector_block_t input_vector_block_left =
@@ -346,7 +346,7 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 
 	static
 void off_diagonal_proton_case(memory_manager_t memory_manager,
-			  execution_instruction_t instruction)
+			  evaluation_instruction_t instruction)
 {
 	log_entry("Running the proton only case");
 	vector_block_t input_vector_block_left =
@@ -383,7 +383,7 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 
 	static
 void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
-				  execution_instruction_t instruction)
+				  evaluation_instruction_t instruction)
 {
 	log_entry("Running the neutron and proton case");
 	vector_block_t input_vector_block_left =

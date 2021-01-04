@@ -49,7 +49,7 @@ matrix_t new_matrix_from_numpy(FILE* matrix_file)
 	return matrix;
 }
 
-matrix_t new_generative_matrix(execution_order_t execution_order,
+matrix_t new_generative_matrix(evaluation_order_t evaluation_order,
 			       combination_table_t combination_table,
 			       const char *index_lists_base_directory,
 			       const char *matrix_file_base_directory,
@@ -57,7 +57,7 @@ matrix_t new_generative_matrix(execution_order_t execution_order,
 {
 	matrix_t matrix = (matrix_t)malloc(sizeof(struct _matrix_));
 	matrix->type = GENERATIV_MATRIX;
-	matrix->scheduler = new_scheduler(execution_order,
+	matrix->scheduler = new_scheduler(evaluation_order,
 					  combination_table,
 					  index_lists_base_directory,
 					  matrix_file_base_directory,

@@ -16,7 +16,7 @@ void show_help_text(const settings_t settings);
 
 const char *get_combination_table_path_setting(const settings_t settings);
 
-const char *get_execution_order_path_setting(const settings_t settings);
+const char *get_evaluation_order_path_setting(const settings_t settings);
 
 const char *get_krylow_vector_directory_setting(const settings_t settings);
 
