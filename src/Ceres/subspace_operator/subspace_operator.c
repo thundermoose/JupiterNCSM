@@ -42,7 +42,7 @@ void create_subspace_operator(const char *subspace_operator_path,
 						  sizeof(double));	
 	for (size_t i = 0; i<num_training_vectors; i++)
 	{
-		for (size_t j = i; j<num_training_vectors; i++)
+		for (size_t j = i; j<num_training_vectors; j++)
 		{
 			double element =
 				scalar_multiplication(training_vectors[j],
