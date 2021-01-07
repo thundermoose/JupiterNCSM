@@ -78,6 +78,13 @@ settings_t parse_settings(size_t num_arguments, char **argument_list)
 		      settings_file,
 		      config_error_text(&config));
 	settings->evaluation_order_path = copy_string(string_buffer);
+	if (config_lookup_string(&config,
+				 "workspace_path",
+				 (const char**)&string_buffer) == CONFIG_FALSE)
+		error("Could not get workspace_path fromm %s. %s\n",
+		      settings_file,
+		      config_error_text(&config));
+	settings->workspace_path = copy_string(string_buffer);
 	if (config_lookup_int64(&config,
 				"num_protons",
 				(long long int*)
