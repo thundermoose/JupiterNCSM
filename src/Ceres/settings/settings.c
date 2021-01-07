@@ -67,7 +67,7 @@ settings_t parse_settings(size_t num_arguments, char **argument_list)
 	if (config_lookup_string(&config,
 				 "indexlists_path",
 				 (const char**)&string_buffer) == CONFIG_FALSE)
-		error("Could not get index_list_path from %s. %s\n",
+		error("Could not get indexlists_path from %s. %s\n",
 		      settings_file,
 		      config_error_text(&config));
 	settings->index_list_path = copy_string(string_buffer);
