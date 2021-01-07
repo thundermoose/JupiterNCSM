@@ -136,6 +136,35 @@ vector_t new_random_vector(vector_settings_t vector_settings)
 	return vector;
 }
 
+vector_t new_existing_vector(vector_settings_t vector_settings)
+{
+	if (!directory_exists(vector_settings.directory_name))
+		return new_zero_vector(vector_settings);
+	vector_t vector = (vector_t)calloc(1,sizeof(struct _vector_));
+	vector->dimension = sum_sizes(vector_settings.block_sizes,
+				      vector_settings.num_blocks);
+	vector->num_vector_blocks = vector_settings.num_blocks;
+	vector->vector_blocks =
+		(vector_block_t*)calloc(vector->num_vector_blocks,
+					sizeof(vector_block_t));
+	size_t start_index = 0;
+	vector->directory_name = copy_string(vector_settings.directory_name);
+	for (size_t i = 0; i<vector->num_vector_blocks; i++)
+	{
+		vector_block_t vector_block =
+		{
+			.start_index = start_index,
+			.block_length = vector_settings.block_sizes[i],
+			.block_id = i+1
+		};
+		vector->vector_blocks[i] = vector_block;
+		start_index += vector_settings.block_sizes[i];
+		// We want to use the old vector files so no initialization
+	}
+	vector->loaded_block.block_id = -1;
+	return vector;
+}
+
 void set_element(vector_t vector,
 		 size_t index,
 		 double value)

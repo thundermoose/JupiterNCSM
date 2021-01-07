@@ -1,5 +1,7 @@
 #include <subspace_operator/subspace_operator.h>
 #include <matrix/matrix.h>
+#include <numpy_matrix/numpy_matrix.h>
+#include <string.h>
 
 
 void create_subspace_operator(const char *subspace_operator_path,
@@ -13,8 +15,8 @@ void create_subspace_operator(const char *subspace_operator_path,
 			      size_t num_training_vectors,
 			      size_t maximum_loaded_memory)
 {
-	matrix_t operator = new_generative_matrix(combination_table,
-						  evaluation_order,
+	matrix_t operator = new_generative_matrix(evaluation_order,
+						  combination_table,
 						  index_list_base_directory,
 						  operator_path,
 						  maximum_loaded_memory);
@@ -55,5 +57,5 @@ void create_subspace_operator(const char *subspace_operator_path,
 			     matrix_elements,
 			     num_training_vectors,
 			     num_training_vectors);
-	free(elements);
+	free(matrix_elements);
 }
