@@ -6,7 +6,14 @@
 #include <subspace_operator/subspace_operator.h>
 #include <string_tools/string_tools.h>
 #include <vector/vector.h>
+#include <log/log.h>
 
+__attribute__((constructor(101)))
+void setting_up_log()
+{
+	initiate_logging("CERES_LOG_FILE",
+			 "ceres.log");
+}
 int main(int num_arguments, char **argument_list)
 {
 	settings_t settings = parse_settings(num_arguments, argument_list);
@@ -67,4 +74,10 @@ int main(int num_arguments, char **argument_list)
 		free_vector(training_vectors[i]);
 	free_settings(settings);
 	return EXIT_SUCCESS;
+}
+
+__attribute__((destructor(900)))
+void finalize()
+{
+	finalize_logging();
 }
