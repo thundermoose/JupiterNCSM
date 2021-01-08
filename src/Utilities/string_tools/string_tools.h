@@ -24,6 +24,14 @@ int ends_with(const char* str,
 
 int is_integer(const char *string);
 
+int is_double(const char *string);
+
+int is_memory_string(const char *string);
+
+size_t parse_memory_string(const char *string);
+
 char *concatinate_strings(const char *string_1, const char *string_2);
+
+char *jump_back_word(char *str, char *current_word);
 
 #endif

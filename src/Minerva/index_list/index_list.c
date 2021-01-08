@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <debug_mode/debug_mode.h>
 
 struct _index_list_
 {

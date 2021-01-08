@@ -46,6 +46,16 @@ void scale_array(double *array,
 		array[i]*=scaling;
 }
 
+
+void array_add_scaled(double *target_array,
+		      double scaling_factor,
+		      const double *term,
+		      size_t num_elements)
+{
+	for (size_t i = 0; i<num_elements; i++)
+		target_array[i]+=scaling_factor*term[i];
+}
+
 new_test(summing_1_2_3_expects_6,
 	 const size_t array[3] = {1,2,3};
 	 assert_that(sum_sizes(array,3) == 6);

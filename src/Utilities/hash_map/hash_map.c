@@ -13,6 +13,7 @@ struct _hash_map_
 	size_t num_buckets;
 	char *element_buckets;
 	char *key_buckets;
+	size_t total_number_collisions;
 };
 
 static inline
@@ -41,6 +42,7 @@ hash_map_t new_hash_map(size_t num_required_elements,
 	       	(char*)malloc(hash_map->num_buckets*element_size);
 	hash_map->key_buckets =
 		(char*)calloc(hash_map->num_buckets,key_size);
+	hash_map->total_number_collisions = 0;
 	return hash_map;
 }
 
@@ -80,6 +82,11 @@ int hash_map_get(const hash_map_t hash_map,
 	}
 }
 
+size_t hash_map_total_number_collisions(const hash_map_t hash_map)
+{
+	return hash_map->total_number_collisions;
+}
+
 void free_hash_map(hash_map_t hash_map)
 {
 	free(hash_map->element_buckets);
@@ -104,6 +111,7 @@ size_t find_bucket(hash_map_t hash_map,
 		current_key =
 			(void*)(hash_map->key_buckets + 
 			index * hash_map->key_size);
+		hash_map->total_number_collisions++;
 	}
 	return index;
 }

@@ -15,6 +15,10 @@ void show_usage(const arguments_t arguments);
 
 int single_block_mode(const arguments_t arguments);
 
+int no_2nf_argument(const arguments_t arguments);
+
+int lec_arguments_set(const arguments_t arguments);
+
 const char *get_interaction_path_2nf_argument(const arguments_t arguments);
 
 const char *get_interaction_path_3nf_argument(const arguments_t arguments);
@@ -24,6 +28,8 @@ const char *get_combination_file_path_argument(const arguments_t arguments);
 const char *get_index_list_path_argument(const arguments_t arguments);
 
 const char *get_output_path_argument(const arguments_t arguments);
+
+const char *get_finished_energy_blocks_argument(const arguments_t arguments);
 
 size_t get_block_id(const arguments_t arguments);
 
@@ -36,6 +42,18 @@ size_t get_num_particles_argument(const arguments_t arguments);
 int get_single_particle_energy_argument(const arguments_t arguments);
 
 int get_two_particle_energy_argument(const arguments_t arguments);
+
+size_t get_max_loaded_memory_argument(const arguments_t arguments);
+
+double get_CE_lec_argument(const arguments_t arguments);
+
+double get_CD_lec_argument(const arguments_t arguments);
+
+double get_C1_lec_argument(const arguments_t arguments);
+
+double get_C3_lec_argument(const arguments_t arguments);
+
+double get_C4_lec_argument(const arguments_t arguments);
 
 void free_arguments(arguments_t arguments);
 

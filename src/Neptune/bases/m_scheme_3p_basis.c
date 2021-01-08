@@ -747,12 +747,15 @@ void read_two_particle_type_files(M_Scheme_3p_Basis *basis,
 	}
 	free(packed_proton_states);
 	free(packed_neutron_states);
-	current_sp_states = basis->sp_states;
-	qsort(basis->states,
-	      basis->dimension,
-	      sizeof(M_Scheme_3p_State),
-	      (__compar_fn_t)compare_m_scheme_3p_states_m);
-	current_sp_states = NULL;
+#pragma omp critical(sort_anicr_m_scheme_3p_basis)
+	{
+		current_sp_states = basis->sp_states;
+		qsort(basis->states,
+		      basis->dimension,
+		      sizeof(M_Scheme_3p_State),
+		      (__compar_fn_t)compare_m_scheme_3p_states_m);
+		current_sp_states = NULL;
+	}
 }
 
 static

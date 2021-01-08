@@ -10,14 +10,18 @@ struct _settings_
 	char *program_name;
 	int show_help;
 	char *combination_table_path;
-	char *execution_order_path;
+	char *evaluation_order_path;
 	char *index_lists_base_directory;
 	char *matrix_file_base_directory;
 	char *krylow_vector_directory;
+	char *eigenvector_directory;
 	size_t num_neutrons;
 	size_t num_protons;
 	size_t max_num_lanczos_iterations;
-	double tollerance;
+	size_t target_eigenvector;
+	size_t maximum_loaded_memory;
+	convergence_critera_t convergence_critera;
+	double tolerance;
 };
 
 settings_t parse_settings(size_t num_arguments,
@@ -25,6 +29,7 @@ settings_t parse_settings(size_t num_arguments,
 {
 	char *settings_file_name = "bacchus.conf";
 	int show_help = 0;
+	size_t maximum_loaded_memory = 0;
 	for (size_t i = 1; i<num_arguments; i++)
 	{
 		if (strcmp(argument_list[i],"--settings-file") == 0)
@@ -41,6 +46,16 @@ settings_t parse_settings(size_t num_arguments,
 			 strcmp(argument_list[i],"-h") == 0)
 		{
 			show_help = 1;	
+		}
+		else if (strcmp(argument_list[i],"--max-memory-load") == 0)
+		{
+			char *memory_string = argument_list[++i];
+			if (!is_memory_string(memory_string))
+				error("--max-memory-load followed by unknown "
+				      " string \"%s\".\n",
+				      memory_string);
+			maximum_loaded_memory = 
+				parse_memory_string(memory_string);		
 		}
 		else
 		{
@@ -79,15 +94,15 @@ settings_t parse_settings(size_t num_arguments,
 	log_entry("settings->combination_table_path = %s",
 		  settings->combination_table_path);
 	if (config_setting_lookup_string(interaction_setting,
-					 "execution_order_file",
+					 "evaluation_order_file",
 					 (const char **)
 					 &string_buffer)
 	    == CONFIG_FALSE)
-		error("No interaction.execution_order_file found in \"%s\"."
+		error("No interaction.evaluation_order_file found in \"%s\"."
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
-	settings->execution_order_path = copy_string(string_buffer);
+	settings->evaluation_order_path = copy_string(string_buffer);
 	if (config_setting_lookup_string(interaction_setting,
 					 "index_lists_base_directory",
 					 (const char **)
@@ -146,13 +161,54 @@ settings_t parse_settings(size_t num_arguments,
 		      settings_file_name,
 		      config_error_text(&config));
 	if (config_setting_lookup_float(lanczos_setting,
-				"convergence_tollerance",
-				&settings->tollerance)
-    		== CONFIG_FALSE)
-    		error("No lanczos.convergence_tollerance found in \"%s\"."
+				"convergence_tolerance",
+				&settings->tolerance)
+	    == CONFIG_FALSE)
+    		error("No lanczos.convergence_tolerance found in \"%s\"."
 		      " %s\n",
 		      settings_file_name,
 		      config_error_text(&config));
+	if (config_setting_lookup_int64(lanczos_setting,
+					"target_eigenvector",
+					(long long*)
+					&settings->target_eigenvector)
+	    == CONFIG_FALSE)
+		error("No lanczos.target_eigenvector found in \"%s\"."
+		      " %s\n",
+		      settings_file_name,
+		      config_error_text(&config));
+	int converge_eigenvector_status = 0;
+	if (config_setting_lookup_bool(lanczos_setting,
+				       "converge_eigenvectors",
+				       (int*)&converge_eigenvector_status) 
+	    == CONFIG_FALSE)
+		converge_eigenvector_status = 0;
+	if (converge_eigenvector_status)
+		settings->convergence_critera = converge_eigenvectors;
+	else
+		settings->convergence_critera = converge_eigenvalues;
+	if (config_setting_lookup_string(lanczos_setting,
+					 "eigenvector_directory",
+					 (const char **)
+					 &string_buffer)
+	   == CONFIG_FALSE)
+		error("No lanczos.eigenvector_directory found in \"%s\".%s\n",
+		      settings_file_name,
+		      config_error_text(&config));
+	settings->eigenvector_directory = copy_string(string_buffer);
+	if (config_setting_lookup_string(lanczos_setting,
+					 "max_memory_load",
+					 (const char **)
+					 &string_buffer) == CONFIG_FALSE)
+		settings->maximum_loaded_memory = (size_t)(16)<<30;
+	else if (is_memory_string(string_buffer))
+		settings->maximum_loaded_memory =
+		       	parse_memory_string(string_buffer);
+	else
+		error("max_memory_load is not set to correct memory string\n");
+	// Command argument has presidence over settings file
+	if (maximum_loaded_memory > 0)
+		settings->maximum_loaded_memory = maximum_loaded_memory;
 	config_destroy(&config);
 	return settings;	
 }
@@ -164,11 +220,15 @@ int should_show_help_text(const settings_t settings)
 
 void show_help_text(const settings_t settings)
 {
-	printf("Usage: %s [--settings-file <file-path>] [-h/--help]\n"
+	printf("Usage: %s [--settings-file <file-path>] [-h/--help] "
+	       "[--max-memory-load <memory size>\n"
 	       "Flags:\n"
 	       "\t--settings-file <file-path>: To provide %s with an "
 	       "alternative settings file than \"bacchus.conf\".\n"
 	       "\t-h/--help: To display this message.\n"
+	       "\t--max-memory-load <memory size>: To provide a different "
+	       "limit on how much memory the matrix vector multiplication "
+	       "uses\n"
 	       "The settings file:\n"
 	       "The settings file is read using the libconfig library."
 	       "Therefore, the user is referred to the libconfig documentation"
@@ -178,8 +238,8 @@ void show_help_text(const settings_t settings)
 	       " following fields:\n"
 	       "\tcombination_table_file: A string containing the path to the"
 	       " comb.txt file produced by anicr.\n"
-	       "\texecution_order_file: A string containing the path to the"
-	       " execution order file, e.g. greedy_2_16.txt.\n"
+	       "\tevaluation_order_file: A string containing the path to the"
+	       " evaluation order file, e.g. greedy_2_16.txt.\n"
 	       "\tindex_lists_base_directory: A string containing the path to"
 	       " the base directory for the index lists generated by anicr.\n"
 	       "\tmatrix_file_base_directory: A string containing the path to"
@@ -195,9 +255,13 @@ void show_help_text(const settings_t settings)
 	       " disk."
 	       "\tmax_num_lanczos_iterations: An integer limiting the maximum"
 	       " number of iterations that the Lanczos algorithm should do\n"
-	       "\tconvergence_tollerance: If the lowest eigenvalue differ with" 
+	       "\tconvergence_tolerance: If the lowest eigenvalue differ with" 
 	       " less than this number from the previous lowest eigenvalue,"
-	       " the Lanczos algorithm is assumed to be converged\n",
+	       " the Lanczos algorithm is assumed to be converged\n"
+	       "\teigenvector_directory: The path to the directory where the"
+	       " desired eigenvectors should be saved\n"
+	       "\ttarget_eigenvector: Should be the highest excited "
+	       "eigenvector desired by the user\n",
 		settings->program_name,
 		settings->program_name);
 }
@@ -207,9 +271,9 @@ const char *get_combination_table_path_setting(const settings_t settings)
 	return settings->combination_table_path;
 }
 
-const char *get_execution_order_path_setting(const settings_t settings)
+const char *get_evaluation_order_path_setting(const settings_t settings)
 {
-	return settings->execution_order_path;
+	return settings->evaluation_order_path;
 }
 
 const char *get_krylow_vector_directory_setting(const settings_t settings)
@@ -227,6 +291,11 @@ const char *get_matrix_file_base_directory_setting(const settings_t settings)
 	return settings->matrix_file_base_directory;
 }
 
+const char *get_eigenvector_directory_setting(const settings_t settings)
+{
+	return settings->eigenvector_directory;
+}
+
 size_t get_num_neutrons_setting(const settings_t settings)
 {
 	return settings->num_neutrons;
@@ -242,15 +311,31 @@ size_t get_max_num_lanczos_iterations_setting(const settings_t settings)
 	return settings->max_num_lanczos_iterations;
 }
 
-double get_tollerance_setting(const settings_t settings)
+size_t get_maximum_loaded_memory_setting(const settings_t settings)
 {
-	return settings->tollerance;
+	return settings->maximum_loaded_memory;
+}
+
+size_t get_target_eigenvector_setting(const settings_t settings)
+{
+	return settings->target_eigenvector;
+}
+
+double get_tolerance_setting(const settings_t settings)
+{
+	return settings->tolerance;
+}
+
+convergence_critera_t
+get_convergece_criteria_setting(const settings_t settings)
+{
+	return settings->convergence_critera;
 }
 
 void free_settings(settings_t settings)
 {
 	free(settings->combination_table_path);
-	free(settings->execution_order_path);
+	free(settings->evaluation_order_path);
 	free(settings->index_lists_base_directory);
 	free(settings->matrix_file_base_directory);
 	free(settings->krylow_vector_directory);

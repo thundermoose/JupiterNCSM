@@ -19,6 +19,8 @@ vector_t new_zero_vector(vector_settings_t vector_settings);
 
 vector_t new_random_vector(vector_settings_t vector_settings);
 
+vector_t new_existing_vector(vector_settings_t vector_settings);
+
 void set_element(vector_t vector,
 		 size_t index,
 		 double value);
@@ -48,6 +50,10 @@ void subtract_plane_projection(vector_t target_vector,
 			       const vector_t second_direction);
 
 double norm(const vector_t vector);
+
+void vector_add_scaled(vector_t result,
+		       double scaling_factor,
+		       const vector_t term);
 
 void scale(vector_t vector,double scaling);
 

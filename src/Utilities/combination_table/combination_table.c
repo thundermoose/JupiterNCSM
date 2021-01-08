@@ -30,8 +30,12 @@ struct _combination_table_
 	size_t index_to_3nf_blocks;
 	size_t length_3nf_blocks;
 	size_t iterator_index_3nf_blocks;
+	size_t index_to_next_3nf_energy_block;
+	matrix_energy_block_t *matrix_energy_blocks;
+	size_t num_matrix_energy_blocks;
 	size_t *id_to_index_map;
 	size_t num_ids;
+	calculation_blocks_t calculation_blocks;
 };
 
 static
@@ -54,6 +58,10 @@ void read_matrix_block_settings(FILE *table_file,
 static void 
 sort_matrix_blocks_on_num_particles(combination_table_t table,
 				    array_builder_t id_to_index_map_builder);
+
+static
+void setup_matrix_energy_blocks(combination_table_t table);
+
 static
 int is_title_row(const char *row);
 
@@ -67,6 +75,10 @@ size_t interpret_id_string(const char *id_string);
 static
 int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 				  matrix_block_setting_t *block_b);
+
+static
+int is_in_same_energy_block(matrix_block_setting_t block_a,
+			    matrix_block_setting_t block_b);
 
 combination_table_t new_combination_table(const char *filename,
 					  size_t num_protons,
@@ -115,9 +127,11 @@ combination_table_t new_combination_table(const char *filename,
 	read_matrix_block_settings(table_file,
 				   matrix_block_settings_builder,
 				   id_to_index_map_builder);
+	table->calculation_blocks = parse_calculation_blocks(table_file);
 	fclose(table_file);
 	free_array_builder(matrix_block_settings_builder);
 	sort_matrix_blocks_on_num_particles(table,id_to_index_map_builder);
+	setup_matrix_energy_blocks(table);
 	free_array_builder(id_to_index_map_builder);
 	return table;
 }
@@ -144,6 +158,57 @@ basis_block_t get_basis_block(combination_table_t combination_table,
 {
 	size_t index = combination_table->id_to_index_map[basis_block_id];
 	return combination_table->basis_blocks[index];
+}
+
+iterator_t 
+new_index_list_setting_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->index_list_settings,
+			    combination_table->num_index_list_settings,
+			    sizeof(index_list_setting_t));
+}
+
+iterator_t
+new_basis_block_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->basis_blocks,
+			    combination_table->num_basis_blocks,
+			    sizeof(basis_block_t));
+}
+
+iterator_t
+new_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->matrix_block_settings,
+			    combination_table->num_matrix_block_settings,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_1nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)combination_table->matrix_block_settings,
+			    combination_table->length_1nf_blocks,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_2nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)(combination_table->matrix_block_settings +
+				    combination_table->length_1nf_blocks),
+			    combination_table->length_2nf_blocks,
+			    sizeof(matrix_block_setting_t));
+}
+
+iterator_t
+new_3nf_matrix_block_settings_iterator(combination_table_t combination_table)
+{
+	return new_iterator((void*)(combination_table->matrix_block_settings +
+				    combination_table->length_1nf_blocks +
+				    combination_table->length_2nf_blocks),
+			    combination_table->length_3nf_blocks,
+			    sizeof(matrix_block_setting_t));
 }
 
 void reset_index_list_interator(combination_table_t combination_table)
@@ -273,9 +338,72 @@ int has_next_3nf_block(combination_table_t combination_table)
 	       	combination_table->length_3nf_blocks;
 }
 
+void reset_3nf_energy_block_iterator(combination_table_t combination_table)
+{
+	combination_table->index_to_next_3nf_energy_block = 0;
+}
+
+int has_next_3nf_matrix_energy_block(combination_table_t combination_table)
+{
+	return combination_table->index_to_next_3nf_energy_block <
+		combination_table->length_3nf_blocks;
+}
+
+matrix_energy_block_t
+next_3nf_matrix_energy_block(combination_table_t combination_table)
+{
+	size_t index_to_first = 
+		combination_table->index_to_next_3nf_energy_block +
+		combination_table->index_to_3nf_blocks;
+	matrix_block_setting_t first_matrix_block = 
+		combination_table->matrix_block_settings[index_to_first];
+	size_t length_energy_block = 1;
+	printf("index_to_first = %lu\n",index_to_first);
+	for (size_t i = index_to_first+1; 
+	     i < combination_table->num_matrix_block_settings;
+	     i++, length_energy_block++)
+	{
+		matrix_block_setting_t current_matrix_block =
+			combination_table->matrix_block_settings[i];
+		if (!is_in_same_energy_block(first_matrix_block,
+					     current_matrix_block))
+			break;
+	}
+	combination_table->index_to_next_3nf_energy_block += 
+		length_energy_block;
+	matrix_block_setting_t *head = 
+		combination_table->matrix_block_settings + index_to_first;
+	return new_matrix_energy_block(head,length_energy_block);
+}
+
 size_t get_num_arrays(combination_table_t combination_table)
 {
 	return combination_table->num_ids;
+}
+
+size_t *get_array_sizes(combination_table_t table)
+{
+	size_t *array_sizes =
+	       	(size_t*)malloc(table->num_ids*sizeof(size_t));
+	for (size_t i = 0; i<table->num_basis_blocks; i++)
+		array_sizes[table->basis_blocks[i].block_id - 1] =
+			table->basis_blocks[i].num_proton_states *	
+			table->basis_blocks[i].num_neutron_states*
+			sizeof(double);
+	for (size_t i = 0; i<table->num_index_list_settings; i++)
+		array_sizes[table->index_list_settings[i].index_list_id-1] =
+			table->index_list_settings[i].length*3*sizeof(int);
+	for (size_t i = 0; i<table->num_matrix_block_settings; i++)
+		array_sizes[table->matrix_block_settings[i].matrix_block_id-1]=
+			get_matrix_block_length
+			(table->matrix_block_settings[i])*sizeof(double);
+	return array_sizes;
+}
+
+calculation_blocks_t
+get_calculation_blocks(combination_table_t combination_table)
+{
+	return combination_table->calculation_blocks;
 }
 
 void free_combination_table(combination_table_t combination_table)
@@ -284,6 +412,7 @@ void free_combination_table(combination_table_t combination_table)
 	free(combination_table->index_list_settings);
 	free(combination_table->matrix_block_settings);
 	free(combination_table->id_to_index_map);
+	free_calculation_blocks(combination_table->calculation_blocks);
 	free(combination_table);
 }
 
@@ -432,11 +561,6 @@ void read_matrix_block_settings(FILE *table_file,
 			.num_neutron_combinations = atoll(words[9]),
 			.matrix_block_id = interpret_id_string(words[13])
 		};
-		//size_t index =
-		//       	num_array_elements(matrix_block_settings_builder);
-		//set_array_element(id_to_index_map_builder,
-		//		  current_setting.matrix_block_id,
-		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -502,11 +626,6 @@ void read_matrix_block_settings(FILE *table_file,
 			};
 			current_setting = proton_setting;
 		}
-		//size_t index =
-		//       	num_array_elements(matrix_block_settings_builder);
-		//set_array_element(id_to_index_map_builder,
-		//		  current_setting.matrix_block_id,
-		//		  &index);
 		append_array_element(matrix_block_settings_builder,
 				     &current_setting);
 		if (words != NULL)
@@ -515,7 +634,6 @@ void read_matrix_block_settings(FILE *table_file,
 				free(words[i]);
 			free(words);
 		}
-		
 	}
 	if (current_row != NULL)
 		free(current_row);
@@ -555,6 +673,12 @@ sort_matrix_blocks_on_num_particles(combination_table_t table,
 				  &index);
 	}
 
+}
+
+static
+void setup_matrix_energy_blocks(combination_table_t table)
+{
+	
 }
 
 static
@@ -609,14 +733,14 @@ int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 	diff = count_neutrons(block_a->type) - count_neutrons(block_b->type);
 	if (diff)
 		return diff;
-	diff = block_a->depth_protons - block_b->depth_protons;
+	diff = block_b->depth_protons - block_a->depth_protons;
 	if (diff)
 		return diff;
 	diff = block_a->difference_energy_protons -
 	       	block_b->difference_energy_protons;
 	if (diff)
 		return diff;
-	diff = block_a->depth_neutrons - block_b->depth_neutrons;
+	diff = block_b->depth_neutrons - block_a->depth_neutrons;
 	if (diff)
 		return diff;
 	diff = block_a->difference_energy_neutrons -
@@ -632,6 +756,19 @@ int compare_matrix_block_settings(matrix_block_setting_t *block_a,
 	return 0;
 }
 
+static
+int is_in_same_energy_block(matrix_block_setting_t block_a,
+			    matrix_block_setting_t block_b)
+{
+	return block_a.depth_protons == block_b.depth_protons &&
+		block_a.difference_energy_protons == 
+		block_b.difference_energy_protons &&
+		block_a.depth_neutrons == block_b.depth_neutrons &&
+		block_a.difference_energy_neutrons == 
+		block_b.difference_energy_neutrons &&
+	       	block_a.type == block_b.type;	
+}
+
 new_test(interpreting_id_string,
 	 const char* input = "12=";
 	 assert_that(interpret_id_string(input) == 12);
@@ -643,3 +780,23 @@ new_test(is_title_row_should_work,
 	);
 
 
+new_test(calculation_blocks_he4_nmax2,
+	 const char *comb_path = 
+	 TEST_DATA"bacchus_run_data/he4/nmax2/comb.txt";
+	 combination_table_t comb = new_combination_table(comb_path,2,2);
+	 calculation_blocks_t calculation_blocks =
+	 	get_calculation_blocks(comb);
+	 while (has_next_calculation_block(calculation_blocks))
+	 {
+		calculation_block_t block =
+	       	next_calculation_block(calculation_blocks);
+		printf("%lu %lu %lu %lu %lu %lu\n",
+		       block.num_particles,
+		       block.vector_block_in,
+		       block.vector_block_out,
+		       block.primary_index_list,
+		       block.secondary_index_list,
+		       block.matrix_element_block);
+	 }
+	 free_combination_table(comb);
+	);

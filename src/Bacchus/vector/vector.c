@@ -10,6 +10,7 @@
 #include <unit_testing/test.h>
 #include <errno.h>
 #include <string.h>
+#include <omp.h>
 
 typedef struct
 {
@@ -135,6 +136,35 @@ vector_t new_random_vector(vector_settings_t vector_settings)
 	return vector;
 }
 
+vector_t new_existing_vector(vector_settings_t vector_settings)
+{
+	if (!directory_exists(vector_settings.directory_name))
+		return new_zero_vector(vector_settings);
+	vector_t vector = (vector_t)calloc(1,sizeof(struct _vector_));
+	vector->dimension = sum_sizes(vector_settings.block_sizes,
+				      vector_settings.num_blocks);
+	vector->num_vector_blocks = vector_settings.num_blocks;
+	vector->vector_blocks =
+		(vector_block_t*)calloc(vector->num_vector_blocks,
+					sizeof(vector_block_t));
+	size_t start_index = 0;
+	vector->directory_name = copy_string(vector_settings.directory_name);
+	for (size_t i = 0; i<vector->num_vector_blocks; i++)
+	{
+		vector_block_t vector_block =
+		{
+			.start_index = start_index,
+			.block_length = vector_settings.block_sizes[i],
+			.block_id = i+1
+		};
+		vector->vector_blocks[i] = vector_block;
+		start_index += vector_settings.block_sizes[i];
+		// We want to use the old vector files so no initialization
+	}
+	vector->loaded_block.block_id = -1;
+	return vector;
+}
+
 void set_element(vector_t vector,
 		 size_t index,
 		 double value)
@@ -183,6 +213,8 @@ void save_vector(vector_t vector)
 {
 	log_entry("Saving vector %s",
 		  vector->directory_name);
+	if (vector->loaded_block.block_id == (size_t)(-1))
+		return;
 	save_vector_elements(vector->element_buffer,
 			     vector,
 			     vector->loaded_block);
@@ -243,8 +275,7 @@ double scalar_multiplication(const vector_t first_vector,
 		log_entry("accumulator = %lg",accumulator);
 		accumulator += block_scalar_product;
 	}
-	if (element_buffer != NULL)
-		free(element_buffer);
+	free(element_buffer);
 	log_entry("accumulator = %lg",accumulator);
 	return accumulator;
 }
@@ -287,8 +318,7 @@ void subtract_line_projection(vector_t target_vector,
 				     target_vector,
 				     vector_block);
 	}
-	if (element_buffer != NULL)
-		free(element_buffer);
+	free(element_buffer);
 }
 
 void subtract_plane_projection(vector_t target_vector,
@@ -323,7 +353,8 @@ void subtract_plane_projection(vector_t target_vector,
 		double *first_direction_elements =
 			element_buffer + vector_block.block_length;
 		double *second_direction_elements =
-			element_buffer + 2*vector_block.block_length;
+			element_buffer + 
+			2*vector_block.block_length;
 		load_vector_elements(target_vector_elements,
 				     target_vector,
 				     vector_block);
@@ -345,8 +376,7 @@ void subtract_plane_projection(vector_t target_vector,
 				     target_vector,
 				     vector_block);
 	}
-	if (element_buffer != NULL)
-		free(element_buffer);
+	free(element_buffer);
 }
 
 double norm(const vector_t vector)
@@ -371,6 +401,37 @@ double norm(const vector_t vector)
 	}
 	free(element_buffer);
 	return sqrt(accumulator);
+}
+
+void vector_add_scaled(vector_t result,
+		       double scaling_factor,
+		       const vector_t term)
+{
+	double *element_buffer = NULL;
+	size_t element_buffer_size = 0;
+	for (size_t i = 0; i<result->num_vector_blocks; i++)
+	{
+		vector_block_t vector_block = result->vector_blocks[i];
+		expand_element_buffer(&element_buffer,
+				      &element_buffer_size,
+				      vector_block.block_length*2);
+		double *result_block = element_buffer;
+		double *term_block = element_buffer+vector_block.block_length;
+		load_vector_elements(result_block,
+				     result,
+				     vector_block);
+		load_vector_elements(term_block,
+				     term,
+				     vector_block);
+		array_add_scaled(result_block,
+				 scaling_factor,
+				 term_block,
+				 vector_block.block_length);
+		save_vector_elements(result_block,
+				     result,
+				     vector_block);
+	}
+	free(element_buffer);
 }
 
 void scale(vector_t vector,double scaling)

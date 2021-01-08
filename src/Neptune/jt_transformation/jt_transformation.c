@@ -402,7 +402,7 @@ new_test(jt_transformation_unitarity,
 	 {
 	 const quantum_number e_max1 = 2;
 	 const quantum_number e_max2 = 2;
-	 const double tollerance = 1e-6;
+	 const double tolerance = 1e-6;
 	 const char *transform_filename =
 	 get_test_file_path("transform.py");
 	 jt_basis_t jt_basis = new_antoine_basis(e_max1,
@@ -436,6 +436,6 @@ new_test(jt_transformation_unitarity,
 	 sparse_to_python_matrix(transform_file,"transform",*transform);
 	 print_matrix(*transformed_matrix);
 	 assert_that(mean_square_difference(identity_matrix,
-					    transformed_matrix) < tollerance);	
+					    transformed_matrix) < tolerance);	
 	 }
 );

@@ -5,10 +5,11 @@
 #include <settings/settings.h>
 #include <matrix/matrix.h>
 #include <combination_table/combination_table.h>
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <lanczos/lanczos.h>
-#include <eigen_system/eigen_system.h>
+#include <eigensystem/eigensystem.h>
 #include <string_tools/string_tools.h>
+#include <string.h>
 #include <time.h>
 
 
@@ -36,8 +37,8 @@ int main(int num_arguments, char **argument_list)
 		(get_combination_table_path_setting(settings),
 		 get_num_protons_setting(settings),
 		 get_num_neutrons_setting(settings));	      
-	execution_order_t execution_order =
-		read_execution_order(get_execution_order_path_setting(settings),
+	evaluation_order_t evaluation_order =
+		read_evaluation_order(get_evaluation_order_path_setting(settings),
 				    combination_table);
 	lanczos_settings_t lanczos_settings =
 	{
@@ -48,22 +49,46 @@ int main(int num_arguments, char **argument_list)
 			(get_krylow_vector_directory_setting(settings)),
 		.max_num_iterations = 
 			get_max_num_lanczos_iterations_setting(settings),
-		.eigenvalue_tollerance = get_tollerance_setting(settings),
+		.eigenvalue_tolerance = get_tolerance_setting(settings),
+		.convergence_critera = 
+			get_convergece_criteria_setting(settings),
+		.target_eigenvalue = 0,
 		.matrix = new_generative_matrix
-			(execution_order,
+			(evaluation_order,
 			 combination_table,
 			 get_index_lists_base_directory_setting(settings),
-			 get_matrix_file_base_directory_setting(settings))
+			 get_matrix_file_base_directory_setting(settings),
+			 get_maximum_loaded_memory_setting(settings))
 	};
 	lanczos_environment_t lanczos_environment =
 		new_lanczos_environment(lanczos_settings);
 	diagonalize(lanczos_environment);
-	eigen_system_t eigen_system = get_eigensystem(lanczos_environment);
-	print_eigen_system(eigen_system);
-	free_eigen_system(eigen_system);
+	eigensystem_t eigensystem = get_eigensystem(lanczos_environment);
+	print_eigensystem(eigensystem);
+	const char *eigenvector_directory =
+	       	get_eigenvector_directory_setting(settings);
+	for (size_t i = 0; i<get_target_eigenvector_setting(settings); i++)
+	{
+		vector_settings_t vector_setting =
+		       	lanczos_settings.vector_settings;
+		vector_setting.directory_name =
+		       	(char*)calloc(strlen(eigenvector_directory)+256,
+				      sizeof(char));
+		sprintf(vector_setting.directory_name,
+			"%s/eigenvector_%lu",
+			eigenvector_directory,
+			i+1);
+		vector_t eigenvector = new_zero_vector(vector_setting);
+		get_eigenvector(eigenvector,
+				 eigensystem,i);
+		save_vector(eigenvector);
+		free_vector(eigenvector);
+		free(vector_setting.directory_name);
+	}
+	free_eigensystem(eigensystem);
 	free_lanczos_environment(lanczos_environment);
 	free_matrix(lanczos_settings.matrix);
-	free_execution_order(execution_order);
+	free_evaluation_order(evaluation_order);
 	free_combination_table(combination_table);
 	free_settings(settings);
 	free(lanczos_settings.krylow_vectors_directory_name);

@@ -2,7 +2,9 @@
 #include <unit_testing/test.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
 #include <debug_mode/debug_mode.h>
+#include <error/error.h>
 
 static
 size_t count_words(const char *string);
@@ -92,6 +94,65 @@ int is_integer(const char *string)
 	return 1;
 }
 
+int is_double(const char *string)
+{
+	static const char double_regex[] =
+	       	"^[+-]?[[:digit:]]+(\\.[[:digit:]]+)?([Ee][+-]?[[:digit:]]+)?";
+	regex_t match_doubles;
+	int error_code = 0;
+	if ((error_code = regcomp(&match_doubles,double_regex,REG_EXTENDED)))
+	{
+		char buffer[256];
+		regerror(error_code,&match_doubles,buffer,256);
+		error("%s\n",buffer);
+	}
+	regmatch_t match[1];
+	int reg_status = regexec(&match_doubles,string,1,match,0);
+	regfree(&match_doubles);
+	return reg_status != REG_NOMATCH;
+}
+
+int is_memory_string(const char *string)
+{
+	if (*string < '0' || *string > '9')
+		return 0;
+	while (*string >= '0' && *string <= '9')
+		string++;
+	return strcmp(string,"GB") == 0 ||
+		strcmp(string,"MB") == 0 ||
+		strcmp(string,"kB") == 0 ||
+		strcmp(string,"GiB") == 0 ||
+		strcmp(string,"MiB") == 0 ||
+		strcmp(string,"kiB") == 0 ||
+		strcmp(string,"B") == 0 ||
+		*string == 0;
+}
+
+size_t parse_memory_string(const char *string)
+{
+	size_t memory = 0;
+	while (*string >= '0' && *string <= '9')
+	{
+		memory*=10;
+		memory+=(size_t)(*string-'0');
+		string++;
+	}
+	if (strcmp(string,"GB") == 0)
+		return memory*1000000000;
+	else if (strcmp(string,"MB") == 0)
+		return memory*1000000;
+	else if (strcmp(string,"kB") == 0)
+		return memory*1000;
+	else if (strcmp(string,"GiB") == 0)
+		return memory<<30;
+	else if (strcmp(string,"MiB") == 0)
+		return memory<<20;
+	else if (strcmp(string,"kiB") == 0)
+		return memory<<10;
+	else
+		return memory;
+}
+
 char *concatinate_strings(const char *string_1,
 			  const char *string_2)
 {
@@ -108,6 +169,18 @@ char *concatinate_strings(const char *string_1,
 	       length_string_2);
 	string[length_string] = 0;
 	return string;
+}
+
+char *jump_back_word(char *string, char *current_word)
+{
+	current_word--;
+	while (current_word > string &&
+	       white_character(*current_word))
+		current_word--;	
+	while (current_word > string &&
+	       !white_character(*current_word))
+		current_word--;	
+	return current_word++;
 }
 
 static
@@ -205,4 +278,25 @@ new_test(extracting_words_special_case,
 	for (size_t i = 0; i<num_words; i++)
 		free(words[i]);
 	free(words);
+	);
+
+new_test(integer_is_double,
+	 assert_that(is_double("123"));
+	);
+
+new_test(word_is_no_double,
+	 assert_that(!is_double("Hej"));
+	);
+
+new_test(integer_with_exponent_is_double,
+	 assert_that(is_double("123e45"));
+	);
+new_test(integer_dot_integer_is_double,
+	 assert_that(is_double("123.45"));
+	);
+new_test(negative_integer_is_double,
+	 assert_that(is_double("-123"));
+	);
+new_test(integer_with_negative_exponent_is_double,
+	 assert_that(is_double("123e-3"));
 	);

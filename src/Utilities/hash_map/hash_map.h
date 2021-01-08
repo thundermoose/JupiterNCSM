@@ -24,6 +24,8 @@ int hash_map_get(const hash_map_t hash_map,
 		 const void *key,
 		 void *element);
 
+size_t hash_map_total_number_collisions(const hash_map_t hash_map);
+
 void free_hash_map(hash_map_t hash_map);
 
 #endif

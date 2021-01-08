@@ -9,14 +9,14 @@
 #include <string.h>
 #include <unit_testing/test.h>
 #include <combination_table/combination_table.h>
-#include <execution_order/execution_order.h>
+#include <evaluation_order/evaluation_order.h>
 #include <scheduler/scheduler.h>
 
 struct _matrix_builder_
 {
 	matrix_builder_settings_t settings;
 	combination_table_t combination_table;	
-	execution_order_t execution_order;
+	evaluation_order_t evaluation_order;
 	scheduler_t scheduler;
 };
 
@@ -29,14 +29,17 @@ matrix_builder_t new_matrix_builder(matrix_builder_settings_t settings)
 		new_combination_table(settings.combination_file_path,
 				      settings.num_protons,
 				      settings.num_neutrons);
-	builder->execution_order =
-		read_execution_order(settings.minerva_instruction_path,
+	builder->evaluation_order =
+		read_evaluation_order(settings.minerva_instruction_path,
 				     builder->combination_table);
+
+	const size_t max_load_memory = (size_t)(16)<<30;
 	builder->scheduler = 
-		new_scheduler(builder->execution_order,
+		new_scheduler(builder->evaluation_order,
 			      builder->combination_table,
 			      settings.index_list_path,
-			      settings.interaction_path);		
+			      settings.interaction_path,
+			      max_load_memory);		
 	return builder;	
 }
 
@@ -85,7 +88,7 @@ matrix_t generate_matrix(matrix_builder_t builder)
 void free_matrix_builder(matrix_builder_t builder)
 {
 	free_combination_table(builder->combination_table);
-	free_execution_order(builder->execution_order);
+	free_evaluation_order(builder->evaluation_order);
 	free_scheduler(builder->scheduler);
 	free(builder);
 }
@@ -119,12 +122,12 @@ new_test(explicit_matrix_nmax0,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 		 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %0.16lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);
@@ -157,18 +160,18 @@ new_test(explicit_matrix_nmax2,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 	 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);
 	 );
 
-new_test(explicit_matrix_nmax4,
+new_test_silent(explicit_matrix_nmax4,
 	 const char *matrix_out_path =
 	 	get_test_file_path("hamiltonian.npy");
 	 const char *input_vector_path =
@@ -195,12 +198,12 @@ new_test(explicit_matrix_nmax4,
 	 FILE *matrix_file = fopen(matrix_out_path,"w");
 	 save_numpy_matrix(matrix_file, matrix);
 	 fclose(matrix_file);
-	 eigen_system_t eigen_system = diagonalize_symmetric_matrix(matrix);
-	 size_t num_eigen_values = get_num_eigen_values(eigen_system);
-	 for (size_t i = 0; i<num_eigen_values; i++)
+	 eigensystem_t eigensystem = diagonalize_symmetric_matrix(matrix);
+	 size_t num_eigenvalues = get_num_eigenvalues(eigensystem);
+	 for (size_t i = 0; i<num_eigenvalues; i++)
 	 	printf("(%lu): %lg\n",i,
-		       get_eigen_value(eigen_system,i));
-	 free_eigen_system(eigen_system);
+		       get_eigenvalue(eigensystem,i));
+	 free_eigensystem(eigensystem);
 	 free_matrix(matrix);
 	 free(settings.input_vector_path);
 	 free(settings.output_vector_path);
@@ -211,7 +214,7 @@ new_test(single_matrix_vector_multiplication,
 	 	get_test_file_path("input");
 	 const char *output_vector_path =
 	 	get_test_file_path("output");
-	 const char *execution_order_path =
+	 const char *evaluation_order_path =
 		TEST_DATA BACCHUS_RUN "nmax4/greedy_2_16.txt";
 	 const char *index_list_path =
                 TEST_DATA BACCHUS_RUN "nmax4/index_lists";
@@ -223,17 +226,19 @@ new_test(single_matrix_vector_multiplication,
 	const size_t num_neutrons = 2;
 	const size_t state_in_index = 73;
 	const size_t state_out_index = 108;
+	const size_t maximum_loaded_memory = (size_t)(16)<<30;
 	combination_table_t combination_table =
 		new_combination_table(combination_table_path,
 				      num_protons,
 				      num_neutrons);
-	execution_order_t execution_order =
-		read_execution_order(execution_order_path,
+	evaluation_order_t evaluation_order =
+		read_evaluation_order(evaluation_order_path,
 				     combination_table);
-	scheduler_t scheduler = new_scheduler(execution_order,
+	scheduler_t scheduler = new_scheduler(evaluation_order,
 				      combination_table,
 				      index_list_path,
-				      interaction_path);
+				      interaction_path,
+				      maximum_loaded_memory);
 	vector_settings_t input_settings =
        		setup_vector_settings(combination_table);
 	input_settings.directory_name = copy_string(input_vector_path);
@@ -253,7 +258,7 @@ new_test(single_matrix_vector_multiplication,
 	free_vector(output_vector);
 	free_vector(input_vector);
 	free_scheduler(scheduler);
-	free_execution_order(execution_order);
+	free_evaluation_order(evaluation_order);
 	free_combination_table(combination_table);
 	free(input_settings.directory_name);
 	free(output_settings.directory_name);

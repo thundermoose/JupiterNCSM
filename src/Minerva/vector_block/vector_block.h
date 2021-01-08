@@ -10,6 +10,9 @@ typedef struct _vector_block_ *vector_block_t;
 vector_block_t new_vector_block(const char *base_directory,
 				const basis_block_t basis_block);
 
+vector_block_t new_output_vector_block(const char *base_directory,
+				       const basis_block_t basis_block);
+
 void load_vector_block_elements(vector_block_t vector_block);
 
 void save_vector_block_elements(vector_block_t vector_block);

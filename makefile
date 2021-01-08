@@ -32,13 +32,29 @@ ifndef hdf5_link_flags
 hdf5_link_flags= -lhdf5
 endif
 
+ifndef blas_comp_flags
+blas_comp_flags=
+endif
+
+ifndef blas_link_flags
+blas_link_flags= -lblas -llapack
+endif
+
+ifndef libconfig_comp_flags
+libconfig_comp_flags=
+endif
+
+ifndef libconfig_link_flags
+libconfig_link_flags=-lconfig
+endif
+
 source_path := src
 mode_path := .tmp
 object_path := .tmp/objects
 dependencies_path := .tmp/dependencies
 
-compiler_flags := -I./$(source_path)/ -I./$(source_path)/Utilities/  -I$(wigxjpf_path)/inc $(hdf5_comp_flags) -fopenmp 
-linker_flags := -lm -llapack -lblas -L$(wigxjpf_path)/lib -lwigxjpf $(hdf5_link_flags) -fopenmp -pthread -lconfig
+compiler_flags := -I./$(source_path)/ -I./$(source_path)/Utilities/  -I$(wigxjpf_path)/inc $(hdf5_comp_flags) -fopenmp $(blas_comp_flags) $(libconfig_comp_flags)
+linker_flags := -lm $(blas_link_flags) -L$(wigxjpf_path)/lib -lwigxjpf $(hdf5_link_flags) -fopenmp -pthread $(libconfig_link_flags)
 
 all_sources := $(shell find ./$(source_path)/ -regex [^\#]*\\.c$)
 all_objects := $(all_sources:./$(source_path)/%.c=./$(object_path)/%.o)
