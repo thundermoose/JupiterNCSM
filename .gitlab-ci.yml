@@ -16,6 +16,7 @@
     - tar -zxf wigxjpf-1.10.tar.gz
     - (cd wigxjpf-1.10/ ; make)
     - make ${JOB_NAME[2]} -k wigxjpf_path=wigxjpf-1.10 hdf5_comp_flags=-I/usr/include/hdf5/serial/ "hdf5_link_flags=-L/usr/lib/x86_64-linux-gnu/hdf5/serial/ -lhdf5"
+    - ls -R
     - ./test_scripts/run_all_tests.sh
   tags:
     - docker
