@@ -33,6 +33,7 @@ typedef struct
 	size_t array_id;
 	// To make sure that no two threads loads the same array
 	omp_nest_lock_t loading_array_lock;
+	omp_lock_t array_loading_in_other_thread_lock;
 	// To make use no to threads use in_use at the same time
 	omp_lock_t in_use_lock;
 } array_t;
@@ -134,7 +135,6 @@ memory_manager_t new_memory_manager(const char *input_vector_base_directory,
 	manager->combination_table = combination_table;
 	manager->evaluation_order = evaluation_order;
 	manager->maximum_loaded_memory = maximum_loaded_memory;
-	printf("max load memory = %lu\n",maximum_loaded_memory);
 	manager->size_current_loaded_memory = 0;
 	manager->num_waits = 0;
 	manager->total_wating_time = 0.0;
@@ -255,6 +255,7 @@ void free_memory_manager(memory_manager_t manager)
 			unload_array(manager,i+1);
 		array_t *array = &manager->all_arrays[i];
 		omp_destroy_nest_lock(&array->loading_array_lock);
+		omp_destroy_lock(&array->array_loading_in_other_thread_lock);
 		omp_destroy_lock(&array->in_use_lock);
 	}
 	free(manager->all_arrays);
@@ -278,6 +279,7 @@ void initialize_arrays(memory_manager_t manager)
 		current_array->size_array = array_sizes[i];
 		current_array->in_use = 0;
 		omp_init_nest_lock(&current_array->loading_array_lock);
+		omp_init_lock(&current_array->array_loading_in_other_thread_lock);
 		omp_init_lock(&current_array->in_use_lock);
 	}	
 	free(array_sizes);
@@ -414,13 +416,9 @@ void load_needed_arrays(memory_manager_t manager,
 	load_array(manager,instruction.vector_block_out);
 	load_array(manager,instruction.matrix_element_file);
 	if (instruction.neutron_index != no_index) 
-	{
 		load_array(manager,instruction.neutron_index);
-	}
 	if (instruction.proton_index != no_index)
-	{
 		load_array(manager,instruction.proton_index);
-	}
 }
 
 static
@@ -459,11 +457,13 @@ void load_array(memory_manager_t manager,
 		size_t array_id)
 {
 	array_t *array = &manager->all_arrays[array_id-1];
-	if (!omp_test_nest_lock(&array->loading_array_lock))
+	if (!omp_test_lock(&array->array_loading_in_other_thread_lock))
 		return;
+	omp_set_nest_lock(&array->loading_array_lock);
 	if (is_array_loaded(manager,array_id))
 	{
 		omp_unset_nest_lock(&array->loading_array_lock);
+		omp_unset_lock(&array->array_loading_in_other_thread_lock);
 		return;
 	}
 	switch(array->type)
@@ -499,12 +499,13 @@ void load_array(memory_manager_t manager,
 					 manager->matrix_base_directory);		
 		break;
 	default:
-		error("Can't load unkown array\n");
+		error("Can't load unknown array\n");
 	}	
 	omp_set_lock(&manager->size_current_loaded_memory_lock);
 	manager->size_current_loaded_memory+=array->size_array;
 	omp_unset_lock(&manager->size_current_loaded_memory_lock);
 	omp_unset_nest_lock(&array->loading_array_lock);
+	omp_unset_lock(&array->array_loading_in_other_thread_lock);
 }
 
 static
@@ -531,7 +532,7 @@ void unload_array(memory_manager_t manager,
 		free_matrix_block((matrix_block_t)array->primary_array);
 		break;
 	default:
-		error("Can't load unkown array\n");
+		error("Can't load unknown array\n");
 	}	
 	array->primary_array = NULL;
 	array->secondary_array = NULL;
