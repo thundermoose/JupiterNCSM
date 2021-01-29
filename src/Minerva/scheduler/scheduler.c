@@ -338,8 +338,6 @@ void off_diagonal_neutron_case(memory_manager_t memory_manager,
 					 list);
 	release_input_vector(memory_manager,instruction.vector_block_in);
 	release_output_vector(memory_manager,instruction.vector_block_out);
-	release_input_vector(memory_manager,instruction.vector_block_out);
-	release_output_vector(memory_manager,instruction.vector_block_in);
 	release_matrix_block(memory_manager,instruction.matrix_element_file);
 	release_index_list(memory_manager,instruction.neutron_index);
 }
@@ -375,8 +373,6 @@ void off_diagonal_proton_case(memory_manager_t memory_manager,
 					list);
 	release_input_vector(memory_manager,instruction.vector_block_in);
 	release_output_vector(memory_manager,instruction.vector_block_out);
-	release_input_vector(memory_manager,instruction.vector_block_out);
-	release_output_vector(memory_manager,instruction.vector_block_in);
 	release_matrix_block(memory_manager,instruction.matrix_element_file);
 	release_index_list(memory_manager,instruction.proton_index);
 }
@@ -416,8 +412,6 @@ void off_diagonal_neutron_proton_case(memory_manager_t memory_manager,
 					proton_list);
 	release_input_vector(memory_manager,instruction.vector_block_in);
 	release_output_vector(memory_manager,instruction.vector_block_out);
-	release_input_vector(memory_manager,instruction.vector_block_out);
-	release_output_vector(memory_manager,instruction.vector_block_in);
 	release_matrix_block(memory_manager,instruction.matrix_element_file);
 	release_index_list(memory_manager,instruction.neutron_index);
 	release_index_list(memory_manager,instruction.proton_index);
