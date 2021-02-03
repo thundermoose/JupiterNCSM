@@ -6,6 +6,7 @@
 #include <combination_table/combination_table.h>
 #include <arguments/arguments.h>
 #include <error/error.h>
+#include <errno.h>
 #include <log/log.h>
 
 #define max(a,b) ((a) > (b) ? (a) : (b))
@@ -86,6 +87,9 @@ int main(int num_arguments,
 			total_workspace =
 			       	(double*)malloc(total_workspace_size*
 						sizeof(double));
+			if (total_workspace == NULL)
+				error("Could not allocate needed work-space memory. %s\n",
+				      strerror(errno));
 		}
 		size_t thread_id = omp_get_thread_num();
 		double *workspace = 
