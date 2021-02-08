@@ -64,8 +64,7 @@ int main(int num_arguments,
 		matrix_block_setting_t current_block =
 			next_matrix_block(combination_table);
 		size_t needed_block_size =
-		       	current_block.num_proton_combinations*
-			current_block.num_neutron_combinations;	
+			get_matrix_block_length(current_block);
 		max_block_size = max(max_block_size,		
 				     needed_block_size);
 	}
