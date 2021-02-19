@@ -23,12 +23,13 @@ const char *settings_workspace_path(const settings_t settings);
 
 const char *settings_index_list_path(const settings_t settings);
 
-const char *settings_evaluation_order_path(const settings_t settings);
-
 const char *settings_operator_path(const settings_t settings, size_t index);
 
 const char *settings_subspace_operator_path(const settings_t settings,
 					    size_t index);
+
+const char *settings_evaluation_order_path(const settings_t settings, 
+					   size_t index);
 
 size_t settings_num_protons(const settings_t settings);
 
