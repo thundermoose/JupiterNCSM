@@ -104,7 +104,7 @@ void print_eigensystem(const eigensystem_t eigensystem)
 	       eigensystem->num_eigenvalues);
 	printf("\teigenvalues = ( ");
 	for (size_t i = 0; i<eigensystem->num_eigenvalues; i++)
-		printf("%lg%s ",
+		printf("%.17lg%s ",
 		       eigensystem->eigenvalues[i],
 		       i == eigensystem->num_eigenvalues-1 ? "" : ","); 
 	printf(");\n"
