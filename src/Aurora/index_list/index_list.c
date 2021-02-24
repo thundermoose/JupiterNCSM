@@ -20,17 +20,20 @@ struct _index_list_
 
 index_list_t parse_human_readable_index_list(const char *file_name)
 {
+	FILE *file = fopen(file_name,"r");
+	if (file == NULL)
+	{
+		fprintf(stderr,"Could not open file %s. %s\n",
+		      file_name,
+		      strerror(errno));
+		return NULL;
+	}	
 	index_list_t index_list =
 	       	(index_list_t)calloc(1,sizeof(struct _index_list_));
 	array_builder_t indices_builder =
 		new_array_builder((void**)&index_list->indices,
 				  &index_list->num_indices,
 				  sizeof(index_triple_t));
-	FILE *file = fopen(file_name,"r");
-	if (file == NULL)
-		error("Could not open file %s. %s\n",
-		      file_name,
-		      strerror(errno));
 	char *row = NULL;
 	size_t row_length = 0;
 	size_t row_index = 0;
@@ -63,13 +66,16 @@ index_list_t parse_human_readable_index_list(const char *file_name)
 
 index_list_t parse_binary_index_lists(const char *file_name)
 {
-	index_list_t index_list =
-	       	(index_list_t)calloc(1,sizeof(struct _index_list_));
 	FILE *file = fopen(file_name,"r");
 	if (file == NULL)
-		error("Could not open file %s. %s\n",
+	{
+		fprintf(stderr,"Could not open file %s. %s\n",
 		      file_name,
 		      strerror(errno));
+		return NULL;
+	}
+	index_list_t index_list =
+	       	(index_list_t)calloc(1,sizeof(struct _index_list_));
 	fseek(file,0,SEEK_END);
 	size_t num_bytes = ftell(file);
 	fseek(file,0,SEEK_SET);

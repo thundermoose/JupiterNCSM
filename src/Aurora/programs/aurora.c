@@ -84,6 +84,8 @@ void transform_file(const char *index_list_path,
 		human_readable_mode ?
 		parse_human_readable_index_list(index_list_file_name) :
 		parse_binary_index_lists(index_list_file_name);
+	if (index_list == NULL)
+		return;
 	sprintf(index_list_file_name,
 		"%s/index_list_%lu",
 		output_path,

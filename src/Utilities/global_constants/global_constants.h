@@ -1,7 +1,7 @@
 #ifndef __GLOBAL_CONSTANTS__
 #define __GLOBAL_CONSTANTS__
 
-#if __GNUC__ <= 6
+#if __GNUC__ <= 8
 
 #define max_interaction_order 3
 
