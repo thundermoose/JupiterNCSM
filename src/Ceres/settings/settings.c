@@ -13,7 +13,7 @@ struct _settings_
 	char *norm_matrix_path;
 	char *workspace_path;
 	char *index_list_path;
-	char *evaluation_order_path;
+	char **evaluation_order_path;
 	char **operator_paths;
 	char **subspace_operator_paths;
 	size_t num_protons;
@@ -71,13 +71,6 @@ settings_t parse_settings(size_t num_arguments, char **argument_list)
 		      settings_file,
 		      config_error_text(&config));
 	settings->index_list_path = copy_string(string_buffer);
-	if (config_lookup_string(&config,
-				 "evaluation_order_path",
-				 (const char**)&string_buffer) == CONFIG_FALSE)
-		error("Could not get evaluation_order_path from %s. %s\n",
-		      settings_file,
-		      config_error_text(&config));
-	settings->evaluation_order_path = copy_string(string_buffer);
 	if (config_lookup_string(&config,
 				 "workspace_path",
 				 (const char**)&string_buffer) == CONFIG_FALSE)
@@ -153,6 +146,8 @@ settings_t parse_settings(size_t num_arguments, char **argument_list)
 			(char**)malloc(settings->num_operators*sizeof(char*));
 		settings->subspace_operator_paths = 
 			(char**)malloc(settings->num_operators*sizeof(char*));
+		settings->evaluation_order_path =
+			(char**)malloc(settings->num_operators*sizeof(char*));
 		for (size_t i = 0; i<settings->num_operators; i++)
 		{
 			config_setting_t *operator_setting =
@@ -179,6 +174,17 @@ settings_t parse_settings(size_t num_arguments, char **argument_list)
 				      i,settings_file,
 				      config_error_text(&config));
 			settings->subspace_operator_paths[i] =
+				copy_string(string_buffer);
+			if (config_setting_lookup_string
+			    (operator_setting,
+			     "evaluation_order_path",
+			     (const char**)&string_buffer) == CONFIG_FALSE)
+				error("Could not read evaluation_order_path "
+				      "from element %lu in operators in "
+				      "%s. %s\n",
+				      i,settings_file,
+				      config_error_text(&config));
+			settings->evaluation_order_path[i] =
 				copy_string(string_buffer);
 		}
 	}
@@ -237,9 +243,6 @@ void settings_show_help_text(const settings_t settings)
 	       "\tnorm_matrix_path: A string containing the path to store\n"
 	       "\t\tthe resulting norm-matrix for the given basis vectors\n"
 	       "\tindexlists_path: The path where the index lists are stored\n"
-	       "\tevaluation_order_path: Path to the file containing the\n"
-	       "\t\torder in which the matrix vector multiplications should\n"
-	       "\t\tdone\n"
 	       "\tnum_protons: The proton number of the given nucleus\n"
 	       "\tnum_neutrons: The neutron number of the given nucleus\n"
 	       "\tmax_loaded_memory: A string setting a limit on how much\n"
@@ -254,6 +257,9 @@ void settings_show_help_text(const settings_t settings)
 	       "\t\t\tthe matrix-vector multiplications\n"
 	       "\t\tsubspace_operator_path: Where to store the resulting\n"
 	       "\t\t\tsubspace-operator\n"
+	       "\t\tevaluation_order_path: Path to the file containing the\n"
+	       "\t\t\torder in which the matrix vector multiplications should\n"
+	       "\t\t\tdone\n"
 	       "The norm-matrix and the subspace-operators are store as\n"
 	       "numpy matrices and can be loaded directly in to python\n",
 		settings->program_name);
@@ -285,11 +291,6 @@ const char *settings_index_list_path(const settings_t settings)
 	return settings->index_list_path;
 }
 
-const char *settings_evaluation_order_path(const settings_t settings)
-{
-	return settings->evaluation_order_path;
-}
-
 const char *settings_operator_path(const settings_t settings, size_t index)
 {
 	return settings->operator_paths[index];
@@ -299,6 +300,12 @@ const char *settings_subspace_operator_path(const settings_t settings,
 					    size_t index)
 {
 	return settings->subspace_operator_paths[index];
+}
+
+const char *settings_evaluation_order_path(const settings_t settings,
+					   size_t index)
+{
+	return settings->evaluation_order_path[index];
 }
 
 size_t settings_num_protons(const settings_t settings)

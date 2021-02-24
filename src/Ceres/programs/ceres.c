@@ -49,9 +49,6 @@ int main(int num_arguments, char **argument_list)
 			   num_training_vectors);
 	const char *workspace_path = settings_workspace_path(settings);
 	const char *indexlist_path = settings_index_list_path(settings);
-	evaluation_order_t evaluation_order = 
-		read_evaluation_order(settings_evaluation_order_path(settings),
-				     combination_table);
 	size_t max_loaded_memory = settings_max_loaded_memory(settings);
 	for (size_t i = 0; i<settings_num_operators(settings); i++)
 	{
@@ -59,6 +56,11 @@ int main(int num_arguments, char **argument_list)
 			settings_operator_path(settings,i);
 		const char *subspace_operator_path =
 			settings_subspace_operator_path(settings,i);
+		const char *evaluation_order_path =
+			settings_evaluation_order_path(settings,i);
+		evaluation_order_t evaluation_order =
+			read_evaluation_order(evaluation_order_path,
+					      combination_table);
 		create_subspace_operator(subspace_operator_path,
 					 operator_path,
 					 workspace_path,
@@ -69,6 +71,7 @@ int main(int num_arguments, char **argument_list)
 					 training_vectors,
 					 num_training_vectors,
 					 max_loaded_memory);		
+		free_evaluation_order(evaluation_order);
 	}
 	for (size_t i = 0; i<num_training_vectors; i++)
 		free_vector(training_vectors[i]);
