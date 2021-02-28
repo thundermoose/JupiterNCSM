@@ -31,10 +31,15 @@ int main(int num_arguments,
 		(char*)calloc(strlen(interaction_path)+128,sizeof(char));
 	FILE *human_readable_output = fopen("corrupted_blocks.txt","w");
 	FILE *output = fopen("corrupted_blocks","w");
+	size_t num_matrix_blocks = get_num_matrix_blocks(table);
+	size_t index = 0;
 	for (initialize(matrix_blocks,&current_block);
 	     has_next_element(matrix_blocks);
-	     next_element(matrix_blocks,&current_block))
+	     next_element(matrix_blocks,&current_block),index++)
 	{
+		printf("%4.2lg %%          \r ",
+		    (100.0*(index+1))/num_matrix_blocks);   
+		fflush(stdout);
 		sprintf(filename_buffer,
 			"%s/%lu_matrix_elements",
 			interaction_path,
