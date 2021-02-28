@@ -16,6 +16,7 @@ int main(int num_arguments,
 		       *argument_list);
 		return EXIT_FAILURE;
 	}
+	printf("num_arguments = %d\n",num_arguments);
 	const char *combfile_path = argument_list[1];	
 	size_t num_protons = atoll(argument_list[2]);
 	size_t num_neutrons = atoll(argument_list[3]);
@@ -28,6 +29,7 @@ int main(int num_arguments,
 	double lec_C4 = atof(argument_list[10]);
 	double lec_CD = atof(argument_list[11]);
 	double lec_CE = atof(argument_list[12]);
+	
 	size_t num_blocks = num_arguments-13;
 	size_t *block_numbers = (size_t *)malloc(num_blocks*sizeof(size_t));
 	printf("comb: %s Z: %lu N: %lu\n"
