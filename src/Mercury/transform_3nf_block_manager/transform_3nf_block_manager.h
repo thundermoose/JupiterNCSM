@@ -8,8 +8,8 @@
 #include <transformed_block/transformed_block.h>
 #include <matrix_energy_block/matrix_energy_block.h>
 
-struct _tranform_2nf_block_manager_;
-typedef struct _tranform_2nf_block_manager_ *transform_3nf_block_manager_t;
+struct _tranform_3nf_block_manager_;
+typedef struct _tranform_3nf_block_manager_ *transform_3nf_block_manager_t;
 
 transform_3nf_block_manager_t 
 new_transform_3nf_block_manager(Data_File *coupled_3nf_data,
