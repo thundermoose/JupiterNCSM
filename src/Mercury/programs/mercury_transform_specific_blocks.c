@@ -30,6 +30,25 @@ int main(int num_arguments,
 	double lec_CE = atof(argument_list[12]);
 	size_t num_blocks = num_arguments-13;
 	size_t *block_numbers = (size_t *)malloc(num_blocks*sizeof(size_t));
+	printf("comb: %s Z: %lu N: %lu\n"
+	       "interaction: %s\n"
+	       "index_list_path: %s\n"
+	       "output_path: %s\n"
+	       "Nmax: %lu\n"
+	       "lecs: %lg %lg %lg %lg %lg\n",
+	       combfile_path,
+	       num_protons,
+	       num_neutrons,
+	       interaction_path,
+	       index_list_path,
+	       output_path,
+	       single_particle_energy,
+	       lec_C1,
+	       lec_C3,
+	       lec_C4,
+	       lec_CD,
+	       lec_CE);
+
 	for (size_t i = 0; i<num_blocks; i++)
 		block_numbers[i] = atof(argument_list[i+13]);
 	combination_table_t table = new_combination_table(combfile_path,
