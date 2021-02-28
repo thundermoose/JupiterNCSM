@@ -37,7 +37,7 @@ int main(int num_arguments,
 	     has_next_element(matrix_blocks);
 	     next_element(matrix_blocks,&current_block),index++)
 	{
-		printf("%4.2lg %%          \r ",
+		printf("Progress: %4.2lg %%          \r ",
 		    (100.0*(index+1))/num_matrix_blocks);   
 		fflush(stdout);
 		sprintf(filename_buffer,
