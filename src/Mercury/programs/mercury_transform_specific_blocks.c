@@ -5,6 +5,7 @@
 #include <combination_table/combination_table.h>
 #include <iterator/iterator.h>
 #include <matrix_energy_block/matrix_energy_block.h>
+#include <input/read_3nf_hdf5_file.h>
 
 int main(int num_arguments,
 	 char **argument_list)
@@ -36,19 +37,20 @@ int main(int num_arguments,
 							  num_neutrons);
 	Data_File *coupled_3nf_data =
 		open_data_file(interaction_path);
+	set_max_loaded_memory(coupled_3nf_data, (size_t)(70)<<30);
 	set_weight(coupled_3nf_data,CE,lec_CE);
 	set_weight(coupled_3nf_data,CD,lec_CD);
 	set_weight(coupled_3nf_data,C1,lec_C1);
 	set_weight(coupled_3nf_data,C3,lec_C3);
 	set_weight(coupled_3nf_data,C4,lec_C4);
 	transform_3nf_block_manager_t manager = 
-		new_transform_3nf_block_manager (coupled_3nf_data,
-						 index_list_path,
-						 single_particle_energy);
+		new_transform_3nf_block_manager(coupled_3nf_data,
+						index_list_path,
+						single_particle_energy);
 	for (size_t i = 0; i<num_blocks; i++)
 	{
 		matrix_block_setting_t current_block =
-		       	get_matrix_block_by_id(table,block_numbers[i]);
+			get_matrix_block_by_id(table,block_numbers[i]);
 		transform_block_settings_t transform_settings =
 			setup_transform_block(current_block);	
 		decouple_transform_3nf_block(manager,transform_settings);
