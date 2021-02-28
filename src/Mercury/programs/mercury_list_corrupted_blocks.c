@@ -47,14 +47,6 @@ int main(int num_arguments,
 		FILE *file = fopen(filename_buffer,"r");
 		if (file == NULL)
 		{
-			fprintf(human_readable_output,
-				"Could not open matrix file %lu. %s\n",
-				current_block.matrix_block_id,
-				strerror(errno));	
-			fwrite(&current_block.matrix_block_id,
-			       sizeof(size_t),
-			       1,
-			       output);
 			continue;
 		}
 		fseek(file,0,SEEK_END);
