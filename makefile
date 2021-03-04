@@ -106,7 +106,7 @@ package_function_objects_$1=$$(package_function_sources_$1:./$(source_path)/%.c=
 package_programs_sources_$1=$$(filter ./$(source_path)/$1/programs/%.c,$$(filter ./$(source_path)/$1/%.c ./$(source_path)/Utilities/%.c,$$(all_sources)))
 package_programs_$1=$$(package_programs_sources_$1:./$(source_path)/$1/programs/%.c=$1/%.x)
 release_$1: $$(package_programs_$1:%.x=release/%.x)
-release/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNDEBUG -DNLOGING -ggdb 
+release/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -DNDEBUG -DNLOGING -O3 
 release/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	mkdir -p $$(@D)
 	echo "Linking $$@"
