@@ -219,6 +219,17 @@ void diagonalize(lanczos_environment_t environment)
 					environment->settings.eigenvalue_tolerance*2;
 				break;
 		}
+		print_eigensystem(diagonalized_system);
+		printf("Converging %s: difference %lg, tolerance %lg\n",
+			environment->settings.convergence_critera ==
+				converge_eigenvalues ?
+				"eigenvalues" :
+				(environment->settings.convergence_critera ==
+				converge_eigenvectors ?
+				"eigenvectors" :
+				"nothing"),
+			difference,
+			environment->settings.eigenvalue_tolerance);
 		free_eigensystem(diagonalized_system);
 		if (difference < environment->settings.eigenvalue_tolerance)
 			break;
