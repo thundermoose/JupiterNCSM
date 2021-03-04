@@ -10,7 +10,7 @@
 #include <error/error.h>
 #include <time.h>
 
-struct _tranform_2nf_block_manager_
+struct _tranform_3nf_block_manager_
 {
 	M_Scheme_3p_Basis *ket_basis;
 	M_Scheme_3p_Basis *bra_basis;
@@ -100,7 +100,7 @@ new_transform_3nf_block_manager(Data_File *coupled_3nf_data,
 {
 	transform_3nf_block_manager_t manager =
 		(transform_3nf_block_manager_t)
-		calloc(1,sizeof(struct _tranform_2nf_block_manager_));
+		calloc(1,sizeof(struct _tranform_3nf_block_manager_));
 	manager->coupled_3nf_data = coupled_3nf_data;
 	manager->index_list_path = copy_string(index_list_path);
 	manager->single_particle_basis =
