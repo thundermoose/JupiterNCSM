@@ -40,6 +40,8 @@ int main(int num_arguments,
 		printf("Progress: %4.2lg %%          \r ",
 		    (100.0*(index+1))/num_matrix_blocks);   
 		fflush(stdout);
+		if (count_particles(current_block.type) != 3)
+			continue;
 		sprintf(filename_buffer,
 			"%s/%lu_matrix_elements",
 			interaction_path,
@@ -47,6 +49,14 @@ int main(int num_arguments,
 		FILE *file = fopen(filename_buffer,"r");
 		if (file == NULL)
 		{
+
+			fprintf(human_readable_output,
+				"Block %lu is missing.\n",
+				current_block.matrix_block_id);
+			fwrite(&current_block.matrix_block_id,
+			       sizeof(size_t),
+			       1,
+			       output);
 			continue;
 		}
 		fseek(file,0,SEEK_END);
