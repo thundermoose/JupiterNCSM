@@ -52,6 +52,10 @@ eigensystem_t diagonalize_tridiagonal_matrix(
 		&info);
 	log_entry("info = %d",info);
 	assert(info == 0);
+	for (size_t i = 0; i<dimension; i++)
+		if (eigenvectors[i*dimension]<0)
+			for (size_t j = 0; j<dimension; j++)
+				eigenvectors[i*dimension+j]*=-1;
 	set_eigenvalues(eigensystem,
 			eigenvalues);
 	set_raw_eigenvectors(eigensystem,
