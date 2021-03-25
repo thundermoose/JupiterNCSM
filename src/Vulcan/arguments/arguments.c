@@ -1,5 +1,7 @@
 #include <arguments/arguments.h>
 #include <array_builder/array_builder.h>
+#include <string_tools/string_tools.h>
+#include <error/error.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -52,8 +54,12 @@ arguments_t parse_arguments(size_t num_arguments,
 			    strcmp(argument_list[i],
 				   "--coefficient") == 0)
 			{
+        const char *value_string = argument_list[++i];
+        if (!is_double(value_string))
+          error("Argument @ %lu, %s is not a double\n",
+                i,value_string);
 				arguments->coefficients[num_coefficients-1] =
-					atof(argument_list[++i]);
+					atof(value_string);
 			}
 			else
 			{
