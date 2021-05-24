@@ -131,7 +131,6 @@ void add_operator_blocks(matrix_block_setting_t block,
 			      block.matrix_block_id,
 			      block_size);
 		double coefficient = coefficients[i];
-		printf("coefficient[%lu] = %lg\n",i,coefficient);
 		for (size_t j = 0; j < block_size; j++)
 			output_block[j]+=coefficient*input_block[j];
 	}
