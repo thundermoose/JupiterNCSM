@@ -9,6 +9,7 @@
 if [ $# -lt 1 ]
 then
 	echo "Usage $0 <nmax> [<k-particle-forces>] [--max-loaded-memory <memstr>]"
+	exit 1
 fi
 
 # Parsing script arguments
