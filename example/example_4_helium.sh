@@ -6,10 +6,14 @@
 
 # Usage ./script.sh <nmax> [<k-particle-forces>] [--max-loaded-memory <memstr>]
 
-if [ $# -lt 1 ]
-then
+function display_usage() {
 	echo "Usage $0 <nmax> [<k-particle-forces>] [--max-loaded-memory <memstr>]"
 	exit 1
+}
+
+if [ $# -lt 1 ]
+then
+	display_usage
 fi
 
 # Parsing script arguments
@@ -32,6 +36,12 @@ do
 		variable_to_set="k_particle_forces"
 	fi
 done
+
+if [ $k_particle_forces -ne 2 ] && [ $k_particle_forces -ne 3 ]
+then
+	echo "k_particle_forces must be either 2 or 3, it is $kparticle_forces"
+	display_usage
+fi
 
 # External resources
 
@@ -63,7 +73,12 @@ mercury=$PWD/../release/Mercury/mercury_J_scheme_to_internal.x
 bacchus=$PWD/../release/Bacchus/bacchus.x
 
 # Setting up run environment
-run_directory="./example_run_4_helium"
+if [ $k_particle_forces -eq 2 ]
+then
+run_directory="./example_run_4_helium_2nf_only_nmax$nmax"
+else
+run_directory="./example_run_4_helium_2nf_and_3nf_nmax$nmax"
+fi
 mkdir -p $run_directory
 cd $run_directory
 
