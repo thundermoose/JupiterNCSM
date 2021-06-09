@@ -1,10 +1,65 @@
 # JupiterNCSM
 This is JupiterNCSM, a no-core shell model code developed in C at Chalmers
-University of Technology. It is licensed under GPL v2
+University of Technology. 
+
+## License
+
+This software is released under the terms and conditions of GPL version 2.
+As required by the license a full copy of it can be found in the LICENSE file.
+This software is presented as is and absolutely no warranty is included.
+
+## Dependencies
+
+JupiterNCSM depends on the following libraries 
+- [HDF5](https://www.hdfgroup.org/solutions/hdf5/)
+- [BLAS](http://www.netlib.org/blas/)
+- [wigxjpf](http://fy.chalmers.se/subatom/wigxjpf/)
+- [libconfig](https://hyperrealm.github.io/libconfig/)
+- [OpenMP](https://www.openmp.org/)
+- [GSL](https://www.gnu.org/software/gsl/)
+
+At the moment the index-lists are computed with [MFR/anicr](https://unknownlink.nonexistent.se)
+which is therefor an indirect dependence.
 
 ## Installation
 
-## Dependencies
+To install JupiterNCSM first run
+```
+>> git clone git@git.chalmers.se:djarv/jupiterncsm.git
+>> cd jupiterncsm
+>> git submodule init
+>> git submodule update
+```
+
+Before running make for the first time, you may need to direct it to where 
+the dependencies are set, and also change compiler and linker. This can be done
+in a makefile.local in which the following variables can be set:
+
+``` makefile.local
+compiler= # if other than gcc is desired
+linker= # if other than gcc is desired
+test_data_path=/path/to/jupiterncsm_test_data # (default is ./jupiterncsm_test_data)
+wigxjpf_path=/path/to/wigxjpf
+hdf5_comp_flags= -I/path/to/hdf5/include # if hdf5 is not installed under /usr/
+hdf5_link_flags= -L/path/to/hdf5/lib -lhdf5 # if hdf5 is not installed under /usr/ 
+blas_comp_flags= -I/path/to/blas/include
+blas_link_flags= -L/path/to/blas/lib -lblas -llapack
+libconfig_comp_flags= -I/path/to/libconfig
+libconfig_link_flags=-lconfig
+```
+
+However, their default values works in many Linux distributions.
+
+To run JupiterNCSM:s internal tests, run 
+```
+>> make test
+>> ./test_scripts/run_all_tests.sh
+```
+
+To compile the release version
+```
+>> make
+```
 
 ## Example
 
