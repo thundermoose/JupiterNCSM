@@ -103,6 +103,6 @@ eigensystem:
 Bacchus ends after 1.02472e+06 µs
 ```
 
-## Contact
+## Authors
 
-See [contacts](AUTHORS.md)
+See [authors](AUTHORS.md).
