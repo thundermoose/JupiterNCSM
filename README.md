@@ -18,7 +18,7 @@ JupiterNCSM depends on the following libraries
 - [OpenMP](https://www.openmp.org/)
 - [GSL](https://www.gnu.org/software/gsl/)
 
-At the moment the index-lists are computed with [MFR/anicr](https://unknownlink.nonexistent.se)
+At the moment the index-lists are computed with [MFR/anicr](https://git.chalmers.se/djarv/mfrtd)
 which is therefor an indirect dependence.
 
 ## Installation
@@ -66,7 +66,7 @@ To compile the release version
 To illustrate how to use JupiterNCSM an example of how to compute the 
 eigen spectrum of ⁴He for the N2LOsat interaction at ħΩ = 20 MeV up to Nmax = 6, 
 is included in the subdirectory **example**. To try it out, download 
-[jupiter_ncsm_example_4he_data.tar.gz](https://unknownlink.nonexistent.se) 
+[jupiter_ncsm_example_4he_data.tar.gz](http://fy.chalmers.se/subatom/jupiterncsm_example_data/jupiter_ncsm_example_4he_data.tar.gz) 
 and place it in **example** after which you can run the  script
 ```
 >> cd example
