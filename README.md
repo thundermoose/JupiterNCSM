@@ -18,7 +18,7 @@ JupiterNCSM depends on the following libraries
 - [OpenMP](https://www.openmp.org/)
 - [GSL](https://www.gnu.org/software/gsl/)
 
-At the moment the index-lists are computed with [MFR/anicr](https://git.chalmers.se/djarv/mfrtd)
+At the moment the index-lists are computed with [MFR/anicr](https://github.com/thundermoose/Anicre)
 which is therefor an indirect dependence.
 
 ## Installation
