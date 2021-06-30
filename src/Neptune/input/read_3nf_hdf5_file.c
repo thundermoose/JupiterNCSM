@@ -57,18 +57,48 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 	hid_t channels =
 		H5Dopen2(data_file->file_handle,
 			 "/Channels",H5P_DEFAULT);
+	hid_t channels_space = H5Dget_space(channels);
+	hsize_t channel_dims[2];
+	int num_dims = 0;
+	if ((num_dims = H5Sget_simple_extent_dims(channels_space,
+						  channel_dims,
+						  NULL)) != 2)
+	{
+		fprintf(stderr,
+			"channesl has %d number of dims, but should be 2\n",
+			num_dims);
+		exit(EXIT_FAILURE);
+	}
 
-	data_file->num_channels =
-		H5Dget_storage_size(channels)/sizeof(Channel);
+	data_file->num_channels = channel_dims[0];
 
 	data_file->channels =
 		(Channel*)malloc(sizeof(Channel)*
 				 data_file->num_channels);
+	if (channel_dims[1] == 4)
+	{
+		H5Dread(channels,
+			H5T_NATIVE_INT, H5S_ALL,
+			H5S_ALL, H5P_DEFAULT,
+			data_file->channels);
+	}
+	else
+	{
+		int *channel_content =
+		       	(int*)malloc(channel_dims[0]*3*sizeof(int));
+		H5Dread(channels,
+			H5T_NATIVE_INT, H5S_ALL,
+			H5S_ALL, H5P_DEFAULT,
+			channel_content);
+		for (size_t i = 0; i<channel_dims[0]; i++)
+		{
+			data_file->channels[i].J_abc = channel_content[3*i];
+			data_file->channels[i].Tz = channel_content[3*i+1];
+			data_file->channels[i].Parity = channel_content[3*i+2];
+			data_file->channels[i].J_ab = 0;
+		}
+	}
 
-	H5Dread(channels,
-		H5T_NATIVE_INT, H5S_ALL,
-		H5S_ALL, H5P_DEFAULT,
-		data_file->channels);
 	H5Dclose(channels);
 	// Read configurations
 	hid_t configs =
