@@ -10,14 +10,14 @@ typedef struct
 } key_index_t;
 
 static inline
-void setup_buckets(size_t buckets[256],
+void setup_buckets(size_t buckets[16],
 		   const key_index_t *current_order,
 		   const size_t array_length);
 
 static inline
 void setup_next_order(key_index_t *next_order,
 		      const key_index_t *current_order,
-		      size_t buckets[256],
+		      size_t buckets[16],
 		      const size_t array_length);
 
 static inline
