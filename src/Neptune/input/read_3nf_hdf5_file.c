@@ -82,7 +82,7 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 			H5S_ALL, H5P_DEFAULT,
 			data_file->channels);
 	}
-	else
+	else if (channel_dims[1] == 3)
 	{
 		int *channel_content =
 		       	(int*)malloc(channel_dims[0]*3*sizeof(int));
@@ -97,6 +97,10 @@ HDF5_Data* open_hdf5_data(const char* file_name)
 			data_file->channels[i].Parity = channel_content[3*i+2];
 			data_file->channels[i].J_ab = 0;
 		}
+	}
+	else
+	{
+		fprintf(stderr,"In channels, wrong number of columns\n");
 	}
 
 	H5Dclose(channels);
