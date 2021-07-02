@@ -39,6 +39,10 @@ double *compress_elements(antoine_header_t header,
 			  double *raw_elements);
 
 static
+double *compress_elements_no_kinetic_energy(antoine_header_t header,
+					   jt_basis_t antoine_basis,
+					   double *raw_elements);
+static
 double get_element(antoine_2nf_file_t antoine_2nf_file,
 		   size_t bra_index,
 		   size_t ket_index,
@@ -62,7 +66,8 @@ int get_fortran_block_length(FILE *file);
 antoine_2nf_file_t open_antoine_2nf_file(const char* file_name,
 					 size_t num_particles,
 					 quantum_number e_max1,
-					 quantum_number e_max2)
+					 quantum_number e_max2,
+					 int include_kinetic_energy)
 {
 	FILE* file_handle = fopen(file_name,"r");
 	if (file_handle == NULL)
@@ -76,10 +81,14 @@ antoine_2nf_file_t open_antoine_2nf_file(const char* file_name,
 	antoine_header_t header = read_header(file_handle);
 	double *raw_elements = read_elements(header,file_handle);
 	double *elements = 
+		include_kinetic_energy ?
 		compress_elements(header,
 				  antoine_basis,
 				  num_particles,
-				  raw_elements);
+				  raw_elements) :
+		compress_elements_no_kinetic_energy(header,
+						    antoine_basis,
+						    raw_elements);
 	free(raw_elements);
 	fclose(file_handle);
 	assert(antoine_basis != NULL);
@@ -188,38 +197,11 @@ double *compress_elements(antoine_header_t header,
 			  size_t num_particles,
 			  double *raw_elements)
 {
-	//const size_t dimension = get_dimension(antoine_basis);
-	//size_t *diagonal_indices =
-	//       	(size_t*)malloc(dimension*sizeof(size_t));
-	//double *harmonic_oscillator_energy = 
-	//	(double*)malloc(dimension*sizeof(double));
-	//index_hash_t used_indices = compute_used_indices(antoine_basis);
-	//Shells *shells = get_jt_basis_shells(antoine_basis);
-	//for (size_t i = 0; i < dimension; i++)
-	//{
-	//	diagonal_indices[i] = get_index(used_indices,i,i);
-	//	jt_state_t state = get_jt_state(antoine_basis,
-	//					i);
-	//	quantum_number e_a = shells->true_shells[state.a].e;
-	//	quantum_number e_b = shells->true_shells[state.b].e;
-	//	harmonic_oscillator_energy[i] = (e_a+e_b)+3.0/4;
-	//	//harmonic_oscillator_energy[i] = 3.0/4;
-	//}
-	//free_index_hash(used_indices);
 	double *elements = (double*)malloc(header.num_rows*3*sizeof(double));
-	printf("header.basis_frequency = %lg\n",
-	       header.basis_frequency);
-	//size_t diagonal_index = 0;
+	log_entry("header.basis_frequency = %lg\n",
+		  header.basis_frequency);
 	for (size_t i = 0; i<header.num_rows; i++)
 	{
-		//double ho_energy = 0.0;
-		//if (diagonal_index < dimension &&
-		//    i == diagonal_indices[diagonal_index])
-		//{
-		//	ho_energy =
-		//	       	harmonic_oscillator_energy[diagonal_index];
-		//	diagonal_index++;
-		//}
 		double kinetic_energy = 
 			(2.0)*header.basis_frequency*
 			raw_elements[header.num_columns*i]/num_particles;
@@ -233,8 +215,24 @@ double *compress_elements(antoine_header_t header,
 		elements[3*i+2] = 
 			raw_elements[header.num_columns*i+4]+kinetic_energy;
 	}
-	//free(diagonal_indices);
-	//free(harmonic_oscillator_energy);
+	return elements;
+}
+
+static
+double *compress_elements_no_kinetic_energy(antoine_header_t header,
+					    jt_basis_t antoine_basis,
+					    double *raw_elements)
+{
+	double *elements = (double*)malloc(header.num_rows*3*sizeof(double));
+	for (size_t i = 0; i<header.num_rows; i++)
+	{
+		elements[3*i] = 
+			raw_elements[header.num_columns*i+3];
+		elements[3*i+1] = 
+			raw_elements[header.num_columns*i+5];
+		elements[3*i+2] = 
+			raw_elements[header.num_columns*i+4];
+	}
 	return elements;
 }
 

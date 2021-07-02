@@ -141,7 +141,8 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 		(get_interaction_path_2nf_argument(arguments),
 		 get_num_particles_argument(arguments),
 		 get_single_particle_energy_argument(arguments),
-		 get_two_particle_energy_argument(arguments));
+		 get_two_particle_energy_argument(arguments),
+		 !get_exclude_kinetic_energy_argument(arguments));
 	transform_2nf_block_manager_t manager =
 		new_transform_2nf_block_manager
 		(coupled_2nf_data,
