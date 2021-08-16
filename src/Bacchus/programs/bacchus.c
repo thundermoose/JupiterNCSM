@@ -67,7 +67,7 @@ int main(int num_arguments, char **argument_list)
 	print_eigensystem(eigensystem);
 	const char *eigenvector_directory =
 	       	get_eigenvector_directory_setting(settings);
-	for (size_t i = 0; i<get_target_eigenvector_setting(settings); i++)
+	for (size_t i = 0; i<=get_target_eigenvector_setting(settings); i++)
 	{
 		vector_settings_t vector_setting =
 		       	lanczos_settings.vector_settings;
