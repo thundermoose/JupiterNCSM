@@ -27,7 +27,7 @@ void create_subspace_operator(const char *subspace_operator_path,
 	for (size_t i = 0; i < num_training_vectors; i++)
 	{
 		sprintf(vector_path_buffer,
-			"%s/intermediate_vector_%lu\n",
+			"%s/intermediate_vector_%lu",
 			workspace_path,
 			i);
 		vector_setting.directory_name = vector_path_buffer;
