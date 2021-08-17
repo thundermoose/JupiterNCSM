@@ -71,7 +71,8 @@ int main(int num_arguments,
 		open_antoine_2nf_file(input_file_name(arguments),
 				      num_particles(arguments),
 				      e_max1,
-				      e_max2);
+				      e_max2,
+				      0);
 	m_scheme_2p_basis_t basis = new_m_scheme_2p_basis(e_max1,e_max2);
 	print_m_scheme_2p_basis(basis);
 	out_file_t output_file =

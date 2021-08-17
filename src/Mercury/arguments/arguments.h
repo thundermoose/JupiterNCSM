@@ -55,6 +55,8 @@ double get_C3_lec_argument(const arguments_t arguments);
 
 double get_C4_lec_argument(const arguments_t arguments);
 
+int get_exclude_kinetic_energy_argument(const arguments_t arguments);
+
 void free_arguments(arguments_t arguments);
 
 #endif

@@ -14,6 +14,7 @@ struct _arguments_
 	int single_block;
 	int no_2nf;
 	int lec_set;
+	int exclude_kinetic_energy;
 	char *program_name;
 	char *interaction_path_2nf;
 	char *interaction_path_3nf;
@@ -96,6 +97,7 @@ arguments_t parse_argument_list(int num_arguments,
 	{
 		arguments->single_block = 0;
 		arguments->no_2nf = 0;
+		arguments->exclude_kinetic_energy = 0;
 		arguments->combination_file_path = argument_list[1];	
 		arguments->index_list_path = argument_list[2];
 		arguments->output_path = argument_list[3];
@@ -126,6 +128,8 @@ arguments_t parse_argument_list(int num_arguments,
 					 max_loaded_memory);
 			MODE_ARGUMENT("--single-block",single_block);
 			MODE_ARGUMENT("--no-2nf",no_2nf);
+			MODE_ARGUMENT("--exclude-kinetic-energy",
+				      exclude_kinetic_energy);
 			STRING_ARGUMENT("--finished-blocks-file",
 					finished_energy_blocks);
 			LEC_ARGUMENT("--LEC-CE",lec_CE);
@@ -295,6 +299,11 @@ double get_C3_lec_argument(const arguments_t arguments)
 double get_C4_lec_argument(const arguments_t arguments)
 {
 	return arguments->lec_C4;
+}
+
+int get_exclude_kinetic_energy_argument(const arguments_t arguments)
+{
+	return arguments->exclude_kinetic_energy;
 }
 
 void free_arguments(arguments_t arguments)

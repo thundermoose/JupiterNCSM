@@ -97,7 +97,7 @@ int is_integer(const char *string)
 int is_double(const char *string)
 {
 	static const char double_regex[] =
-	       	"^[+-]?[[:digit:]]+(\\.[[:digit:]]+)?([Ee][+-]?[[:digit:]]+)?^";
+	       	"^[+-]?[[:digit:]]+(\\.[[:digit:]]+)?([Ee][+-]?[[:digit:]]+)?";
 	regex_t match_doubles;
 	int error_code = 0;
 	if ((error_code = regcomp(&match_doubles,double_regex,REG_EXTENDED)))
