@@ -15,6 +15,9 @@ typedef struct
 	short proton_states[6];	
 } connection_t;
 
+connection_list_t new_connection_list(const char *index_list_path,
+				      matrix_block_setting_t settings);
+
 connection_list_t read_connection_files(const char *index_list_path,
 					matrix_block_setting_t settings);
 

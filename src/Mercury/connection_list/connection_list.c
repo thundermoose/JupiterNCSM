@@ -35,6 +35,36 @@ size_t short_to_size(short number)
 	return convert.final_value;
 }
 
+connection_list_t new_connection_list(const char *index_list_path,
+				      matrix_block_setting_t settings)
+{
+	block_type_t type = settings.type;
+	size_t num_protons = count_protons(type);
+	char *proton_directory = 
+		num_protons > 0 ?
+		(char*)malloc(strlen(index_list_path)+256) :
+		NULL;		
+	switch (num_protons)
+	{
+		case 1:
+			sprintf(proton_directory,
+				"%s/p_inds_index_lists"
+				index_list_path);
+			break;
+		case 2:
+			sprintf(proton_directory,
+				"%s/pp_inds_index_lists"
+				index_list_path);
+			break;
+		case 3:
+			sprintf(proton_directory,
+				"%s/ppp_inds_index_lists"
+				index_list_path);
+			break;
+		default:
+			;
+	}
+}
 
 connection_list_t read_connection_files(const char *index_list_path,
 					matrix_block_setting_t settings)
