@@ -74,6 +74,9 @@ profiling: $(mode_path)/profiling.mode $(all_sources)
 debug: $(mode_path)/debug.mode $(all_sources)
 	make $(program_packages_names:%=debug_%)
 
+debug_no_logging: $(mode_path)/debug_no_logging.mode $(all_sources)
+	make $(program_packages_names:%=debug_no_logging_%)
+
 test: $(mode_path)/test.mode $(all_sources)
 	make $(program_packages_names:%=test_%)
 
@@ -127,6 +130,12 @@ debug/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
 	echo "Linking $$@ with $$^"
 	$$(linker) -o $$@ $$^ $$(linker_flags)
 
+debug_no_logging_$1: $$(package_programs_$1:%.x=debug_no_logging/%.x)
+debug_no_logging/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DDEBUG -DNLOGING
+debug_no_logging/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)
+	mkdir -p $$(@D)
+	echo "Linking $$@ with $$^"
+	$$(linker) -o $$@ $$^ $$(linker_flags)
 test_$1: $$(package_programs_$1:%.x=test/%.x)
 test/$1/%.x: compiler_flags+=-I./$(source_path)/$1/ $$(package_compiler_flags_$1) -ggdb -DDEBUG -DTEST -DTEST_DATA=$(test_data_path)
 test/$1/%.x: ./$(object_path)/$1/programs/%.o $$(package_function_objects_$1)

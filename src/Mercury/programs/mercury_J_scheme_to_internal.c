@@ -24,6 +24,7 @@ void initialization()
 
 static
 void generate_1nf_matrix_blocks(combination_table_t combination_table,
+				single_particle_basis_t basis,
 				arguments_t arguments);
 
 static
@@ -32,6 +33,7 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 
 static
 void generate_2nf_zero_matrix_blocks(combination_table_t combination_table,
+				     single_particle_basis_t basis,
 				     arguments_t arguments);
 
 
@@ -79,13 +81,20 @@ int main(int num_arguments,
 		(get_combination_file_path_argument(arguments),
 		 get_num_protons_argument(arguments),
 		 get_num_neutrons_argument(arguments));
+	single_particle_basis_t single_particle_basis = 
+		new_antoine_single_particle_basis
+		(get_single_particle_energy_argument(arguments));
 	generate_1nf_matrix_blocks(combination_table,
+				   single_particle_basis,
 				   arguments);
 	if (no_2nf_argument(arguments))
-		generate_2nf_zero_matrix_blocks(combination_table, arguments);
+		generate_2nf_zero_matrix_blocks(combination_table, 
+						single_particle_basis,
+						arguments);
 	else
 		generate_2nf_matrix_blocks(combination_table, arguments);
 	generate_3nf_matrix_blocks_parallel(combination_table, arguments);
+	free_single_particle_basis(single_particle_basis);
 	free_combination_table(combination_table);
 	free_arguments(arguments);
 	clock_gettime(CLOCK_REALTIME,&t_end);
@@ -98,6 +107,7 @@ int main(int num_arguments,
 
 static
 void generate_1nf_matrix_blocks(combination_table_t combination_table,
+				single_particle_basis_t single_particle_basis,
 				arguments_t arguments)
 {
 	struct timespec t_start,t_end;
@@ -110,8 +120,9 @@ void generate_1nf_matrix_blocks(combination_table_t combination_table,
 		matrix_block_setting_t current_matrix_block = 
 			next_1nf_block_iterator(combination_table);
 		connection_list_t connection_list =
-			read_connection_files(index_list_path,
-					      current_matrix_block);
+			new_connection_list(index_list_path,
+					    single_particle_basis,
+					    current_matrix_block);
 		mercury_matrix_block_t current_block =
 			new_zero_mercury_matrix_block(connection_list);
 		save_mercury_matrix_block(current_block,
@@ -192,6 +203,7 @@ void generate_2nf_matrix_blocks(combination_table_t combination_table,
 
 static
 void generate_2nf_zero_matrix_blocks(combination_table_t combination_table,
+				     single_particle_basis_t single_particle_basis,
 				     arguments_t arguments)
 {
 	struct timespec t_start,t_end;
@@ -207,7 +219,8 @@ void generate_2nf_zero_matrix_blocks(combination_table_t combination_table,
 	     next_element(iterator_2nf_blocks,&current_matrix_block))
 	{
 		connection_list_t connection_list =
-			read_connection_files(index_list_path,
+			new_connection_list(index_list_path,
+					      single_particle_basis,
 					      current_matrix_block);
 		mercury_matrix_block_t current_block =
 			new_zero_mercury_matrix_block(connection_list);

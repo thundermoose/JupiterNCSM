@@ -1,5 +1,6 @@
 #include <connection_list/connection_list.h>
 #include <debug_mode/debug_mode.h>
+#include <array_builder/array_builder.h>
 #include <error/error.h>
 #include <log/log.h>
 #include <stdio.h>
@@ -20,12 +21,13 @@ char *create_directory_path(const char *index_list_path,
 			    char particle_type);
 
 static
-short *create_single_particle_connections(directory,
-					size_t num_particles,
-					int differnece_energy,
-					int difference_M,
-					int depth,
-					size_t *num_connectinos);
+short *create_single_particle_connections(const char *directory,
+					  size_t num_particles,
+					  int difference_energy,
+					  int difference_M,
+					  int depth,
+					  single_particle_basis_t basis,
+					  size_t *num_connections);
 
 static
 void read_connection_file(short **connections,
@@ -38,6 +40,14 @@ void read_connection_file(short **connections,
 			  int depth);
 
 static
+int single_species_compute_M(single_particle_basis_t basis,
+			     short *state,
+			     size_t num_particles);
+
+static
+short *load_states(const char *directory,int E,size_t *length);
+
+	static
 size_t short_to_size(short number)
 {
 	union{
@@ -49,6 +59,7 @@ size_t short_to_size(short number)
 }
 
 connection_list_t new_connection_list(const char *index_list_path,
+				      single_particle_basis_t basis,
 				      matrix_block_setting_t settings)
 {
 	block_type_t type = settings.type;
@@ -69,17 +80,19 @@ connection_list_t new_connection_list(const char *index_list_path,
 						   settings.difference_energy_protons,
 						   settings.difference_M_protons,
 						   settings.depth_protons,
+						   basis,
 						   &num_proton_connections);
 	size_t num_neutron_connections = 0;
 	short *neutron_connections =
 		create_single_particle_connections(neutron_directory,
-						   num_neutrons;
+						   num_neutrons,
 						   settings.difference_energy_neutrons,
 						   settings.difference_M_neutrons,
 						   settings.depth_neutrons,
+						   basis,
 						   &num_neutron_connections);
 	connection_list_t list =
-	       	(connection_list_t)calloc(1,sizeof(struct _connection_list_));
+		(connection_list_t)calloc(1,sizeof(struct _connection_list_));
 	list->settings = settings;
 	if (num_protons == 0)
 	{
@@ -145,6 +158,18 @@ connection_list_t new_connection_list(const char *index_list_path,
 				list->connections[connection_index++] = 
 					current_connection;
 			}
+		}
+		if (list->num_connections != settings.num_proton_combinations*settings.num_neutron_combinations)
+		{
+			fprintf(stderr,"matrix block %lu should have %lu num connections but only has %lu\n",
+				settings.matrix_block_id,
+				settings.num_proton_combinations*settings.num_neutron_combinations,
+				list->num_connections);
+			fprintf(stderr,"num_proton_connections = %lu\n",
+				num_proton_connections);
+			fprintf(stderr,"num_neutron_connections = %lu\n",
+				num_neutron_connections);
+			exit(1);
 		}
 	}
 	free(neutron_connections);
@@ -278,7 +303,7 @@ connection_list_t read_connection_files(const char *index_list_path,
 		free(proton_connections);
 	}
 	connection_list_t connection_list =
-	       	(connection_list_t)malloc(sizeof(struct _connection_list_));
+		(connection_list_t)malloc(sizeof(struct _connection_list_));
 	connection_list->settings = settings;
 	connection_list->connections = connections;
 	connection_list->num_connections = num_connections;
@@ -333,6 +358,92 @@ int compute_M(connection_t connection,
 	return M;
 }
 
+	static
+char *create_directory_path(const char *index_list_path,
+			    size_t num_particles,
+			    char particle_type)
+{
+	size_t length = strlen(index_list_path)+256;	
+	char *directory_path = (char*)calloc(length,sizeof(char));
+	char directory_name[] = "   _inds_index_lists";
+	memset(directory_name,particle_type,3);
+	sprintf(directory_path,
+		"%s/%s",
+		index_list_path,
+		directory_name+3-num_particles);
+	return directory_path;
+}
+
+	static
+short *create_single_particle_connections(const char *directory,
+					  size_t num_particles,
+					  int difference_energy,
+					  int difference_M,
+					  int depth,
+					  single_particle_basis_t basis,
+					  size_t *num_connections)
+{
+	if (num_particles == 0)
+		return NULL;
+	int annihilated_energy = depth;
+	int created_energy = depth+difference_energy;
+	size_t length_annihilated_states = 0;
+	short *annihilated_states = 
+		load_states(directory,
+			    annihilated_energy,
+			    &length_annihilated_states);
+	length_annihilated_states/=num_particles;
+	size_t length_created_states = 0;
+	short *created_states = 
+		load_states(directory,
+			    created_energy,
+			    &length_created_states);
+	length_created_states/=num_particles;
+	short *single_particle_connections = NULL;
+	array_builder_t connections_builder = 
+		new_array_builder((void**)&single_particle_connections,
+				  num_connections,
+				  2*num_particles*sizeof(short));
+	for (size_t annihilated_index = 0;
+	     annihilated_index < length_annihilated_states;
+	     annihilated_index++)
+	{
+		int annihilated_M = 
+			single_species_compute_M(basis,
+						 annihilated_states
+						 +annihilated_index*num_particles,
+						 num_particles);
+		int created_M = annihilated_M+difference_M;
+		size_t created_index = 0;
+		for (;created_index < length_created_states; created_index++)
+			if (single_species_compute_M(basis,
+						     created_states
+						     +created_index*num_particles,
+						     num_particles) == created_M)
+				break;
+		for (;created_index < length_created_states &&
+		     (single_species_compute_M(basis,
+					       created_states
+					       +created_index*num_particles,
+					       num_particles) == created_M); 
+		     created_index++)
+		{
+			short state[6];
+			memcpy(state,
+			       annihilated_states+annihilated_index*num_particles,
+			       num_particles*sizeof(short));
+			memcpy(state+num_particles,
+			       created_states+created_index*num_particles,
+			       num_particles*sizeof(short));
+			append_array_element(connections_builder,
+					     state);
+		}
+	}
+	free_array_builder(connections_builder);
+	free(annihilated_states);
+	free(created_states);
+	return single_particle_connections;
+}
 	static
 void read_connection_file(short **connections,
 			  size_t *num_connections,
@@ -394,4 +505,48 @@ void read_connection_file(short **connections,
 		      file_name);
 	free(file_name);
 	fclose(connection_file);
+}
+
+static
+short *load_states(const char *directory,int E,size_t *length)
+{
+	char *filename = calloc(strlen(directory)+256,sizeof(char));
+	sprintf(filename,"%s/basis_energy_%d",directory,E);
+	FILE *file = fopen(filename,"r");
+	if (file == NULL)
+	{
+		fprintf(stderr,"Could not open file \"%s\". %s\n",
+			filename,
+			strerror(errno));
+		exit(1);
+	}
+	fseek(file,0,SEEK_END);
+	*length = ftell(file)/sizeof(short);
+	fseek(file,0,SEEK_SET);
+	short *states = (short*)malloc((*length)*sizeof(short));
+	if (fread(states,sizeof(short),*length,file) != (*length))
+	{
+		fprintf(stderr,"Could not read %lu bytes from file \"%s\"\n",
+			(*length)*sizeof(short),
+			filename);	
+		exit(1);
+	}
+	fclose(file);
+	free(filename);
+	return states;
+}
+
+	static
+int single_species_compute_M(single_particle_basis_t basis,
+			     short *state,
+			     size_t num_particles)
+{
+	int M = 0;
+	for (size_t particle_index = 0; 
+	     particle_index < num_particles; 
+	     particle_index++)
+	{
+		M += get_m(get_state(basis,2*(state[particle_index])));
+	}
+	return M;
 }
