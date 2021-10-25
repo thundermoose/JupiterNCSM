@@ -15,6 +15,19 @@ struct _connection_list_
 };
 
 static
+char *create_directory_path(const char *index_list_path,
+			    size_t num_particles,
+			    char particle_type);
+
+static
+short *create_single_particle_connections(directory,
+					size_t num_particles,
+					int differnece_energy,
+					int difference_M,
+					int depth,
+					size_t *num_connectinos);
+
+static
 void read_connection_file(short **connections,
 			  size_t *num_connections,
 			  size_t num_particles,
@@ -40,30 +53,105 @@ connection_list_t new_connection_list(const char *index_list_path,
 {
 	block_type_t type = settings.type;
 	size_t num_protons = count_protons(type);
+	size_t num_neutrons = count_neutrons(type);
 	char *proton_directory = 
-		num_protons > 0 ?
-		(char*)malloc(strlen(index_list_path)+256) :
-		NULL;		
-	switch (num_protons)
+		create_directory_path(index_list_path,
+				      num_protons,
+				      'p');
+	char *neutron_directory = 
+		create_directory_path(index_list_path,
+				      num_neutrons,
+				      'n');
+	size_t num_proton_connections = 0;
+	short *proton_connections =
+		create_single_particle_connections(proton_directory,
+						   num_protons,				   
+						   settings.difference_energy_protons,
+						   settings.difference_M_protons,
+						   settings.depth_protons,
+						   &num_proton_connections);
+	size_t num_neutron_connections = 0;
+	short *neutron_connections =
+		create_single_particle_connections(neutron_directory,
+						   num_neutrons;
+						   settings.difference_energy_neutrons,
+						   settings.difference_M_neutrons,
+						   settings.depth_neutrons,
+						   &num_neutron_connections);
+	connection_list_t list =
+	       	(connection_list_t)calloc(1,sizeof(struct _connection_list_));
+	list->settings = settings;
+	if (num_protons == 0)
 	{
-		case 1:
-			sprintf(proton_directory,
-				"%s/p_inds_index_lists"
-				index_list_path);
-			break;
-		case 2:
-			sprintf(proton_directory,
-				"%s/pp_inds_index_lists"
-				index_list_path);
-			break;
-		case 3:
-			sprintf(proton_directory,
-				"%s/ppp_inds_index_lists"
-				index_list_path);
-			break;
-		default:
-			;
+		list->num_connections = num_neutron_connections;	
+		list->connections = 
+			(connection_t*)
+			malloc(num_neutron_connections*sizeof(connection_t));
+		connection_t current_connection;
+		current_connection.type = type;
+		for (size_t neutron_index = 0; 
+		     neutron_index < num_neutron_connections; 
+		     neutron_index++)
+		{
+			memcpy(current_connection.neutron_states,
+			       neutron_connections+2*neutron_index*num_neutrons,
+			       2*num_neutrons*sizeof(short));
+			list->connections[neutron_index] = current_connection;
+		}
+	}	
+	else if (num_neutrons == 0)
+	{
+		list->num_connections = num_proton_connections;	
+		list->connections = 
+			(connection_t*)
+			malloc(num_proton_connections*sizeof(connection_t));
+		connection_t current_connection;
+		current_connection.type = type;
+		for (size_t proton_index = 0; 
+		     proton_index < num_proton_connections; 
+		     proton_index++)
+		{
+			memcpy(current_connection.proton_states,
+			       proton_connections+2*proton_index*num_protons,
+			       2*num_protons*sizeof(short));
+			list->connections[proton_index] = current_connection;
+		}
+	} 
+	else
+	{
+		list->num_connections = 
+			num_proton_connections*num_neutron_connections;	
+		list->connections = 
+			(connection_t*)
+			malloc(list->num_connections*sizeof(connection_t));
+		connection_t current_connection;
+		current_connection.type = type;
+		size_t connection_index = 0;
+		for (size_t proton_index = 0; 
+		     proton_index < num_proton_connections; 
+		     proton_index++)
+		{
+			memcpy(current_connection.proton_states,
+			       proton_connections+2*proton_index*num_protons,
+			       2*num_protons*sizeof(short));
+			for (size_t neutron_index = 0;
+			     neutron_index < num_neutron_connections;
+			     neutron_index++)
+			{
+				memcpy(current_connection.neutron_states,
+				       neutron_connections+
+				       2*neutron_index*num_neutrons,
+				       2*num_neutrons*sizeof(short));
+				list->connections[connection_index++] = 
+					current_connection;
+			}
+		}
 	}
+	free(neutron_connections);
+	free(proton_connections);
+	free(neutron_directory);
+	free(proton_directory);
+	return list;
 }
 
 connection_list_t read_connection_files(const char *index_list_path,
