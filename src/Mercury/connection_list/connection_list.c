@@ -428,7 +428,7 @@ short *create_single_particle_connections(const char *directory,
 					       num_particles) == created_M); 
 		     created_index++)
 		{
-			short state[6];
+			short state[6] = {0,0,0,0,0,0};
 			memcpy(state,
 			       annihilated_states+annihilated_index*num_particles,
 			       num_particles*sizeof(short));
