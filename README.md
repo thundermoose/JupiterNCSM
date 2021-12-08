@@ -25,7 +25,7 @@ which is therefor an indirect dependence.
 
 To install JupiterNCSM first run
 ```
->> git clone git@git.chalmers.se:djarv/jupiterncsm.git
+>> git clone git@github.com:thundermoose/JupiterNCSM.git
 >> cd jupiterncsm
 >> git submodule init
 >> git submodule update
