@@ -20,6 +20,16 @@ single_particle_basis_t new_single_particle_basis(int energy_max)
 	return basis;
 }
 
+single_particle_basis_t new_antoine_single_particle_basis(int energy_max)
+{
+	single_particle_basis_t basis =
+		(single_particle_basis_t)
+		malloc(sizeof(struct _single_particle_basis_));	
+	basis->shells = new_antoine_shells(energy_max);
+	basis->sp_states = new_sp_states(basis->shells);
+	return basis;
+}
+
 single_particle_state_t get_state(single_particle_basis_t basis,
 				  size_t index)
 {

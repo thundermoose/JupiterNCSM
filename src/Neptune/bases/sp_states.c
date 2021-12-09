@@ -74,7 +74,6 @@ SP_States* new_sp_states(Shells* shells){
 	return sp_states;
 }
 
-
 void list_sp_states(SP_States* s)
 {
 	list_shells(s->shells);

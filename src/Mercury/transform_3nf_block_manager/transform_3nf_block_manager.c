@@ -180,8 +180,9 @@ get_transform_3nf_matrix_block(transform_3nf_block_manager_t manager,
 	struct timespec time_start;
 	clock_gettime(CLOCK_REALTIME,&time_start);
 	connection_list_t connection_list = 
-		read_connection_files(manager->index_list_path,
-				      settings);
+		new_connection_list(manager->index_list_path,
+				    manager->single_particle_basis,
+				    settings);
 	size_t num_elements = num_connections(connection_list);
 	double *elements = (double*)calloc(num_elements,sizeof(double));
 	size_t element_index = 0;

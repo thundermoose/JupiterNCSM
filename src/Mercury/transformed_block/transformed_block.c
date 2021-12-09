@@ -112,8 +112,9 @@ mercury_matrix_block_t get_3nf_mercury_matrix(transformed_block_t block,
 					      matrix_block_setting_t settings)
 {
 	connection_list_t connection_list = 
-		read_connection_files(block->index_list_path,
-				      settings);
+		new_connection_list(block->index_list_path,
+				    block->single_particle_basis,
+				    settings);
 	size_t num_elements = num_connections(connection_list);
 	double *elements = (double*)calloc(num_elements,sizeof(double));
 	size_t element_index = 0;

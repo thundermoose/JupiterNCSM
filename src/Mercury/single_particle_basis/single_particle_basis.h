@@ -15,6 +15,8 @@ typedef struct
 
 single_particle_basis_t new_single_particle_basis(int energy_max);
 
+single_particle_basis_t new_antoine_single_particle_basis(int energy_max);
+
 single_particle_state_t get_state(single_particle_basis_t basis,
 				  size_t index);
 

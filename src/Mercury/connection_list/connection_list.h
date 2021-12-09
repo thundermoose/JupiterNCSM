@@ -16,6 +16,7 @@ typedef struct
 } connection_t;
 
 connection_list_t new_connection_list(const char *index_list_path,
+				      single_particle_basis_t basis,
 				      matrix_block_setting_t settings);
 
 connection_list_t read_connection_files(const char *index_list_path,

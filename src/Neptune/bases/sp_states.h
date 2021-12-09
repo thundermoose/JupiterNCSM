@@ -27,12 +27,8 @@ typedef struct _sp_states_{
 // from a list of all shells
 SP_States* new_sp_states(Shells* shells);
 
-
 // Lists the sp_states
 void list_sp_states(SP_States* s);
-
-
-
 
 // free all memory used by sp_states
 void free_sp_states(SP_States* sp_states);
