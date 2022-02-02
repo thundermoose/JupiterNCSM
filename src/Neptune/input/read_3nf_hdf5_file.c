@@ -4,6 +4,8 @@
 #include <debug_mode/debug_mode.h>
 #include <log/log.h>
 #include <time.h>
+#include <error/error.h>
+#include <errno.h>
 
 static
 Block *get_hdf5_block(HDF5_Data* data_file, int channel_number);
@@ -212,6 +214,12 @@ Block* load_channel(HDF5_Data* data_file,
 	configurations = 
 		(Block_Configuration*)malloc(block->num_matrix_elements*
 					     sizeof(Block_Configuration));
+	if (configurations == NULL)
+	{
+		error("Could not allocate configurations for channel %d.\n%s.\n",
+		      channel_number,
+		      strerror(errno));
+	}
 	H5Dread(conf,
 		H5T_NATIVE_INT,
 		H5S_ALL,
@@ -223,6 +231,12 @@ Block* load_channel(HDF5_Data* data_file,
 	hid_t elem = H5Dopen2(group,"Elements",H5P_DEFAULT);
 	size_t out_array_size = H5Dget_storage_size(elem)/sizeof(double);
 	out_array = (double*)malloc(sizeof(double)*out_array_size);
+	if (out_array == NULL)
+	{
+		error("Could not allocate matrix_elements for channel %d.\n%s.\n",
+		      channel_number,
+		      strerror(errno));
+	}
 	H5Dread(elem,
 		H5T_NATIVE_DOUBLE,
 		H5S_ALL,
@@ -252,6 +266,12 @@ Block* load_channel(HDF5_Data* data_file,
 	}
 	block->matrix_elements =
 	       	(double*)malloc(sizeof(double)*block->num_matrix_elements);
+	if (block->matrix_elements == NULL)
+	{
+		error("Could not allocate matrix_elements for channel %d.\n%s.\n",
+		      channel_number,
+		      strerror(errno));
+	}
 	size_t i;
 	size_t len = block->num_matrix_elements;
 	block->configuration_to_index = 
